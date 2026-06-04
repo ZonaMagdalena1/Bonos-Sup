@@ -35,6 +35,7 @@ body{font-family:Arial,sans-serif;font-size:14px;color:#1a1a1a;background:#f5f5f
 .herr-item{border:1px solid #e0ddd4;border-radius:8px;padding:10px 12px;background:#fafaf8;transition:border .2s}
 .herr-item.ok{border-color:#9FE1CB;background:#E1F5EE}
 .herr-item.falta{border-color:#F0997B;background:#FAECE7}
+.herr-item.noprop{border-color:#EF9F27;background:#FFF8E8}
 .herr-item label{font-size:12px;font-weight:600;color:#333;display:block;margin-bottom:6px}
 .herr-item select{font-size:12px;padding:5px 8px;border:1px solid #d0ccc4;border-radius:5px;width:100%;background:white;outline:none}
 .herr-item .herr-obs{font-size:11px;padding:4px 6px;border:1px solid #e0ddd4;border-radius:5px;width:100%;margin-top:5px;resize:none;font-family:Arial,sans-serif;outline:none}
@@ -384,6 +385,21 @@ button.success:hover{background:#27500A}
   </div>
   <div class="incump-badge" id="incump-count"></div>
 </div>
+<!-- AJUSTE MANUAL DE BONO -->
+<div id="bono-override-box" style="display:none;background:white;border:1px solid #e0ddd4;border-radius:10px;padding:14px 18px;margin-top:10px">
+  <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+    <div style="font-size:13px;font-weight:600;color:#185FA5"><i class="ti ti-adjustments"></i> Ajuste de bono por observación</div>
+    <select id="bono-override-sel" onchange="aplicarOverrideBono()" style="font-size:13px;padding:6px 10px;border:1px solid #d0ccc4;border-radius:6px;background:white;min-width:220px;outline:none">
+      <option value="">— Sin ajuste —</option>
+      <option value="bajar300">Bajar a Bono Regular ($300 MXN)</option>
+      <option value="bajar0">Retirar bono (Sin bono)</option>
+    </select>
+    <div style="flex:1">
+      <input type="text" id="bono-override-motivo" placeholder="Motivo del ajuste (obligatorio)…" style="width:100%;font-size:12px;padding:6px 10px;border:1px solid #d0ccc4;border-radius:6px;outline:none">
+    </div>
+  </div>
+</div>
+
 <div class="escala-info">⚠ Cualquier incumplimiento en criterios o herramienta <strong>suspende el bono</strong> (el puntaje se conserva) &nbsp;|&nbsp; Escala para cálculo: 0–69 = Sin bono &nbsp;|&nbsp; 70–80 = $300 MXN &nbsp;|&nbsp; 81–100 = $500 MXN</div>
 
 <div class="btn-row">
@@ -909,44 +925,53 @@ function onCamChange(){
     info.style.display='block';
     info.innerHTML='<i class="ti ti-car"></i> Serie: '+c.serie+' | Placas: '+c.placas;
 
-    // Si es HILUX o MITSUBISHI → Lonas = N/A automático
+    // HILUX / MITSUBISHI → N/A en lonas (4.4), redilas (4.3) y bancas de redilas (4.13)
     const sinLona=MODELOS_SIN_LONA.some(m=>c.modelo.toUpperCase().includes(m));
-    const lonaEl=document.getElementById('r-4.4');
-    const lonaBadge=document.getElementById('s-4.4');
-    const lonaRow=lonaEl?lonaEl.closest('.item'):null;
-    if(lonaEl){
+    const camposNA=sinLona?['4.3','4.4','4.13']:[];
+    const camposTodos=['4.3','4.4','4.13'];
+    camposTodos.forEach(id=>{
+      const el=document.getElementById('r-'+id);
+      const badge=document.getElementById('s-'+id);
+      const row=el?el.closest('.item'):null;
+      if(!el)return;
       if(sinLona){
-        lonaEl.value='NA';
-        lonaEl.disabled=true;
-        if(lonaBadge){lonaBadge.className='badge na';lonaBadge.textContent='N/A';}
-        if(lonaRow){lonaRow.style.opacity='.45';lonaRow.title='N/A — este vehículo no usa lonas';}
-        // Mostrar nota
-        let nota=document.getElementById('nota-lona');
-        if(!nota){nota=document.createElement('div');nota.id='nota-lona';nota.style.cssText='font-size:11px;color:#854F0B;background:#FFF8E8;border:1px solid #EF9F27;border-radius:4px;padding:4px 8px;margin-top:4px';lonaEl.parentNode.appendChild(nota);}
-        nota.textContent='ℹ '+c.modelo+' no usa lonas — criterio excluido de la puntuación';
+        el.value='NA'; el.disabled=true;
+        if(badge){badge.className='badge na';badge.textContent='N/A';}
+        if(row){row.style.opacity='.45';row.title='N/A — '+c.modelo+' no aplica este criterio';}
       }else{
-        lonaEl.value='';
-        lonaEl.disabled=false;
-        if(lonaBadge){lonaBadge.className='badge na';lonaBadge.textContent='–';}
-        if(lonaRow){lonaRow.style.opacity='1';lonaRow.title='';}
-        const nota=document.getElementById('nota-lona');
-        if(nota)nota.remove();
+        el.value=''; el.disabled=false;
+        if(badge){badge.className='badge na';badge.textContent='–';}
+        if(row){row.style.opacity='1';row.title='';}
       }
-    }
+    });
+    // Nota informativa
+    const notaEl=document.getElementById('nota-lona');
+    if(sinLona){
+      let nota=notaEl;
+      if(!nota){
+        nota=document.createElement('div');nota.id='nota-lona';
+        nota.style.cssText='font-size:11px;color:#854F0B;background:#FFF8E8;border:1px solid #EF9F27;border-radius:4px;padding:5px 10px;margin:6px 0';
+        const ref=document.getElementById('r-4.3');
+        if(ref&&ref.closest('.item'))ref.closest('.item').after(nota);
+      }
+      nota.innerHTML='<i class="ti ti-info-circle"></i> <strong>'+c.modelo+':</strong> Lonas, redilas y bancas de redilas marcadas como N/A — no aplican para este vehículo';
+    }else if(notaEl){notaEl.remove();}
     recalc();
   }else{
     document.getElementById('f-modelo').value='';
     document.getElementById('f-placas').value='';
     info.style.display='none';
-    // Restablecer lonas si se deselecciona camioneta
-    const lonaEl=document.getElementById('r-4.4');
-    if(lonaEl){lonaEl.disabled=false;lonaEl.value='';}
-    const lonaBadge=document.getElementById('s-4.4');
-    if(lonaBadge){lonaBadge.className='badge na';lonaBadge.textContent='–';}
+    // Restablecer lonas/redilas si se deselecciona camioneta
+    ['4.3','4.4','4.13'].forEach(id=>{
+      const el=document.getElementById('r-'+id);
+      if(el){el.disabled=false;el.value='';}
+      const badge=document.getElementById('s-'+id);
+      if(badge){badge.className='badge na';badge.textContent='–';}
+      const row=el?el.closest('.item'):null;
+      if(row){row.style.opacity='1';row.title='';}
+    });
     const nota=document.getElementById('nota-lona');
     if(nota)nota.remove();
-    const lonaRow=lonaEl?lonaEl.closest('.item'):null;
-    if(lonaRow){lonaRow.style.opacity='1';lonaRow.title='';}
   }
 }
 
@@ -1013,6 +1038,7 @@ function buildInventario(gridId, items, prefix, resumId){
         <option value="">– selecciona –</option>
         <option value="presente">✓ Presente</option>
         <option value="falta">✗ Falta / Dañado</option>
+        <option value="noprop">⚠ No proporcionado</option>
         <option value="na">N/A</option>
       </select>
       <textarea class="herr-obs" id="${prefix}-obs-${i}" rows="2" placeholder="Observación…"></textarea>
@@ -1025,9 +1051,11 @@ function updateHerr(prefix, i, gridId, resumId){
   const val=document.getElementById(prefix+'-'+i).value;
   const item=document.getElementById(prefix+'-item-'+i);
   const st=document.getElementById(prefix+'-st-'+i);
-  item.className='herr-item'+(val==='presente'?' ok':val==='falta'?' falta':'');
-  st.className='herr-status'+(val==='presente'?' ok':val==='falta'?' falta':'');
-  st.textContent=val==='presente'?'✓ Presente':val==='falta'?'✗ Falta / Dañado':val==='na'?'N/A':'';
+  // noprop = no afecta bono (color naranja pero no suspende)
+  const cls=val==='presente'?' ok':val==='falta'?' falta':val==='noprop'?' noprop':'';
+  item.className='herr-item'+cls;
+  st.className='herr-status'+(val==='presente'?' ok':val==='falta'?' falta':val==='noprop'?' noprop':'');
+  st.textContent=val==='presente'?'✓ Presente':val==='falta'?'✗ Falta / Dañado':val==='noprop'?'⚠ No proporcionado':val==='na'?'N/A':'';
   // actualizar resumen
   const items=prefix==='herr'?HERRAMIENTAS:BOTIQUIN;
   let pres=0,total=0;
@@ -1041,6 +1069,7 @@ function updateHerr(prefix, i, gridId, resumId){
 function getVal(id){const el=document.getElementById('r-'+id);return el?el.value||null:null;}
 
 function hayIncumpHerramienta(){
+  // 'noprop' (no proporcionado) NO suspende el bono — solo 'falta' suspende
   for(let i=0;i<HERRAMIENTAS.length;i++){const v=document.getElementById('herr-'+i).value;if(v==='falta')return true;}
   for(let i=0;i<BOTIQUIN.length;i++){const v=document.getElementById('bot-'+i).value;if(v==='falta')return true;}
   return false;
@@ -1120,6 +1149,52 @@ function recalc(){
   ic.innerHTML=totalIncump>0?'<span style="color:#A32D2D">'+totalIncump+' incumplimiento(s)</span>':sc>0?'<span style="color:#3B6D11">Sin incumplimientos</span>':'';
   document.getElementById('btn-acta').style.display=(totalIncump>0||cancelaBono)?'flex':'none';
   window._lastCalc={total:sc,bonoTxt,incumplidos,cancelaBono,herrFalta,bonoTag,bonoTeoricoMXN};
+
+  // Mostrar ajuste solo cuando hay bono $500 aprobado
+  const overrideBox=document.getElementById('bono-override-box');
+  if(overrideBox){
+    overrideBox.style.display=(bonoTag==='500'&&!cancelaBono)?'block':'none';
+    if(bonoTag!=='500'){
+      document.getElementById('bono-override-sel').value='';
+      document.getElementById('bono-override-motivo').value='';
+    }
+  }
+}
+
+function aplicarOverrideBono(){
+  const sel=document.getElementById('bono-override-sel').value;
+  const br=document.getElementById('bono-result');
+  const numEl=document.getElementById('score-num');
+  const fill=document.getElementById('prog-fill');
+  const c=window._lastCalc;
+  if(!c)return;
+
+  if(sel==='bajar300'){
+    br.textContent='✓ Bono Regular: $300 MXN (ajustado por observación)';
+    br.className='bono bono-med';
+    fill.style.background='#EF9F27';
+    numEl.className='score-num amber';
+    window._lastCalc.bonoTag='300';
+    window._lastCalc.bonoTxt='$300 MXN (ajustado por observación)';
+    window._lastCalc.bonoTeoricoMXN=300;
+  }else if(sel==='bajar0'){
+    br.textContent='Sin bono (retirado por observación)';
+    br.className='bono bono-no';
+    fill.style.background='#E24B4A';
+    numEl.className='score-num red';
+    window._lastCalc.bonoTag='sinbono';
+    window._lastCalc.bonoTxt='Sin bono (retirado por observación)';
+    window._lastCalc.bonoTeoricoMXN=0;
+  }else{
+    // Restaurar original
+    br.textContent='✓ Bono aprobado: $500 MXN';
+    br.className='bono bono-ok';
+    fill.style.background='#639922';
+    numEl.className='score-num green';
+    window._lastCalc.bonoTag='500';
+    window._lastCalc.bonoTxt='✓ Bono aprobado: $500 MXN';
+    window._lastCalc.bonoTeoricoMXN=500;
+  }
 }
 
 // ============================================================
@@ -1230,6 +1305,8 @@ function guardarEvaluacion(){
     rancho:d.rancho,contrato:d.contrato,has:d.has,inv:d.inv,
     jefe:d.jefe,km:d.km,negVal:d.negVal,obsGeneral:d.obsGeneral,
     puntaje:c.total,bonoTxt:c.bonoTxt,bonoTag:c.bonoTag,
+    bonoOverride:document.getElementById('bono-override-sel').value||'',
+    bonoOverrideMotivo:document.getElementById('bono-override-motivo').value.trim()||'',
     incumplidos:c.incumplidos.map(i=>i.id+' — '+i.crit).join('; ')||'Ninguno',
     herrFalta:c.herrFalta,
     herramientas:getInventarioSnap('herr',HERRAMIENTAS),
