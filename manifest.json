@@ -1,0 +1,27 @@
+{
+  "name": "Bonos Supervisores — Consolidación de Agave",
+  "short_name": "Bonos Agave",
+  "description": "Sistema de evaluación de bono semanal para supervisores",
+  "start_url": "/bonos-supervisores/",
+  "scope": "/bonos-supervisores/",
+  "display": "standalone",
+  "background_color": "#f5f5f0",
+  "theme_color": "#185FA5",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["business", "productivity"],
+  "lang": "es"
+}

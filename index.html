@@ -1,0 +1,1552 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Bonos Agave">
+<meta name="theme-color" content="#185FA5">
+<meta name="description" content="Sistema de evaluación de bono semanal — Consolidación de Agave S.A. de C.V.">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-192.png">
+<title>Bonos Agave — Consolidación de Agave S.A. de C.V.</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.19.0/dist/tabler-icons.min.css">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:Arial,sans-serif;font-size:14px;color:#1a1a1a;background:#f5f5f0;min-height:100vh}
+.topbar{background:#185FA5;color:white;padding:10px 24px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:6px}
+.topbar h1{font-size:15px;font-weight:600}
+.topbar span{font-size:11px;opacity:.8}
+.container{max-width:1020px;margin:0 auto;padding:20px 16px}
+.card{background:white;border:1px solid #e0ddd4;border-radius:10px;padding:20px;margin-bottom:16px;box-shadow:0 1px 3px rgba(0,0,0,.05)}
+.card-title{font-size:13px;font-weight:600;color:#185FA5;margin-bottom:14px;padding-bottom:8px;border-bottom:1px solid #e8e8e8;display:flex;align-items:center;gap:8px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+.grid4{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:10px}
+.field label{font-size:11px;color:#666;display:block;margin-bottom:4px;font-weight:600;text-transform:uppercase;letter-spacing:.3px}
+.field input,.field select,.field textarea{width:100%;font-size:13px;padding:8px 10px;border:1px solid #d0ccc4;border-radius:6px;background:white;color:#1a1a1a;outline:none;transition:border .2s;font-family:Arial,sans-serif}
+.field input:focus,.field select:focus,.field textarea:focus{border-color:#185FA5;box-shadow:0 0 0 2px rgba(24,95,165,.1)}
+.field input[readonly]{background:#f5f5f0;color:#666;cursor:default}
+.info-chip{font-size:11px;color:#185FA5;margin-top:4px;padding:4px 8px;background:#EBF3FB;border-radius:4px;display:none}
+/* Sección herramientas */
+.herr-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px;margin-top:6px}
+.herr-item{border:1px solid #e0ddd4;border-radius:8px;padding:10px 12px;background:#fafaf8;transition:border .2s}
+.herr-item.ok{border-color:#9FE1CB;background:#E1F5EE}
+.herr-item.falta{border-color:#F0997B;background:#FAECE7}
+.herr-item label{font-size:12px;font-weight:600;color:#333;display:block;margin-bottom:6px}
+.herr-item select{font-size:12px;padding:5px 8px;border:1px solid #d0ccc4;border-radius:5px;width:100%;background:white;outline:none}
+.herr-item .herr-obs{font-size:11px;padding:4px 6px;border:1px solid #e0ddd4;border-radius:5px;width:100%;margin-top:5px;resize:none;font-family:Arial,sans-serif;outline:none}
+.herr-status{font-size:10px;font-weight:700;margin-top:5px;display:block}
+.herr-status.ok{color:#27500A}
+.herr-status.falta{color:#791F1F}
+/* Criterios */
+.section-title{font-size:12px;font-weight:600;color:#185FA5;background:#EBF3FB;padding:6px 12px;border-radius:6px;margin:14px 0 6px;border-left:3px solid #185FA5;display:flex;align-items:center;gap:6px}
+.item{display:grid;grid-template-columns:38px 1fr 120px 52px 108px;gap:8px;align-items:start;padding:8px 4px;border-bottom:1px solid #f0ede6;font-size:12px}
+.item:last-child{border-bottom:none}
+.item:hover{background:#fafaf8;border-radius:4px}
+.item .num{color:#999;font-size:11px;font-weight:600;padding-top:8px}
+.item .crit{color:#1a1a1a;line-height:1.5;padding-top:6px}
+.cancela-tag{display:inline-block;background:#FCEBEB;color:#791F1F;font-size:10px;padding:1px 5px;border-radius:3px;margin-top:2px}
+.item .peso{color:#666;text-align:center;font-size:11px;padding-top:8px}
+.item .ctrl-obs{display:flex;flex-direction:column;gap:4px}
+.item select,.item input[type=number]{font-size:12px;padding:5px 8px;border:1px solid #d0ccc4;border-radius:6px;background:white;color:#1a1a1a;width:100%;outline:none}
+.item select:focus,.item input[type=number]:focus{border-color:#185FA5}
+.obs-mini{font-size:11px;padding:4px 6px;border:1px solid #e0ddd4;border-radius:5px;background:white;color:#1a1a1a;resize:none;width:100%;font-family:Arial,sans-serif;outline:none}
+.obs-mini:focus{border-color:#185FA5}
+.badge{font-size:10px;padding:3px 8px;border-radius:4px;text-align:center;font-weight:600;margin-top:4px;white-space:nowrap}
+.badge.bien{background:#EAF3DE;color:#27500A}
+.badge.incumplido{background:#FCEBEB;color:#791F1F}
+.badge.na{background:#f0ede6;color:#888}
+/* Negligencia */
+.neg-box{border:1px solid;border-radius:8px;padding:14px}
+.neg-box.alerta{border-color:#F0997B;background:#FAECE7}
+.neg-box.ok{border-color:#9FE1CB;background:#E1F5EE}
+.neg-label{font-size:13px;font-weight:600;margin-bottom:10px;display:flex;align-items:center;gap:6px}
+.neg-label.r{color:#A32D2D}
+.neg-label.g{color:#085041}
+/* Score */
+.score-bar{display:flex;align-items:center;gap:20px;background:white;border:1px solid #e0ddd4;border-radius:10px;padding:16px 20px}
+.score-num{font-size:40px;font-weight:700;min-width:70px}
+.score-num.green{color:#3B6D11}
+.score-num.amber{color:#854F0B}
+.score-num.red{color:#A32D2D}
+.score-detail{flex:1}
+.score-detail .lbl{font-size:12px;color:#666;margin-bottom:6px}
+.bono{font-size:17px;font-weight:700;margin-bottom:8px}
+.bono-ok{color:#3B6D11}.bono-med{color:#854F0B}.bono-no{color:#A32D2D}
+.progress-bar{height:10px;background:#e8e8e8;border-radius:5px;overflow:hidden}
+.progress-fill{height:100%;border-radius:5px;transition:width .4s}
+.incump-badge{font-size:12px;text-align:right;min-width:130px;font-weight:600}
+.escala-info{font-size:11px;color:#888;margin-top:8px;padding:8px 12px;background:#f5f5f0;border-radius:6px}
+/* Fotos */
+.foto-zone{border:2px dashed #d0ccc4;border-radius:8px;padding:16px;text-align:center;cursor:pointer;transition:all .2s;background:#fafaf8;position:relative}
+.foto-zone:hover,.foto-zone.drag-over{border-color:#185FA5;background:#EBF3FB}
+.foto-zone input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%}
+.foto-zone .zt{pointer-events:none}
+.foto-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:10px;margin-top:12px}
+.foto-thumb{position:relative;aspect-ratio:1;border-radius:8px;overflow:hidden;border:1px solid #e0ddd4}
+.foto-thumb img{width:100%;height:100%;object-fit:cover}
+.foto-thumb .del-btn{position:absolute;top:4px;right:4px;background:rgba(163,45,45,.85);color:white;border:none;border-radius:50%;width:22px;height:22px;font-size:13px;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.foto-thumb .flabel{position:absolute;bottom:0;left:0;right:0;background:rgba(0,0,0,.55);color:white;font-size:9px;padding:2px 4px;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cam-btn{display:inline-flex;align-items:center;gap:6px;font-size:12px;padding:7px 14px;border-radius:6px;border:1px solid #d0ccc4;background:white;color:#1a1a1a;cursor:pointer;margin-top:8px;font-family:Arial,sans-serif}
+.cam-btn:hover{background:#f0ede6}
+/* Botones */
+.btn-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:16px}
+button{font-size:13px;padding:9px 18px;border-radius:7px;border:1px solid #d0ccc4;background:white;color:#1a1a1a;cursor:pointer;display:flex;align-items:center;gap:7px;font-family:Arial,sans-serif;transition:all .15s;font-weight:500}
+button:hover{background:#f0ede6;border-color:#aaa}
+button:active{transform:scale(.98)}
+button.primary{background:#185FA5;color:white;border-color:#185FA5}
+button.primary:hover{background:#0C447C}
+button.danger{background:#A32D2D;color:white;border-color:#A32D2D}
+button.danger:hover{background:#791F1F}
+button.success{background:#3B6D11;color:white;border-color:#3B6D11}
+button.success:hover{background:#27500A}
+/* Tabs */
+.tabs{display:flex;gap:0;margin-bottom:16px;border-bottom:2px solid #e0ddd4}
+.tab{font-size:13px;padding:10px 18px;cursor:pointer;border-bottom:2px solid transparent;color:#666;background:none;border-top:none;border-left:none;border-right:none;font-weight:500;margin-bottom:-2px;font-family:Arial,sans-serif}
+.tab:hover{color:#185FA5}
+.tab.active{color:#185FA5;border-bottom-color:#185FA5}
+.tab-pane{display:none}
+.tab-pane.active{display:block}
+/* DB */
+.db-filters{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;align-items:flex-end}
+.db-filters .field{min-width:150px}
+.db-filters .field label{font-size:11px}
+.db-filters .field input,.db-filters .field select{padding:6px 9px;font-size:12px}
+.tbl-wrap{overflow-x:auto;border:1px solid #e0ddd4;border-radius:10px}
+.db-table{width:100%;font-size:11px;border-collapse:collapse;background:white}
+.db-table th{background:#f0f4f8;padding:8px 10px;text-align:left;color:#555;font-weight:600;border-bottom:1px solid #e0ddd4;white-space:nowrap;cursor:pointer;user-select:none}
+.db-table th:hover{background:#e4edf5}
+.db-table th .sort-arrow{font-size:9px;margin-left:3px;opacity:.5}
+.db-table td{padding:7px 10px;border-bottom:1px solid #f0ede6;vertical-align:middle}
+.db-table tr:last-child td{border-bottom:none}
+.db-table tr:hover td{background:#fafaf8}
+.db-tag{font-size:10px;padding:2px 7px;border-radius:3px;font-weight:600;white-space:nowrap}
+.db-tag.v{background:#EAF3DE;color:#27500A}
+.db-tag.x{background:#FCEBEB;color:#791F1F}
+.db-tag.m{background:#FAEEDA;color:#633806}
+.db-tag.s{background:#f0ede6;color:#666}
+.stat-row{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px}
+.stat-card{background:white;border:1px solid #e0ddd4;border-radius:8px;padding:14px 16px;text-align:center}
+.stat-card .sv{font-size:26px;font-weight:700;color:#185FA5}
+.stat-card .sl{font-size:11px;color:#888;margin-top:2px}
+.detail-modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:8000;align-items:center;justify-content:center}
+.detail-modal.open{display:flex}
+.detail-box{background:white;border-radius:12px;padding:24px;max-width:700px;width:95%;max-height:90vh;overflow-y:auto}
+.detail-box h3{font-size:15px;color:#185FA5;margin-bottom:14px;border-bottom:1px solid #e0ddd4;padding-bottom:8px}
+.det-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px 20px;font-size:12px;margin-bottom:14px}
+.det-grid dt{color:#888;font-weight:600}
+.det-grid dd{color:#1a1a1a}
+/* Cámara */
+.modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:9000;align-items:center;justify-content:center}
+.modal-bg.open{display:flex}
+.modal-box{background:white;border-radius:12px;padding:20px;max-width:420px;width:90%;text-align:center}
+.modal-box h3{font-size:15px;margin-bottom:12px;color:#185FA5}
+.modal-box video{width:100%;border-radius:8px;margin-bottom:10px;background:#000}
+.modal-btns{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-top:8px}
+/* Toast */
+.toast{position:fixed;bottom:24px;right:24px;background:#185FA5;color:white;padding:12px 20px;border-radius:8px;font-size:13px;opacity:0;transition:opacity .3s;pointer-events:none;z-index:9999;box-shadow:0 4px 12px rgba(0,0,0,.2)}
+.toast.show{opacity:1}
+@media(max-width:640px){
+  .grid2,.grid3,.grid4{grid-template-columns:1fr}
+  .item{grid-template-columns:30px 1fr 90px}
+  .item .peso,.item .badge{display:none}
+  .score-bar{flex-direction:column;text-align:center}
+  .stat-row{grid-template-columns:1fr 1fr}
+}
+
+.sync-bar{position:fixed;top:0;left:0;right:0;z-index:9998;padding:8px 20px;font-size:12px;font-weight:600;text-align:center;display:flex;align-items:center;justify-content:center;gap:8px;transition:all .3s;transform:translateY(-100%)}
+.sync-bar.show{transform:translateY(0)}
+.sync-bar.syncing{background:#EBF3FB;color:#185FA5;border-bottom:1px solid #a8ccee}
+.sync-bar.ok{background:#EAF3DE;color:#27500A;border-bottom:1px solid #9FE1CB}
+.sync-bar.error{background:#FCEBEB;color:#791F1F;border-bottom:1px solid #F0997B}
+.sync-bar.pending{background:#FFF8E8;color:#854F0B;border-bottom:1px solid #EF9F27}
+.cfg-modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:9500;align-items:center;justify-content:center}
+.cfg-modal.open{display:flex}
+.cfg-box{background:white;border-radius:12px;padding:28px;max-width:540px;width:95%;max-height:92vh;overflow-y:auto}
+.cfg-box h3{font-size:16px;color:#185FA5;margin-bottom:16px;border-bottom:1px solid #e0ddd4;padding-bottom:10px;display:flex;align-items:center;gap:8px}
+.cfg-step{background:#f5f5f0;border-radius:8px;padding:14px;margin-bottom:12px;border-left:3px solid #185FA5}
+.cfg-step .sn{font-size:11px;font-weight:700;color:#185FA5;text-transform:uppercase;margin-bottom:5px}
+.cfg-step p{font-size:12px;color:#444;line-height:1.6;margin-bottom:5px}
+.cfg-step code{background:#E4EDF5;color:#185FA5;padding:2px 6px;border-radius:3px;font-size:11px;word-break:break-all}
+.cfg-step pre{background:#1a1a1a;color:#e8e8e8;padding:10px;border-radius:6px;font-size:10px;overflow-x:auto;max-height:160px;white-space:pre-wrap;word-break:break-all;margin-top:6px}
+.sync-status-dot{width:8px;height:8px;border-radius:50%;display:inline-block}
+.dot-ok{background:#3B6D11}.dot-pend{background:#EF9F27}.dot-off{background:#ccc}.dot-err{background:#A32D2D}
+
+</style>
+</head>
+<body>
+<div class="topbar">
+  <h1><i class="ti ti-clipboard-check"></i>&nbsp; Sistema de Evaluación — Bono Semanal de Supervisores</h1>
+  <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+    <span style="font-size:11px;opacity:.9;display:flex;align-items:center;gap:5px">
+      <span class="sync-status-dot dot-off" id="conn-dot"></span>
+      <span id="conn-label" style="opacity:.85">Sin configurar</span>
+    </span>
+    <button onclick="abrirConfig()" style="background:rgba(255,255,255,.18);color:white;border:1px solid rgba(255,255,255,.35);padding:5px 12px;font-size:11px;border-radius:5px">
+      <i class="ti ti-settings"></i> Configurar BD Sheets
+    </button>
+    <button id="install-btn" onclick="instalarApp()" style="display:none;background:rgba(255,255,255,.18);color:white;border:1px solid rgba(255,255,255,.35);padding:5px 12px;font-size:11px;border-radius:5px;align-items:center;gap:5px">
+      <i class="ti ti-download"></i> Instalar app
+    </button>
+    <span style="font-size:11px;opacity:.7">Consolidación de Agave S.A. de C.V.</span>
+  </div>
+</div>
+
+<div class="container">
+<div class="tabs">
+  <button class="tab active" onclick="showTab('eval',event)"><i class="ti ti-clipboard-list"></i>&nbsp; Nueva Evaluación</button>
+  <button class="tab" onclick="showTab('db',event)"><i class="ti ti-database"></i>&nbsp; Base de Datos</button>
+</div>
+
+<!-- ===== TAB EVALUACIÓN ===== -->
+<div id="tab-eval" class="tab-pane active">
+
+<!-- DATOS GENERALES -->
+<div class="card">
+  <div class="card-title"><i class="ti ti-user-check"></i> Datos del supervisor y vehículo</div>
+  <div class="grid3" style="margin-bottom:12px">
+    <div class="field">
+      <label>Supervisor evaluado</label>
+      <select id="f-nombre" onchange="onPersonaChange('supervisor')">
+        <option value="">— Selecciona supervisor —</option>
+      </select>
+    </div>
+    <div class="field">
+      <label>Puesto</label>
+      <input type="text" id="f-puesto" readonly placeholder="Se llena automático">
+    </div>
+    <div class="field">
+      <label>Semana evaluada</label>
+      <input type="text" id="f-semana" placeholder="ej. 26/05 – 01/06/2026">
+    </div>
+  </div>
+  <div class="grid3" style="margin-bottom:12px">
+    <div class="field">
+      <label>No. Económico / Camioneta</label>
+      <select id="f-cam" onchange="onCamChange()">
+        <option value="">— Selecciona camioneta —</option>
+      </select>
+      <div class="info-chip" id="cam-info"></div>
+    </div>
+    <div class="field">
+      <label>Modelo / Año</label>
+      <input type="text" id="f-modelo" readonly placeholder="Se llena automático">
+    </div>
+    <div class="field">
+      <label>Placas</label>
+      <input type="text" id="f-placas" readonly placeholder="Se llena automático">
+    </div>
+  </div>
+  <div class="grid3">
+    <div class="field">
+      <label>Parcela / Rancho</label>
+      <select id="f-lugar" onchange="onParcelaChange()">
+        <option value="">— Selecciona parcela —</option>
+      </select>
+      <div class="info-chip" id="parcela-info"></div>
+    </div>
+    <div class="field">
+      <label>Jefe de área</label>
+      <input type="text" id="f-jefe" readonly placeholder="Se llena automático">
+    </div>
+    <div class="field">
+      <label>Evaluador</label>
+      <select id="f-eval" onchange="onPersonaChange('evaluador')">
+        <option value="">— Selecciona evaluador —</option>
+      </select>
+    </div>
+  </div>
+  <div class="grid2" style="margin-top:10px">
+    <div class="field"><label>Kilometraje actual</label><input type="text" id="f-km" placeholder="Km actuales del vehículo"></div>
+    <div class="field"><label>Fecha de evaluación</label><input type="text" id="f-fecha" placeholder="dd/mm/aaaa"></div>
+  </div>
+</div>
+
+<!-- CRITERIOS -->
+<div class="card">
+  <div class="card-title"><i class="ti ti-checklist"></i> Criterios de evaluación
+    <span style="margin-left:auto;font-size:11px;color:#888;font-weight:400">Cada criterio tiene espacio para observación individual</span>
+  </div>
+  <div id="items-container"></div>
+</div>
+
+<!-- HERRAMIENTAS -->
+<div class="card">
+  <div class="card-title"><i class="ti ti-tool"></i> Inventario de herramienta — ítem por ítem
+    <span style="margin-left:auto;font-size:11px;font-weight:400;color:#888" id="herr-resumen">— / — items presentes</span>
+  </div>
+  <div class="herr-grid" id="herr-grid"></div>
+</div>
+
+<!-- BOTIQUÍN -->
+<div class="card">
+  <div class="card-title"><i class="ti ti-first-aid-kit"></i> Inventario de botiquín — ítem por ítem
+    <span style="margin-left:auto;font-size:11px;font-weight:400;color:#888" id="bot-resumen">— / — items presentes</span>
+  </div>
+  <div class="herr-grid" id="bot-grid"></div>
+</div>
+
+<!-- NEGLIGENCIA -->
+<div class="card">
+  <div class="card-title"><i class="ti ti-alert-triangle"></i> Cláusula de paro por negligencia</div>
+  <div id="neg-box" class="neg-box ok">
+    <div class="neg-label g" id="neg-titulo"><i class="ti ti-circle-check"></i> Sin negligencia registrada</div>
+    <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+      <label style="font-size:13px;color:#555">¿Hubo paro por negligencia o falla no reportada a tiempo?</label>
+      <select id="neg-sel" onchange="recalc()" style="font-size:13px;padding:6px 10px;border:1px solid #d0ccc4;border-radius:6px;background:white;min-width:220px;outline:none">
+        <option value="No">No</option>
+        <option value="Si">Sí — Bono SUSPENDIDO (puntaje se conserva)</option>
+      </select>
+    </div>
+  </div>
+</div>
+
+<!-- OBSERVACIONES -->
+<div class="card">
+  <div class="card-title"><i class="ti ti-notes"></i> Observaciones generales</div>
+  <div class="field">
+    <label>Observaciones / Comentarios / Compromisos</label>
+    <textarea id="obs-general" rows="4" placeholder="Escribe aquí cualquier observación general, acuerdos o contexto adicional…"></textarea>
+  </div>
+</div>
+
+<!-- FOTOS -->
+<div class="card">
+  <div class="card-title"><i class="ti ti-camera"></i> Fotografías de evidencia
+    <span style="margin-left:auto;font-size:11px;color:#888;font-weight:400" id="foto-count-lbl">0 fotos</span>
+  </div>
+  <div class="foto-zone" id="foto-zone" ondragover="dragOver(event)" ondragleave="dragLeave()" ondrop="dropFotos(event)">
+    <input type="file" id="foto-input" accept="image/*" multiple onchange="agregarFotos(event)">
+    <div class="zt">
+      <i class="ti ti-photo-up" style="font-size:28px;color:#185FA5;display:block;margin-bottom:6px"></i>
+      <div style="font-size:13px;font-weight:600;color:#185FA5">Arrastra fotos aquí o haz clic para seleccionar</div>
+      <div style="font-size:11px;color:#888;margin-top:4px">Selecciona múltiples imágenes desde tu galería</div>
+    </div>
+  </div>
+  <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px">
+  <button class="cam-btn" onclick="abrirCamara('environment')"><i class="ti ti-camera"></i> Cámara trasera</button>
+  <button class="cam-btn" onclick="abrirCamara('user')"><i class="ti ti-camera-selfie"></i> Cámara frontal</button>
+</div>
+  <div class="foto-grid" id="foto-grid"></div>
+</div>
+
+<!-- RESULTADO -->
+<div class="score-bar">
+  <div class="score-num" id="score-num">0</div>
+  <div class="score-detail">
+    <div class="lbl">Puntaje total sobre 100 pts</div>
+    <div class="bono" id="bono-result">Complete la evaluación para ver el resultado</div>
+    <div class="progress-bar"><div class="progress-fill" id="prog-fill" style="width:0%;background:#185FA5"></div></div>
+  </div>
+  <div class="incump-badge" id="incump-count"></div>
+</div>
+<div class="escala-info">⚠ Cualquier incumplimiento en criterios o herramienta <strong>suspende el bono</strong> (el puntaje se conserva) &nbsp;|&nbsp; Escala para cálculo: 0–69 = Sin bono &nbsp;|&nbsp; 70–80 = $300 MXN &nbsp;|&nbsp; 81–100 = $500 MXN</div>
+
+<div class="btn-row">
+  <button class="success" onclick="guardarEvaluacion()"><i class="ti ti-device-floppy"></i> Guardar en base de datos</button>
+  <button class="primary" onclick="generarPDFEval()"><i class="ti ti-file-type-pdf"></i> Generar PDF evaluación</button>
+  <button class="danger" id="btn-acta" onclick="generarActa()" style="display:none"><i class="ti ti-file-alert"></i> Generar acta administrativa</button>
+  <button onclick="limpiarForm()"><i class="ti ti-refresh"></i> Nueva evaluación</button>
+</div>
+</div><!-- /tab-eval -->
+
+<!-- ===== TAB BASE DE DATOS ===== -->
+<div id="tab-db" class="tab-pane">
+
+<div class="stat-row" id="stat-row">
+  <div class="stat-card"><div class="sv" id="stat-total">0</div><div class="sl">Total evaluaciones</div></div>
+  <div class="stat-card"><div class="sv" id="stat-bono500" style="color:#3B6D11">0</div><div class="sl">Bono $500 MXN</div></div>
+  <div class="stat-card"><div class="sv" id="stat-bono300" style="color:#854F0B">0</div><div class="sl">Bono $300 MXN</div></div>
+  <div class="stat-card"><div class="sv" id="stat-suspendido" style="color:#A32D2D">0</div><div class="sl">Bono suspendido</div></div>
+</div>
+
+<div class="card">
+  <div class="card-title"><i class="ti ti-database"></i> Consulta de evaluaciones
+    <button style="margin-left:auto;padding:5px 12px;font-size:12px" onclick="sincronizarAhora()"><i class="ti ti-refresh"></i> Sincronizar</button>
+    <button style="padding:5px 12px;font-size:12px" onclick="exportarCSV()"><i class="ti ti-file-spreadsheet"></i> Exportar CSV</button>
+    <button style="padding:5px 12px;font-size:12px;color:#A32D2D;border-color:#F0997B" onclick="limpiarBD()"><i class="ti ti-trash"></i> Limpiar BD</button>
+  </div>
+
+  <div class="db-filters">
+    <div class="field"><label>Supervisor</label>
+      <select id="flt-nombre" onchange="renderDB()"><option value="">Todos</option></select>
+    </div>
+    <div class="field"><label>Resultado bono</label>
+      <select id="flt-bono" onchange="renderDB()">
+        <option value="">Todos</option>
+        <option value="500">$500 MXN</option>
+        <option value="300">$300 MXN</option>
+        <option value="suspendido">Suspendido</option>
+        <option value="sinbono">Sin bono</option>
+      </select>
+    </div>
+    <div class="field"><label>Parcela</label>
+      <select id="flt-parcela" onchange="renderDB()"><option value="">Todas</option></select>
+    </div>
+    <div class="field"><label>Semana / texto</label>
+      <input type="text" id="flt-texto" placeholder="Buscar…" oninput="renderDB()">
+    </div>
+    <button onclick="resetFiltros()"><i class="ti ti-x"></i> Limpiar filtros</button>
+  </div>
+
+  <div class="tbl-wrap">
+    <table class="db-table" id="db-table">
+      <thead><tr>
+        <th onclick="sortDB('fecha')">Fecha <span class="sort-arrow">↕</span></th>
+        <th onclick="sortDB('nombre')">Supervisor <span class="sort-arrow">↕</span></th>
+        <th onclick="sortDB('semana')">Semana <span class="sort-arrow">↕</span></th>
+        <th>Rancho</th>
+        <th>Camioneta</th>
+        <th onclick="sortDB('puntaje')">Puntaje <span class="sort-arrow">↕</span></th>
+        <th>Resultado</th>
+        <th>Fotos</th>
+        <th>Detalle</th>
+      </tr></thead>
+      <tbody id="db-body"></tbody>
+    </table>
+  </div>
+  <div id="db-empty" class="empty-hist" style="display:none;text-align:center;padding:2rem;color:#aaa;font-size:13px">
+    <i class="ti ti-inbox" style="font-size:28px;display:block;margin-bottom:10px;opacity:.4"></i>Sin evaluaciones registradas aún
+  </div>
+  <div id="db-pagination" style="display:flex;justify-content:space-between;align-items:center;padding:10px 14px;font-size:12px;color:#666;border-top:1px solid #f0ede6"></div>
+</div>
+</div><!-- /tab-db -->
+</div><!-- /container -->
+
+<!-- MODAL DETALLE -->
+<div class="detail-modal" id="detail-modal">
+  <div class="detail-box">
+    <h3 id="det-titulo">Detalle de evaluación</h3>
+    <div id="det-content"></div>
+    <div style="margin-top:16px;text-align:right">
+      <button onclick="document.getElementById('detail-modal').classList.remove('open')"><i class="ti ti-x"></i> Cerrar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL CÁMARA -->
+<div class="modal-bg" id="cam-modal">
+  <div class="modal-box">
+    <h3><i class="ti ti-camera"></i> Tomar fotografía de evidencia</h3>
+    <video id="cam-video" autoplay playsinline muted></video>
+    <canvas id="cam-canvas" style="display:none"></canvas>
+    <div class="modal-btns">
+      <button class="primary" onclick="capturarFoto()"><i class="ti ti-camera"></i> Capturar</button>
+      <button onclick="cerrarCamara()"><i class="ti ti-x"></i> Cerrar</button>
+    </div>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+// ============================================================
+// DATOS MAESTROS
+// ============================================================
+const PARCELAS=[
+  {rancho:"2.5",contrato:"SAN PEDRO 2021",has:25.6,inv:85960,jefe:"ALEJANDRO RAMIREZ"},
+  {rancho:"77",contrato:"MARTINIANO VALLARTA LOPEZ",has:5.28,inv:17901,jefe:"JOSE ALBERTO VILLEGAS PARTIDA"},
+  {rancho:"78",contrato:"ENEDINO GALLEGOS MOYA (PREDIO 1)",has:14.24,inv:52383,jefe:"ALEJANDRO RAMIREZ"},
+  {rancho:"79",contrato:"ENEDINO GALLEGOS MOYA (PREDIO 2)",has:8.72,inv:29493,jefe:"ALEJANDRO RAMIREZ"},
+  {rancho:"82",contrato:"PRIMITIVO BAÑUELOS ALVAREZ",has:5.54,inv:17534,jefe:"ALEJANDRO RAMIREZ"},
+  {rancho:"83",contrato:"BENITO BAÑUELOS ALVAREZ",has:3.07,inv:10119,jefe:"ALEJANDRO RAMIREZ"},
+  {rancho:"84",contrato:"SUSANA ARELLANO VILLAGRANA",has:5.96,inv:21062,jefe:"ALEJANDRO RAMIREZ"},
+  {rancho:"84.1",contrato:"SUSANA ARELLANO VILLAGRANA (2)",has:11.4,inv:42530,jefe:"ALEJANDRO RAMIREZ"},
+  {rancho:"85",contrato:"JULIAN SALAS ALTAMIRANO",has:20.47,inv:66594,jefe:"ALEJANDRO RAMIREZ"},
+  {rancho:"86",contrato:"JOSE GUADALUPE MIRAMONTES HERNANDEZ",has:13.51,inv:46436,jefe:"ALEJANDRO RAMIREZ"},
+  {rancho:"87",contrato:"J ISAAC PERALES CERVANTES",has:7.89,inv:25161,jefe:"JOSE ALBERTO VILLEGAS PARTIDA"},
+  {rancho:"88",contrato:"ALFREDO GUZMAN CERVANTES",has:4.04,inv:13978,jefe:"ALEJANDRO RAMIREZ"},
+  {rancho:"89",contrato:"J JESUS RODRIGUEZ CORTES",has:3.0,inv:10549,jefe:"ALEJANDRO RAMIREZ"},
+  {rancho:"90",contrato:"AUSENCIO ROJAS PIZ",has:4.24,inv:17429,jefe:"ALEJANDRO RAMIREZ"},
+  {rancho:"92",contrato:"QUIRINO HAROS ZUÑIGA",has:7.79,inv:30536,jefe:"ALEJANDRO RAMIREZ"},
+  {rancho:"93",contrato:"FIDEL GONZALEZ VARELA",has:3.64,inv:11115,jefe:"JOSE ALBERTO VILLEGAS PARTIDA"},
+  {rancho:"94",contrato:"FRANCISCO JAVIER MONRROY MARTINEZ",has:12.0,inv:39645,jefe:"JOSE ALBERTO VILLEGAS PARTIDA"},
+  {rancho:"95",contrato:"PATRICIA GARCIA BUENO",has:17.34,inv:57602,jefe:"JOSE ALBERTO VILLEGAS PARTIDA"},
+  {rancho:"96",contrato:"ADELAIDA CERVANTES MIRAMONTES",has:12.0,inv:41231,jefe:"JOSE ALBERTO VILLEGAS PARTIDA"},
+  {rancho:"97",contrato:"OSCAR CERVANTES MIRAMONTES",has:7.41,inv:26816,jefe:"JOSE ALBERTO VILLEGAS PARTIDA"},
+  {rancho:"98",contrato:"LETICIA CERVANTES MIRAMONTES",has:2.37,inv:8040,jefe:"JOSE ALBERTO VILLEGAS PARTIDA"},
+  {rancho:"99",contrato:"NORMA ALICIA HAROS SOLIS",has:7.2,inv:28098,jefe:"ALEJANDRO RAMIREZ"},
+  {rancho:"100",contrato:"MARCELINO SOLIS HIDALGO",has:2.88,inv:10981,jefe:"ALEJANDRO RAMIREZ"},
+  {rancho:"102",contrato:"FRANCISCO JAVIER CARRILLO LOPEZ",has:12.0,inv:34315,jefe:"JOSE ALBERTO VILLEGAS PARTIDA"},
+  {rancho:"103",contrato:"FRANCISCO HIDALGO ROMERO",has:3.77,inv:8468,jefe:"ALEJANDRO RAMIREZ"},
+  {rancho:"104",contrato:"MARIA DEL CARMEN ROMERO IBARRA (LAS CALABAZAS)",has:10.0,inv:45791,jefe:"ALEJANDRO RAMIREZ"},
+  {rancho:"105",contrato:"MARTIN SALINAS CASTAÑEDA",has:4.24,inv:13774,jefe:"ALEJANDRO RAMIREZ"},
+  {rancho:"106",contrato:"JOSEFINA SALAZAR RIVAS",has:7.3,inv:25771,jefe:"JOSE ALBERTO VILLEGAS PARTIDA"},
+  {rancho:"107",contrato:"J. ABEL MARTINEZ RODRIGUEZ",has:55.0,inv:171879,jefe:"JOSE ALBERTO VILLEGAS PARTIDA"},
+  {rancho:"108",contrato:"HÉCTOR MANUEL OROZCO DÍAZ",has:24.19,inv:76005,jefe:"ALEJANDRO RAMIREZ"},
+  {rancho:"109",contrato:"JOSE LEOPOLDO LINARES CALDERA (1)",has:13.5,inv:62251,jefe:"ALEJANDRO RAMIREZ"},
+  {rancho:"110",contrato:"JOSE LEOPOLDO LINARES CALDERA (2)",has:2.8,inv:11287,jefe:"ALEJANDRO RAMIREZ"},
+  {rancho:"112",contrato:"JOSE SABINO ESCOBEDO ROJAS",has:4.0,inv:17057,jefe:"ALEJANDRO RAMIREZ"},
+  {rancho:"113",contrato:"PABLO CARRILLO PEÑA",has:12.0,inv:51318,jefe:"JOSE ALBERTO VILLEGAS PARTIDA"},
+  {rancho:"114",contrato:"JOSE CARRILLO CARO",has:10.0,inv:49311,jefe:"JOSE ALBERTO VILLEGAS PARTIDA"},
+  {rancho:"115",contrato:"JOSE ENRIQUE ESPARZA MARTINEZ (2)",has:5.0,inv:19290,jefe:"ALEJANDRO RAMIREZ"},
+  {rancho:"116",contrato:"JOSE ENRIQUE ESPARZA MARTINEZ (1)",has:4.0,inv:16260,jefe:"ALEJANDRO RAMIREZ"},
+  {rancho:"117",contrato:"MARIA FELICITAS NAVARRO LOPEZ",has:10.5,inv:29542,jefe:"ALEJANDRO RAMIREZ"},
+  {rancho:"118",contrato:"CATALINA BRAVO NUÑEZ",has:14.0,inv:68813,jefe:"JOSE ALBERTO VILLEGAS PARTIDA"},
+  {rancho:"122",contrato:"FRANCISCO BAUTISTA CABRALES",has:20.0,inv:51464,jefe:"JOSE ALBERTO VILLEGAS PARTIDA"},
+  {rancho:"124",contrato:"ROGELIO RODRIGUEZ PALACIOS",has:7.0,inv:20990,jefe:"JOSE ALBERTO VILLEGAS PARTIDA"},
+  {rancho:"125",contrato:"RAFAEL LLAMAS LLAMAS",has:22.0,inv:94747,jefe:"JOSE ALBERTO VILLEGAS PARTIDA"},
+  {rancho:"127",contrato:"JUAN MARQUEZ ALVAREZ 2022",has:5.0,inv:21689,jefe:"JOSE ALBERTO VILLEGAS PARTIDA"},
+  {rancho:"128",contrato:"DARIO MESTAS CARO 2022",has:7.0,inv:26743,jefe:"JOSE ALBERTO VILLEGAS PARTIDA"},
+  {rancho:"129",contrato:"ROSENDO LOPEZ CARRIILO",has:12.8,inv:46077,jefe:"JOSE ALBERTO VILLEGAS PARTIDA"},
+  {rancho:"131",contrato:"J. ABEL MARTINEZ RODRIGUEZ 2023",has:25.0,inv:98039,jefe:"JOSE ALBERTO VILLEGAS PARTIDA"},
+  {rancho:"133",contrato:"SANTIAGO MERCADO RODRIGUEZ 2023 COLUMPIO EXTREMO (1)",has:7.64,inv:25668,jefe:"JOSE ALBERTO VILLEGAS PARTIDA"},
+  {rancho:"133.1",contrato:"SANTIAGO MERCADO RODRIGUEZ 2023 CFE (2)",has:7.1,inv:23970,jefe:"JOSE ALBERTO VILLEGAS PARTIDA"},
+  {rancho:"134",contrato:"EMILIA FLORES RAYGOZA 2023",has:7.88,inv:28712,jefe:"JOSE ALBERTO VILLEGAS PARTIDA"},
+  {rancho:"135",contrato:"ALEJANDRO PEÑA CARRILLO 2023",has:4.46,inv:15278,jefe:"ALEJANDRO RAMIREZ"},
+  {rancho:"136",contrato:"ALFREDO GUZMAN CERVANTES PREDIO II 2023",has:4.03,inv:15458,jefe:"ALEJANDRO RAMIREZ"},
+  {rancho:"137",contrato:"ELIAS OROZCO DIAZ 2023 (EL MIRADOR)",has:20.9,inv:73040,jefe:"ALEJANDRO RAMIREZ"},
+  {rancho:"138",contrato:"EMILIANO ROJAS PIZ 2023",has:11.3,inv:39252,jefe:"ALEJANDRO RAMIREZ"},
+  {rancho:"139",contrato:"EZEQUIEL AMAYA DIAZ 2023",has:8.0,inv:36478,jefe:"ALEJANDRO RAMIREZ"},
+  {rancho:"140",contrato:"FRANCISCA PIZ SALAZAR 2023",has:6.3,inv:22150,jefe:"ALEJANDRO RAMIREZ"},
+  {rancho:"141",contrato:"RAUDEL MORENO PIZ 2023",has:2.38,inv:8887,jefe:"ALEJANDRO RAMIREZ"},
+  {rancho:"142",contrato:"HERNA LICIA TOPETE 2023",has:6.0,inv:21466,jefe:"JOSE ALBERTO VILLEGAS PARTIDA"},
+  {rancho:"143",contrato:"J CARMEN PIZ SALAZAR 2023",has:10.37,inv:39269,jefe:"ALEJANDRO RAMIREZ"},
+  {rancho:"144",contrato:"JOSE AMEZQUITA TORRES 2023",has:12.14,inv:41380,jefe:"ALEJANDRO RAMIREZ"},
+  {rancho:"145",contrato:"JOSE CARMEN PIZ RODRIGUEZ 2023",has:6.0,inv:19730,jefe:"ALEJANDRO RAMIREZ"},
+  {rancho:"147",contrato:"LEANDRO AMAYA DIAZ I 2023",has:3.75,inv:12315,jefe:"ALEJANDRO RAMIREZ"},
+  {rancho:"148",contrato:"LEANDRO AMAYA DIAZ II 2023",has:8.6,inv:30101,jefe:"ALEJANDRO RAMIREZ"},
+  {rancho:"149",contrato:"LEANDRO PEÑA CARRILLO 2023",has:8.5,inv:30219,jefe:"ALEJANDRO RAMIREZ"},
+  {rancho:"150",contrato:"MARIA SANTOS NUÑEZ 2023",has:6.8,inv:23439,jefe:"ALEJANDRO RAMIREZ"},
+  {rancho:"151",contrato:"MIGUEL PEÑA TAMAYO 2023",has:6.1,inv:17752,jefe:"ALEJANDRO RAMIREZ"},
+  {rancho:"152",contrato:"RAYMUNDO PEREZ I 2023",has:12.5,inv:43226,jefe:"ALEJANDRO RAMIREZ"},
+  {rancho:"153",contrato:"RAYMUNDO PEREZ II 2023",has:7.4,inv:21159,jefe:"ALEJANDRO RAMIREZ"},
+  {rancho:"154",contrato:"RUBEN MORENO PIZ 2023",has:4.45,inv:20447,jefe:"ALEJANDRO RAMIREZ"},
+  {rancho:"154.2",contrato:"RUBEN MORENO PIZ 2023 (2)",has:3.0,inv:13785,jefe:"ALEJANDRO RAMIREZ"},
+  {rancho:"154.3",contrato:"RUBEN MORENO PIZ 2023 (3)",has:1.36,inv:6256,jefe:"ALEJANDRO RAMIREZ"},
+  {rancho:"155",contrato:"SUSANA ARELLANO VILLAGRANA PREDIO 2023",has:7.3,inv:24981,jefe:"ALEJANDRO RAMIREZ"},
+  {rancho:"156",contrato:"OSCAR PEÑA CARRILLO",has:8.0,inv:31288,jefe:"ALEJANDRO RAMIREZ"},
+  {rancho:"157",contrato:"JOSEFINA VARELA LÓPEZ",has:3.5,inv:13031,jefe:"ALEJANDRO RAMIREZ"},
+  {rancho:"158",contrato:"SALVADOR BARAJAS CABRERA 2025",has:7.75,inv:22876,jefe:"JOSE ALBERTO VILLEGAS PARTIDA"},
+  {rancho:"159",contrato:"JUAN MARQUEZ ALVAREZ 2025",has:5.24,inv:15291,jefe:"JOSE ALBERTO VILLEGAS PARTIDA"},
+  {rancho:"160",contrato:"PARCELA COMUNAL MAGDALENA (MONIGOTES) 2025",has:42.0,inv:132381,jefe:"JOSE ALBERTO VILLEGAS PARTIDA"},
+  {rancho:"161",contrato:"MARIA GUADALUPE CARRILLO RODRIGEZ 2025 (EL PANTEÓN MGD)",has:8.41,inv:28090,jefe:"JOSE ALBERTO VILLEGAS PARTIDA"},
+  {rancho:"162",contrato:"LILIA GUERRERO GALLARDO 2025",has:6.56,inv:16183,jefe:"JOSE ALBERTO VILLEGAS PARTIDA"},
+  {rancho:"162.1",contrato:"LILIA GUERRERO GALLARDO 2025 (2)",has:1.76,inv:4340,jefe:"JOSE ALBERTO VILLEGAS PARTIDA"},
+  {rancho:"163",contrato:"VICENTE CERVANTES VARGAS 2025",has:9.6,inv:29398,jefe:"JOSE ALBERTO VILLEGAS PARTIDA"},
+  {rancho:"164",contrato:"ESTEBAN VALLARTA MARQUEZ 2025",has:2.72,inv:8067,jefe:"JOSE ALBERTO VILLEGAS PARTIDA"},
+  {rancho:"164.1",contrato:"ESTEBAN VALLARTA MARQUEZ 2025 (2)",has:1.28,inv:3797,jefe:"JOSE ALBERTO VILLEGAS PARTIDA"},
+  {rancho:"165",contrato:"ANTONIO RUBIO PIZ 2025",has:2.0,inv:6442,jefe:"JOSE ALBERTO VILLEGAS PARTIDA"},
+  {rancho:"166",contrato:"DANIEL RUBIO 2025",has:2.0,inv:6294,jefe:"JOSE ALBERTO VILLEGAS PARTIDA"},
+  {rancho:"167",contrato:"BERNARDO GARCIA 2025",has:2.5,inv:8910,jefe:"JOSE ALBERTO VILLEGAS PARTIDA"},
+  {rancho:"168",contrato:"SALVADOR BARAJAS CABRERA 2026",has:4.44,inv:14716,jefe:"JOSE ALBERTO VILLEGAS PARTIDA"},
+  {rancho:"169",contrato:"EL BASURERO-EJIDO MAGDALENA 2026",has:11.2,inv:37300,jefe:"JOSE ALBERTO VILLEGAS PARTIDA"},
+  {rancho:"169.2",contrato:"EL BASURERO-EJIDO MAGDALENA 2026 (2)",has:5.93,inv:19601,jefe:"JOSE ALBERTO VILLEGAS PARTIDA"},
+  {rancho:"169.3",contrato:"EL BASURERO-EJIDO MAGDALENA 2026 (3)",has:1.65,inv:6039,jefe:"JOSE ALBERTO VILLEGAS PARTIDA"},
+  {rancho:"170",contrato:"JOSE ALEJANDRO VARELA HERNANDEZ 2026",has:4.48,inv:14252,jefe:"ALEJANDRO RAMIREZ"},
+  {rancho:"171",contrato:"TERESA HERNANDEZ TAMAYO 2026 (MARCOS GALLEGOS)",has:4.16,inv:11883,jefe:"ALEJANDRO RAMIREZ"},
+  {rancho:"172",contrato:"HIPOLITO Y JUAN ESPINOZA 2026 (LAS ENGORDAS)",has:20.0,inv:80895,jefe:"ALEJANDRO RAMIREZ"},
+  {rancho:"173",contrato:"ELIAS MESTAS DAVALOS 2026",has:7.0,inv:23994,jefe:"JOSE ALBERTO VILLEGAS PARTIDA"},
+  {rancho:"175",contrato:"GUSTAVO PEREZ SALMERON 2026",has:5.75,inv:18374,jefe:"ALEJANDRO RAMIREZ"},
+  {rancho:"176",contrato:"PABLO GARCIA MENCHACA 2026",has:1.93,inv:7062,jefe:"JOSE ALBERTO VILLEGAS PARTIDA"},
+  {rancho:"177",contrato:"LUIS JORGE RAMOS VIELMAS 2026",has:19.7,inv:63040,jefe:"EXTERNO QUILLO"},
+  {rancho:"OF-MGD",contrato:"OFICINA MAGDALENA",has:0,inv:0,jefe:"FRANCISCO VANEGAS ZEPEDA"}
+];
+
+const CAMIONETAS=[
+  {eco:"S/N",modelo:"Nissan NP300",anio:"2017",serie:"850617",placas:"JE-3522-B"},
+  {eco:"CAC-01",modelo:"Ford F350",anio:"2014",serie:"72175",placas:"JY-52-986"},
+  {eco:"CAC-02",modelo:"Ford F350",anio:"2014",serie:"72177",placas:"JE-3525-B"},
+  {eco:"CAC-03",modelo:"Ford F350",anio:"2017",serie:"31877",placas:"JE-3520-B"},
+  {eco:"CAC-04",modelo:"Ford F350",anio:"2019",serie:"44884",placas:"JW-37-400"},
+  {eco:"CAC-05",modelo:"Ford F350",anio:"2019",serie:"21973",placas:"JW-51-557"},
+  {eco:"CAC-06",modelo:"Ford F350",anio:"2019",serie:"28394",placas:"JW-58-685"},
+  {eco:"CAC-07",modelo:"Ford F350",anio:"2019",serie:"21984",placas:"JW-58-684"},
+  {eco:"CAC-10",modelo:"HILUX",anio:"2020",serie:"1253",placas:"JW-73-328"},
+  {eco:"CAC-11",modelo:"HILUX",anio:"2020",serie:"1145",placas:"JW-73-342"},
+  {eco:"CAC-12",modelo:"Ford F350",anio:"2021",serie:"333549",placas:"JX-13-601"},
+  {eco:"CAC-13",modelo:"RAM4000",anio:"2021",serie:"16491",placas:"JX-29-787"},
+  {eco:"CAC-14",modelo:"HILUX",anio:"2021",serie:"4200319",placas:"JX-31-673"},
+  {eco:"CAC-15",modelo:"HILUX",anio:"2022",serie:"4002013",placas:"JX-53-513"},
+  {eco:"CAC-16",modelo:"HILUX",anio:"2022",serie:"4002173",placas:"JX-53-677"},
+  {eco:"CAC-17",modelo:"Ford F350",anio:"2022",serie:"81930",placas:"JY-52-998"},
+  {eco:"CAC-18",modelo:"Ford F350",anio:"2022",serie:"48271",placas:"JX-83-276"},
+  {eco:"CAC-19",modelo:"RAM 700",anio:"2023",serie:"99970",placas:"JY-03-362"},
+  {eco:"CAC-20",modelo:"MITSUBISHI",anio:"2023",serie:"31424",placas:"JX-95-502"},
+  {eco:"CAC-22",modelo:"RAM 700",anio:"2023",serie:"Y08170",placas:"JY-03-759"},
+  {eco:"CAC-24",modelo:"HILUX",anio:"2023",serie:"",placas:"JY-11-557"}
+];
+
+const PERSONAL=[
+  {nombre:"ALEJANDRO SALVADOR RAMIREZ CORREA",puesto:"JEFE DE AREA"},
+  {nombre:"JOSE ALBERTO VILLEGAS PARTIDA",puesto:"JEFE DE AREA"},
+  {nombre:"MARCOS SANCHEZ RUVALCABA",puesto:"SUPERVISOR"},
+  {nombre:"ULISES EMMANUEL GARCIA ROJAS",puesto:"SUPERVISOR"},
+  {nombre:"JUAN CARLOS RAMOS CORREA",puesto:"SUPERVISOR"},
+  {nombre:"EMMANUEL RUBIO DELGADO",puesto:"SUPERVISOR"},
+  {nombre:"JESUS MANUEL GUTIERREZ TAMAYO",puesto:"SUPERVISOR"},
+  {nombre:"MARIO ZÚÑIGA AGUILERA",puesto:"SUPERVISOR"},
+  {nombre:"TOMAS LISARAZU CASTAÑEDA RINCON",puesto:"COORDINADOR DE CULTIVO"},
+  {nombre:"FRANCISCO VANEGAS ZEPEDA",puesto:"GERENTE GENERAL"},
+  {nombre:"JESUCRISTIAN GUZMAN LANDEROS",puesto:"FITOSANITARIO"},
+  {nombre:"JORGE LÓPEZ CARRANZA",puesto:"COORDINADOR ADMINISTRATIVO"}
+];
+
+const EVALUADORES=[
+  {nombre:"JORGE LÓPEZ CARRANZA",puesto:"COORDINADOR ADMINISTRATIVO"},
+  {nombre:"TOMAS LISARAZU CASTAÑEDA RINCON",puesto:"COORDINADOR DE CULTIVO"},
+  {nombre:"FRANCISCO VANEGAS ZEPEDA",puesto:"GERENTE GENERAL"}
+];
+
+const SUPERVISORES=PERSONAL.filter(p=>["SUPERVISOR","JEFE DE AREA","COORDINADOR DE CULTIVO","FITOSANITARIO"].includes(p.puesto));
+
+const HERRAMIENTAS=[
+  "Gato hidráulico","Cruceta","Triángulo de seguridad","Compresor",
+  "Eslingas para remolcar","Cables pasa corriente","Cepillo / escobeta / brocha",
+  "Franelas de limpieza","Extintor","Pinzas","Llaves (juego completo)",
+  "Desarmadores (juego)","Estuche de herramienta completo"
+];
+
+const BOTIQUIN=[
+  "Mochila botiquín","Vendas","Gasas","Curitas","Agua oxigenada",
+  "Jabón neutro para heridas","Tijeras punta redonda","Cinta de curación",
+  "Lava ojos","Agua para lavado de ojos","Pomada de árnica"
+];
+
+const CRITERIOS=[
+  {sec:"1. Asistencia",icon:"ti-calendar-check",items:[
+    {id:"1.1",crit:"Asistió todos los días del periodo semanal (0 faltas, sin excepciones)",tipo:"sinno",peso:15,cancela:false}
+  ]},
+  {sec:"2. Horario",icon:"ti-clock",items:[
+    {id:"2.1",crit:"Cumplimiento del horario asignado (7:00 a.m. – 3:00 p.m. en parcela)",tipo:"sinno",peso:10,cancela:false}
+  ]},
+  {sec:"3. Actividades de cultivo",icon:"ti-plant",items:[
+    {id:"3.1",crit:"Calidad de las actividades realizadas conforme al Plan Anual de Cultivo",tipo:"escala",peso:10,cancela:false},
+    {id:"3.2",crit:"Rendimiento según KPIs del plan anual (comparado con estándares del periodo)",tipo:"escala",peso:10,cancela:false}
+  ]},
+  {sec:"4. Evaluación estética del vehículo",icon:"ti-car",items:[
+    {id:"4.1",crit:"Unidad limpia, sin basura y sin exceso de tierra (interior y exterior)",tipo:"sinno",peso:1,cancela:false},
+    {id:"4.2",crit:"Carrocería sin golpes o deformaciones atribuibles a negligencia",tipo:"sinno",peso:1,cancela:false},
+    {id:"4.3",crit:"Caja y/o redilas limpias, firmes y sin daños",tipo:"sinno",peso:1,cancela:false},
+    {id:"4.4",crit:"Lonas en buen estado, sin roturas ni desgaste",tipo:"sinno",peso:1,cancela:false},
+    {id:"4.5",crit:"Cristales y parabrisas limpios y sin estrelladuras",tipo:"sinno",peso:1,cancela:false},
+    {id:"4.6",crit:"Parachoques delantero y trasero en buen estado",tipo:"sinno",peso:1,cancela:false},
+    {id:"4.7",crit:"Llanta de refacción instalada y en buen estado",tipo:"sinno",peso:1,cancela:false},
+    {id:"4.8",crit:"Placas correctamente instaladas y visibles",tipo:"sinno",peso:1,cancela:false},
+    {id:"4.9",crit:"Tarjeta de circulación presente y vigente",tipo:"sinno",peso:1,cancela:false},
+    {id:"4.10",crit:"Tarjeta de combustible presente",tipo:"sinno",peso:1,cancela:false},
+    {id:"4.11",crit:"Póliza de seguro vigente",tipo:"sinno",peso:1,cancela:false},
+    {id:"4.12",crit:"Faros, cuartos y calaveras funcionando correctamente",tipo:"sinno",peso:1,cancela:false},
+    {id:"4.13",crit:"Bancas de caja y redilas en buen estado",tipo:"sinno",peso:1,cancela:false},
+    {id:"4.14",crit:"Sin grafitis, rayones intencionales o pintura no autorizada",tipo:"sinno",peso:1,cancela:false}
+  ]},
+  {sec:"5. Mantenimiento del vehículo",icon:"ti-settings",items:[
+    {id:"5.1",crit:"Niveles de fluidos correctos y reportados (aceite, anticongelante, hidráulico, frenos)",tipo:"sinno",peso:6,cancela:false},
+    {id:"5.2",crit:"Estado de llantas reportado y en condiciones adecuadas",tipo:"sinno",peso:6,cancela:false},
+    {id:"5.3",crit:"Sin excesos de velocidad constantes o reiterados (verificado por GPS)",tipo:"sinno",peso:6,cancela:false}
+  ]}
+];
+
+// ============================================================
+// ESTADO
+// ============================================================
+let historial=[], fotos=[], camStream=null, dbSortCol='fecha', dbSortAsc=false, dbPage=1;
+const PER_PAGE=15;
+let GS_URL='', syncPending=[], isSyncing=false;
+
+try{const s=localStorage.getItem('bono_agave_v3');if(s)historial=JSON.parse(s);}catch(e){}
+try{GS_URL=localStorage.getItem('bono_gs_url')||'';}catch(e){}
+try{const p=localStorage.getItem('bono_gs_pending');if(p)syncPending=JSON.parse(p);}catch(e){}
+
+function saveHist(){try{localStorage.setItem('bono_agave_v3',JSON.stringify(historial));}catch(e){}}
+function savePending(){try{localStorage.setItem('bono_gs_pending',JSON.stringify(syncPending));}catch(e){}}
+
+function updateConn(state){
+  const dot=document.getElementById('conn-dot');
+  const lbl=document.getElementById('conn-label');
+  if(!dot)return;
+  const M={ok:['dot-ok','Sheets conectado ✓'],pending:['dot-pend','Pendiente ('+syncPending.length+')'],offline:['dot-off','Sin internet'],error:['dot-err','Error conexión'],none:['dot-off','Sin configurar']};
+  const [cls,txt]=M[state]||M.none;
+  dot.className='sync-status-dot '+cls;
+  lbl.textContent=txt;
+}
+
+function showSyncBar(type,msg,autoHide=true){
+  const bar=document.getElementById('sync-bar');
+  const mi=document.getElementById('sync-icon');
+  bar.className='sync-bar show '+type;
+  document.getElementById('sync-msg').textContent=msg;
+  mi.className={syncing:'ti ti-cloud-upload',ok:'ti ti-cloud-check',error:'ti ti-cloud-x',pending:'ti ti-cloud-pause'}[type]||'ti ti-cloud';
+  if(autoHide&&(type==='ok'||type==='error'))setTimeout(()=>bar.classList.remove('show'),4000);
+}
+
+async function sendToGS(reg){
+  if(!GS_URL)return false;
+  try{
+    const res=await fetch(GS_URL,{method:'POST',headers:{'Content-Type':'text/plain'},body:JSON.stringify({action:'save',row:reg})});
+    const j=await res.json();
+    return j.ok===true;
+  }catch(e){return false;}
+}
+
+async function pingGS(){
+  if(!GS_URL)return false;
+  try{
+    const res=await fetch(GS_URL,{method:'POST',headers:{'Content-Type':'text/plain'},body:JSON.stringify({action:'ping'})});
+    const j=await res.json();
+    return j.ok===true;
+  }catch(e){return false;}
+}
+
+async function syncPendientes(){
+  if(!GS_URL||syncPending.length===0||isSyncing)return;
+  isSyncing=true;
+  showSyncBar('syncing','Sincronizando '+syncPending.length+' evaluación(es) pendiente(s)…',false);
+  const restantes=[];
+  let ok_count=0;
+  for(const reg of syncPending){
+    const ok=await sendToGS(reg);
+    if(ok)ok_count++;
+    else restantes.push(reg);
+  }
+  syncPending=restantes;savePending();
+  isSyncing=false;
+  if(ok_count>0){showSyncBar('ok','✓ '+ok_count+' evaluación(es) sincronizada(s) con Google Sheets');}
+  else{showSyncBar('error','Sin conexión — '+restantes.length+' pendiente(s)',false);}
+  updateConn(syncPending.length>0?'pending':'ok');
+}
+
+function abrirConfig(){
+  document.getElementById('cfg-modal').classList.add('open');
+  document.getElementById('cfg-url').value=GS_URL||'';
+  document.getElementById('cfg-result').innerHTML='';
+}
+
+function copiarCodigo(){
+  const txt=document.getElementById('gs-code').textContent;
+  navigator.clipboard.writeText(txt).then(()=>toast('✓ Código copiado al portapapeles')).catch(()=>toast('Selecciona y copia el código manualmente'));
+}
+
+function guardarConfig(){
+  const url=document.getElementById('cfg-url').value.trim();
+  if(!url){document.getElementById('cfg-result').innerHTML='<span style="color:#A32D2D">⚠ Ingresa la URL del Web App</span>';return;}
+  GS_URL=url;localStorage.setItem('bono_gs_url',url);
+  probarConexion();
+}
+
+async function probarConexion(){
+  const res=document.getElementById('cfg-result');
+  res.innerHTML='<span style="color:#185FA5"><i class="ti ti-loader"></i> Probando conexión…</span>';
+  const ok=await pingGS();
+  if(ok){
+    res.innerHTML='<span style="color:#27500A">✓ Conexión exitosa con Google Sheets. ¡Listo para guardar!</span>';
+    updateConn(syncPending.length>0?'pending':'ok');
+    if(syncPending.length>0)setTimeout(syncPendientes,800);
+  }else{
+    res.innerHTML='<span style="color:#A32D2D">✗ No se pudo conectar. Verifica que la URL sea correcta y que el Web App esté publicado para "Cualquier persona".</span>';
+    updateConn('error');
+  }
+}
+
+window.addEventListener('online',()=>{
+  updateConn(GS_URL?(syncPending.length>0?'pending':'ok'):'none');
+  if(GS_URL&&syncPending.length>0)syncPendientes();
+});
+window.addEventListener('offline',()=>updateConn('offline'));
+
+setTimeout(async()=>{
+  if(!GS_URL){updateConn('none');return;}
+  if(!navigator.onLine){updateConn(syncPending.length>0?'pending':'offline');return;}
+  const ok=await pingGS();
+  updateConn(ok?(syncPending.length>0?'pending':'ok'):'error');
+  if(ok&&syncPending.length>0)syncPendientes();
+},1500);
+
+// ============================================================
+// INIT
+// ============================================================
+function initSelects(){
+  // Supervisores
+  const sN=document.getElementById('f-nombre');
+  SUPERVISORES.forEach(p=>{const o=document.createElement('option');o.value=p.nombre;o.textContent=p.nombre+' ('+p.puesto+')';sN.appendChild(o);});
+  // Camionetas
+  const sC=document.getElementById('f-cam');
+  CAMIONETAS.forEach(c=>{const o=document.createElement('option');o.value=c.eco;o.textContent=c.eco+' — '+c.modelo+' '+c.anio+' ('+c.placas+')';sC.appendChild(o);});
+  // Parcelas
+  const sL=document.getElementById('f-lugar');
+  PARCELAS.forEach(p=>{const o=document.createElement('option');o.value=p.rancho;o.textContent='['+p.rancho+'] '+p.contrato;sL.appendChild(o);});
+  // Evaluadores
+  const sE=document.getElementById('f-eval');
+  EVALUADORES.forEach(e=>{const o=document.createElement('option');o.value=e.nombre;o.textContent=e.nombre+' — '+e.puesto;sE.appendChild(o);});
+  // Fecha hoy
+  document.getElementById('f-fecha').value=new Date().toLocaleDateString('es-MX');
+  // Filtros DB
+  const fN=document.getElementById('flt-nombre');
+  SUPERVISORES.forEach(p=>{const o=document.createElement('option');o.value=p.nombre;o.textContent=p.nombre;fN.appendChild(o);});
+  const fP=document.getElementById('flt-parcela');
+  PARCELAS.forEach(p=>{const o=document.createElement('option');o.value=p.rancho;o.textContent='['+p.rancho+'] '+p.contrato.substring(0,35);fP.appendChild(o);});
+}
+
+function onPersonaChange(tipo){
+  if(tipo==='supervisor'){
+    const v=document.getElementById('f-nombre').value;
+    const p=PERSONAL.find(x=>x.nombre===v);
+    document.getElementById('f-puesto').value=p?p.puesto:'';
+  }
+}
+
+// Modelos sin lona (caja cerrada / pick-up sin lona)
+const MODELOS_SIN_LONA=['HILUX','MITSUBISHI'];
+
+function onCamChange(){
+  const v=document.getElementById('f-cam').value;
+  const c=CAMIONETAS.find(x=>x.eco===v);
+  const info=document.getElementById('cam-info');
+  if(c){
+    document.getElementById('f-modelo').value=c.modelo+' '+c.anio;
+    document.getElementById('f-placas').value=c.placas;
+    info.style.display='block';
+    info.innerHTML='<i class="ti ti-car"></i> Serie: '+c.serie+' | Placas: '+c.placas;
+
+    // Si es HILUX o MITSUBISHI → Lonas = N/A automático
+    const sinLona=MODELOS_SIN_LONA.some(m=>c.modelo.toUpperCase().includes(m));
+    const lonaEl=document.getElementById('r-4.4');
+    const lonaBadge=document.getElementById('s-4.4');
+    const lonaRow=lonaEl?lonaEl.closest('.item'):null;
+    if(lonaEl){
+      if(sinLona){
+        lonaEl.value='NA';
+        lonaEl.disabled=true;
+        if(lonaBadge){lonaBadge.className='badge na';lonaBadge.textContent='N/A';}
+        if(lonaRow){lonaRow.style.opacity='.45';lonaRow.title='N/A — este vehículo no usa lonas';}
+        // Mostrar nota
+        let nota=document.getElementById('nota-lona');
+        if(!nota){nota=document.createElement('div');nota.id='nota-lona';nota.style.cssText='font-size:11px;color:#854F0B;background:#FFF8E8;border:1px solid #EF9F27;border-radius:4px;padding:4px 8px;margin-top:4px';lonaEl.parentNode.appendChild(nota);}
+        nota.textContent='ℹ '+c.modelo+' no usa lonas — criterio excluido de la puntuación';
+      }else{
+        lonaEl.value='';
+        lonaEl.disabled=false;
+        if(lonaBadge){lonaBadge.className='badge na';lonaBadge.textContent='–';}
+        if(lonaRow){lonaRow.style.opacity='1';lonaRow.title='';}
+        const nota=document.getElementById('nota-lona');
+        if(nota)nota.remove();
+      }
+    }
+    recalc();
+  }else{
+    document.getElementById('f-modelo').value='';
+    document.getElementById('f-placas').value='';
+    info.style.display='none';
+    // Restablecer lonas si se deselecciona camioneta
+    const lonaEl=document.getElementById('r-4.4');
+    if(lonaEl){lonaEl.disabled=false;lonaEl.value='';}
+    const lonaBadge=document.getElementById('s-4.4');
+    if(lonaBadge){lonaBadge.className='badge na';lonaBadge.textContent='–';}
+    const nota=document.getElementById('nota-lona');
+    if(nota)nota.remove();
+    const lonaRow=lonaEl?lonaEl.closest('.item'):null;
+    if(lonaRow){lonaRow.style.opacity='1';lonaRow.title='';}
+  }
+}
+
+function onParcelaChange(){
+  const v=document.getElementById('f-lugar').value;
+  const p=PARCELAS.find(x=>x.rancho===v);
+  const info=document.getElementById('parcela-info');
+  if(p){
+    document.getElementById('f-jefe').value=p.jefe;
+    info.style.display='block';
+    info.innerHTML='<i class="ti ti-user"></i> Jefe: '+p.jefe+' | '+p.has+' ha | '+p.inv.toLocaleString()+' plantas';
+  }else{
+    document.getElementById('f-jefe').value='';
+    info.style.display='none';
+  }
+}
+
+// ============================================================
+// BUILD CRITERIOS
+// ============================================================
+function buildItems(){
+  const c=document.getElementById('items-container');
+  c.innerHTML='';
+  CRITERIOS.forEach(sec=>{
+    const st=document.createElement('div');
+    st.className='section-title';
+    st.innerHTML='<i class="ti '+sec.icon+'"></i> '+sec.sec;
+    c.appendChild(st);
+    sec.items.forEach(item=>{
+      const row=document.createElement('div');
+      row.className='item';
+      let ctrl=item.tipo==='sinno'
+        ?`<select id="r-${item.id}" onchange="recalc()"><option value="">––</option><option value="Si">Sí</option><option value="No">No</option></select>`
+        :`<input type="number" id="r-${item.id}" min="0" max="10" step="1" placeholder="0–10" oninput="recalc()">`;
+      row.innerHTML=`
+        <span class="num">${item.id}</span>
+        <span class="crit">${item.crit}${item.cancela?'<br><span class="cancela-tag">⚠ Cancela bono si No</span>':''}</span>
+        <div class="ctrl-obs">${ctrl}<textarea class="obs-mini" id="obs-${item.id}" rows="2" placeholder="Observación…"></textarea></div>
+        <span class="peso">${item.peso}%</span>
+        <span id="s-${item.id}" class="badge na">–</span>`;
+      c.appendChild(row);
+    });
+  });
+}
+
+// ============================================================
+// BUILD HERRAMIENTAS / BOTIQUÍN
+// ============================================================
+function buildHerramientas(){
+  buildInventario('herr-grid', HERRAMIENTAS, 'herr', 'herr-resumen');
+  buildInventario('bot-grid', BOTIQUIN, 'bot', 'bot-resumen');
+}
+
+function buildInventario(gridId, items, prefix, resumId){
+  const grid=document.getElementById(gridId);
+  grid.innerHTML='';
+  items.forEach((item,i)=>{
+    const div=document.createElement('div');
+    div.className='herr-item';
+    div.id=prefix+'-item-'+i;
+    div.innerHTML=`
+      <label>${item}</label>
+      <select id="${prefix}-${i}" onchange="updateHerr('${prefix}',${i},'${gridId}','${resumId}');recalc()">
+        <option value="">– selecciona –</option>
+        <option value="presente">✓ Presente</option>
+        <option value="falta">✗ Falta / Dañado</option>
+        <option value="na">N/A</option>
+      </select>
+      <textarea class="herr-obs" id="${prefix}-obs-${i}" rows="2" placeholder="Observación…"></textarea>
+      <span class="herr-status" id="${prefix}-st-${i}"></span>`;
+    grid.appendChild(div);
+  });
+}
+
+function updateHerr(prefix, i, gridId, resumId){
+  const val=document.getElementById(prefix+'-'+i).value;
+  const item=document.getElementById(prefix+'-item-'+i);
+  const st=document.getElementById(prefix+'-st-'+i);
+  item.className='herr-item'+(val==='presente'?' ok':val==='falta'?' falta':'');
+  st.className='herr-status'+(val==='presente'?' ok':val==='falta'?' falta':'');
+  st.textContent=val==='presente'?'✓ Presente':val==='falta'?'✗ Falta / Dañado':val==='na'?'N/A':'';
+  // actualizar resumen
+  const items=prefix==='herr'?HERRAMIENTAS:BOTIQUIN;
+  let pres=0,total=0;
+  items.forEach((_,j)=>{const v=document.getElementById(prefix+'-'+j).value;if(v&&v!=='na')total++;if(v==='presente')pres++;});
+  document.getElementById(resumId).textContent=pres+' / '+total+' ítems presentes';
+}
+
+// ============================================================
+// RECALC
+// ============================================================
+function getVal(id){const el=document.getElementById('r-'+id);return el?el.value||null:null;}
+
+function hayIncumpHerramienta(){
+  for(let i=0;i<HERRAMIENTAS.length;i++){const v=document.getElementById('herr-'+i).value;if(v==='falta')return true;}
+  for(let i=0;i<BOTIQUIN.length;i++){const v=document.getElementById('bot-'+i).value;if(v==='falta')return true;}
+  return false;
+}
+
+function recalc(){
+  let total=0, incumplidos=[], cancelaBono=false;
+  CRITERIOS.forEach(sec=>{
+    sec.items.forEach(item=>{
+      const v=getVal(item.id);
+      const badge=document.getElementById('s-'+item.id);
+      if(!v){badge.className='badge na';badge.textContent='–';return;}
+      // Criterio marcado como N/A → no suma ni resta, no cuenta como incumplido
+      if(v==='NA'){badge.className='badge na';badge.textContent='N/A';return;}
+      let pts=0,estado='';
+      if(item.tipo==='sinno'){
+        if(v==='Si'){pts=item.peso;estado='bien';}
+        else{pts=0;estado='incumplido';incumplidos.push(item);}
+        if(item.cancela&&v==='No')cancelaBono=true;
+      }else{
+        const n=parseFloat(v);
+        if(!isNaN(n)){pts=(n/10)*item.peso;estado=n>=7?'bien':'incumplido';if(n<7)incumplidos.push(item);}
+      }
+      badge.className='badge '+(estado==='bien'?'bien':'incumplido');
+      badge.textContent=estado==='bien'?'✓ Bien':'✗ Incumplido';
+      total+=pts;
+    });
+  });
+
+  // Herramienta faltante suspende bono
+  const herrFalta=hayIncumpHerramienta();
+  if(herrFalta)cancelaBono=true;
+
+  const neg=document.getElementById('neg-sel').value;
+  const negBox=document.getElementById('neg-box');
+  const negTit=document.getElementById('neg-titulo');
+  if(neg==='Si'){
+    negBox.className='neg-box alerta';negTit.className='neg-label r';
+    negTit.innerHTML='<i class="ti ti-alert-triangle"></i> Negligencia declarada — bono SUSPENDIDO (puntaje conservado)';
+    cancelaBono=true;
+  }else{
+    negBox.className='neg-box ok';negTit.className='neg-label g';
+    negTit.innerHTML='<i class="ti ti-circle-check"></i> Sin negligencia registrada';
+  }
+
+  const sc=Math.round(total);
+  document.getElementById('score-num').textContent=sc;
+  const fill=document.getElementById('prog-fill');
+  fill.style.width=Math.min(sc,100)+'%';
+
+  // Calculo de bono teórico (sin suspensión)
+  let bonoTeoricoMXN=sc>=81?500:sc>=70?300:0;
+  let bonoTxt='', bonoClass='', bonoTag='sinbono';
+
+  if(cancelaBono){
+    bonoTxt='⛔ BONO SUSPENDIDO — Puntaje registrado: '+sc+'/100';
+    bonoClass='bono-no'; fill.style.background='#E24B4A';
+    document.getElementById('score-num').className='score-num red';
+    bonoTag='suspendido';
+  }else if(sc>=81){
+    bonoTxt='✓ Bono aprobado: $500 MXN';bonoClass='bono-ok';fill.style.background='#639922';
+    document.getElementById('score-num').className='score-num green';bonoTag='500';
+  }else if(sc>=70){
+    bonoTxt='✓ Bono aprobado: $300 MXN';bonoClass='bono-med';fill.style.background='#EF9F27';
+    document.getElementById('score-num').className='score-num amber';bonoTag='300';
+  }else if(sc>0){
+    bonoTxt='Sin bono (puntaje menor a 70)';bonoClass='bono-no';fill.style.background='#E24B4A';
+    document.getElementById('score-num').className='score-num red';
+  }else{
+    bonoTxt='Complete la evaluación para ver el resultado';bonoClass='';
+    document.getElementById('score-num').className='score-num';fill.style.background='#185FA5';
+  }
+
+  const br=document.getElementById('bono-result');br.textContent=bonoTxt;br.className='bono '+bonoClass;
+  const ic=document.getElementById('incump-count');
+  const totalIncump=incumplidos.length+(herrFalta?1:0);
+  ic.innerHTML=totalIncump>0?'<span style="color:#A32D2D">'+totalIncump+' incumplimiento(s)</span>':sc>0?'<span style="color:#3B6D11">Sin incumplimientos</span>':'';
+  document.getElementById('btn-acta').style.display=(totalIncump>0||cancelaBono)?'flex':'none';
+  window._lastCalc={total:sc,bonoTxt,incumplidos,cancelaBono,herrFalta,bonoTag,bonoTeoricoMXN};
+}
+
+// ============================================================
+// DATOS FORM
+// ============================================================
+function getDatos(){
+  const ranchoId=document.getElementById('f-lugar').value||'';
+  const p=PARCELAS.find(x=>x.rancho===ranchoId);
+  return{
+    nombre:document.getElementById('f-nombre').value||'—',
+    puesto:document.getElementById('f-puesto').value||'—',
+    semana:document.getElementById('f-semana').value.trim()||'—',
+    cam:document.getElementById('f-cam').value||'—',
+    modelo:document.getElementById('f-modelo').value||'—',
+    placas:document.getElementById('f-placas').value||'—',
+    evaluador:document.getElementById('f-eval').value||'—',
+    rancho:ranchoId||'—',
+    contrato:p?p.contrato:'—',
+    has:p?p.has:'—',
+    inv:p?p.inv:'—',
+    jefe:document.getElementById('f-jefe').value||'—',
+    km:document.getElementById('f-km').value.trim()||'—',
+    fecha:document.getElementById('f-fecha').value||new Date().toLocaleDateString('es-MX'),
+    obsGeneral:document.getElementById('obs-general').value.trim()||'',
+    negVal:document.getElementById('neg-sel').value
+  };
+}
+
+function getObsItems(){
+  const obs={};
+  CRITERIOS.forEach(sec=>{sec.items.forEach(item=>{const el=document.getElementById('obs-'+item.id);if(el&&el.value.trim())obs[item.id]=el.value.trim();});});
+  return obs;
+}
+
+function getInventarioSnap(prefix, lista){
+  return lista.map((nombre,i)=>({
+    nombre,
+    estado:document.getElementById(prefix+'-'+i).value||'',
+    obs:document.getElementById(prefix+'-obs-'+i).value.trim()||''
+  }));
+}
+
+// ============================================================
+// FOTOS
+// ============================================================
+function agregarFotos(ev){
+  Array.from(ev.target.files).forEach(f=>{
+    const r=new FileReader();
+    r.onload=e=>{fotos.push({dataUrl:e.target.result,nombre:f.name});renderFotos();};
+    r.readAsDataURL(f);
+  });
+  ev.target.value='';
+}
+function dragOver(e){e.preventDefault();document.getElementById('foto-zone').classList.add('drag-over');}
+function dragLeave(){document.getElementById('foto-zone').classList.remove('drag-over');}
+function dropFotos(e){
+  e.preventDefault();dragLeave();
+  Array.from(e.dataTransfer.files).forEach(f=>{
+    if(!f.type.startsWith('image/'))return;
+    const r=new FileReader();
+    r.onload=ev=>{fotos.push({dataUrl:ev.target.result,nombre:f.name});renderFotos();};
+    r.readAsDataURL(f);
+  });
+}
+function eliminarFoto(i){fotos.splice(i,1);renderFotos();}
+function renderFotos(){
+  document.getElementById('foto-count-lbl').textContent=fotos.length+' foto'+(fotos.length!==1?'s':'');
+  document.getElementById('foto-grid').innerHTML=fotos.map((f,i)=>`
+    <div class="foto-thumb">
+      <img src="${f.dataUrl}" alt="Foto ${i+1}">
+      <button class="del-btn" onclick="eliminarFoto(${i})">✕</button>
+      <div class="flabel">Foto ${i+1}</div>
+    </div>`).join('');
+}
+
+// Cámara
+function abrirCamara(facing){
+  facing=facing||'environment';
+  document.getElementById('cam-modal').classList.add('open');
+  if(camStream){camStream.getTracks().forEach(t=>t.stop());camStream=null;}
+  navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:facing},width:{ideal:1920},height:{ideal:1080}},audio:false})
+    .then(s=>{camStream=s;document.getElementById('cam-video').srcObject=s;})
+    .catch(()=>{toast('⚠ Sin acceso a cámara. Verifica permisos.');cerrarCamara();});
+}
+function cerrarCamara(){
+  if(camStream)camStream.getTracks().forEach(t=>t.stop());camStream=null;
+  document.getElementById('cam-modal').classList.remove('open');
+  document.getElementById('cam-video').srcObject=null;
+}
+function capturarFoto(){
+  const v=document.getElementById('cam-video'),canvas=document.getElementById('cam-canvas');
+  canvas.width=v.videoWidth;canvas.height=v.videoHeight;
+  canvas.getContext('2d').drawImage(v,0,0);
+  fotos.push({dataUrl:canvas.toDataURL('image/jpeg',.85),nombre:'Cam_'+Date.now()+'.jpg'});
+  renderFotos();toast('✓ Foto capturada');cerrarCamara();
+}
+
+// ============================================================
+// GUARDAR
+// ============================================================
+function guardarEvaluacion(){
+  const c=window._lastCalc;
+  if(!c||c.total===0){toast('⚠ Captura al menos un criterio antes de guardar');return;}
+  const d=getDatos();
+  const reg={
+    id:Date.now(),fecha:d.fecha,nombre:d.nombre,puesto:d.puesto,semana:d.semana,
+    cam:d.cam,modelo:d.modelo,placas:d.placas,evaluador:d.evaluador,
+    rancho:d.rancho,contrato:d.contrato,has:d.has,inv:d.inv,
+    jefe:d.jefe,km:d.km,negVal:d.negVal,obsGeneral:d.obsGeneral,
+    puntaje:c.total,bonoTxt:c.bonoTxt,bonoTag:c.bonoTag,
+    incumplidos:c.incumplidos.map(i=>i.id+' — '+i.crit).join('; ')||'Ninguno',
+    herrFalta:c.herrFalta,
+    herramientas:getInventarioSnap('herr',HERRAMIENTAS),
+    botiquin:getInventarioSnap('bot',BOTIQUIN),
+    obsItems:getObsItems(),
+    nFotos:fotos.length,
+    fotosMini:fotos.slice(0,4).map(f=>f.dataUrl) // guarda hasta 4 thumbs
+  };
+  historial.unshift(reg);saveHist();
+  renderDB();
+
+  // Sincronizar con Google Sheets
+  if(GS_URL && navigator.onLine){
+    showSyncBar('syncing','Guardando en Google Sheets…',false);
+    sendToGS(reg).then(ok=>{
+      if(ok){showSyncBar('ok','✓ Guardado en Google Sheets y localmente');updateConn('ok');}
+      else{syncPending.push(reg);savePending();showSyncBar('pending','Guardado localmente — sin conexión a Sheets, se sync automático',false);updateConn('pending');}
+    });
+  }else if(GS_URL){
+    syncPending.push(reg);savePending();
+    showSyncBar('pending','Sin internet — guardado localmente. Se sincronizará cuando haya señal',false);
+    updateConn('pending');
+  }else{
+    showSyncBar('error','Guardado solo en este dispositivo — configura Google Sheets para compartir',false);
+  }
+  toast('✓ Evaluación guardada — '+fotos.length+' foto(s)');
+}
+
+// ============================================================
+// BASE DE DATOS
+// ============================================================
+function renderDB(){
+  let data=[...historial];
+  // filtros
+  const fN=document.getElementById('flt-nombre').value;
+  const fB=document.getElementById('flt-bono').value;
+  const fP=document.getElementById('flt-parcela').value;
+  const fT=document.getElementById('flt-texto').value.toLowerCase();
+  if(fN)data=data.filter(r=>r.nombre===fN);
+  if(fB)data=data.filter(r=>r.bonoTag===fB);
+  if(fP)data=data.filter(r=>r.rancho===fP);
+  if(fT)data=data.filter(r=>JSON.stringify(r).toLowerCase().includes(fT));
+  // sort
+  data.sort((a,b)=>{
+    let va=a[dbSortCol]||'',vb=b[dbSortCol]||'';
+    if(dbSortCol==='puntaje'){va=Number(va);vb=Number(vb);}
+    return dbSortAsc?(va>vb?1:-1):(va<vb?1:-1);
+  });
+  // stats
+  document.getElementById('stat-total').textContent=historial.length;
+  document.getElementById('stat-bono500').textContent=historial.filter(r=>r.bonoTag==='500').length;
+  document.getElementById('stat-bono300').textContent=historial.filter(r=>r.bonoTag==='300').length;
+  document.getElementById('stat-suspendido').textContent=historial.filter(r=>r.bonoTag==='suspendido').length;
+  // paginación
+  const total=data.length, pages=Math.ceil(total/PER_PAGE)||1;
+  if(dbPage>pages)dbPage=1;
+  const slice=data.slice((dbPage-1)*PER_PAGE, dbPage*PER_PAGE);
+  const body=document.getElementById('db-body');
+  const empty=document.getElementById('db-empty');
+  if(slice.length===0){body.innerHTML='';empty.style.display='block';}
+  else{
+    empty.style.display='none';
+    body.innerHTML=slice.map(r=>{
+      const tc={suspendido:'x','500':'v','300':'m',sinbono:'s'}[r.bonoTag]||'s';
+      const tl={suspendido:'Suspendido','500':'$500 MXN','300':'$300 MXN',sinbono:'Sin bono'}[r.bonoTag]||r.bonoTag;
+      return`<tr>
+        <td>${r.fecha}</td>
+        <td><strong>${r.nombre}</strong><br><span style="color:#888;font-size:10px">${r.puesto||''}</span></td>
+        <td>${r.semana}</td>
+        <td style="font-size:10px">[${r.rancho}]<br>${(r.contrato||'').substring(0,28)}…</td>
+        <td style="font-size:11px">${r.cam}<br><span style="color:#888">${r.placas||''}</span></td>
+        <td style="font-size:16px;font-weight:700;text-align:center;color:${tc==='v'?'#3B6D11':tc==='m'?'#854F0B':'#A32D2D'}">${r.puntaje}</td>
+        <td><span class="db-tag ${tc}">${tl}</span></td>
+        <td style="text-align:center">${r.nFotos>0?'<span style="color:#185FA5">📷 '+r.nFotos+'</span>':'—'}</td>
+        <td><button style="padding:4px 10px;font-size:11px" onclick="verDetalle(${r.id})"><i class="ti ti-eye"></i> Ver</button></td>
+      </tr>`;
+    }).join('');
+  }
+  // paginación
+  document.getElementById('db-pagination').innerHTML=total>0?
+    `<span>Mostrando ${(dbPage-1)*PER_PAGE+1}–${Math.min(dbPage*PER_PAGE,total)} de ${total} registros</span>
+    <div style="display:flex;gap:6px">
+      <button style="padding:4px 10px;font-size:11px" onclick="changePage(-1)" ${dbPage<=1?'disabled':''}>‹ Anterior</button>
+      <span style="padding:4px 8px;font-size:11px;color:#666">Pág. ${dbPage}/${pages}</span>
+      <button style="padding:4px 10px;font-size:11px" onclick="changePage(1)" ${dbPage>=pages?'disabled':''}>Siguiente ›</button>
+    </div>`:'';
+}
+
+function changePage(d){dbPage+=d;renderDB();}
+function sortDB(col){if(dbSortCol===col)dbSortAsc=!dbSortAsc;else{dbSortCol=col;dbSortAsc=false;}renderDB();}
+function resetFiltros(){['flt-nombre','flt-bono','flt-parcela'].forEach(id=>document.getElementById(id).value='');document.getElementById('flt-texto').value='';renderDB();}
+
+function verDetalle(id){
+  const r=historial.find(x=>x.id===id);if(!r)return;
+  const tc={suspendido:'x','500':'v','300':'m',sinbono:'s'}[r.bonoTag]||'s';
+  const tl={suspendido:'⛔ Bono Suspendido','500':'✓ $500 MXN','300':'✓ $300 MXN',sinbono:'Sin bono'}[r.bonoTag]||r.bonoTag;
+
+  // inventario herramientas
+  let herrHTML='<table style="width:100%;font-size:11px;border-collapse:collapse;margin:4px 0">';
+  (r.herramientas||[]).forEach(h=>{
+    const col=h.estado==='presente'?'#27500A':h.estado==='falta'?'#791F1F':'#888';
+    herrHTML+=`<tr><td style="padding:3px 6px;border-bottom:1px solid #f0ede6">${h.nombre}</td>
+      <td style="padding:3px 6px;border-bottom:1px solid #f0ede6;font-weight:700;color:${col};white-space:nowrap">${h.estado||'—'}</td>
+      <td style="padding:3px 6px;border-bottom:1px solid #f0ede6;color:#666;font-style:italic">${h.obs||''}</td></tr>`;
+  });
+  herrHTML+='</table>';
+
+  let botHTML='<table style="width:100%;font-size:11px;border-collapse:collapse;margin:4px 0">';
+  (r.botiquin||[]).forEach(h=>{
+    const col=h.estado==='presente'?'#27500A':h.estado==='falta'?'#791F1F':'#888';
+    botHTML+=`<tr><td style="padding:3px 6px;border-bottom:1px solid #f0ede6">${h.nombre}</td>
+      <td style="padding:3px 6px;border-bottom:1px solid #f0ede6;font-weight:700;color:${col};white-space:nowrap">${h.estado||'—'}</td>
+      <td style="padding:3px 6px;border-bottom:1px solid #f0ede6;color:#666;font-style:italic">${h.obs||''}</td></tr>`;
+  });
+  botHTML+='</table>';
+
+  let fotosHTML=r.fotosMini&&r.fotosMini.length>0?
+    `<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-top:6px">
+    ${r.fotosMini.map((d,i)=>`<div style="aspect-ratio:1;border-radius:6px;overflow:hidden;border:1px solid #e0ddd4"><img src="${d}" style="width:100%;height:100%;object-fit:cover"></div>`).join('')}
+    ${r.nFotos>4?`<div style="aspect-ratio:1;background:#f5f5f0;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:12px;color:#888">+${r.nFotos-4} más</div>`:''}
+    </div>`:'<p style="color:#aaa;font-size:12px">Sin fotos adjuntas</p>';
+
+  document.getElementById('det-titulo').textContent='Evaluación — '+r.nombre+' — '+r.semana;
+  document.getElementById('det-content').innerHTML=`
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px 20px;font-size:12px;margin-bottom:14px">
+      <div><span style="color:#888;font-weight:600">Supervisor:</span> ${r.nombre}</div>
+      <div><span style="color:#888;font-weight:600">Puesto:</span> ${r.puesto||'—'}</div>
+      <div><span style="color:#888;font-weight:600">Semana:</span> ${r.semana}</div>
+      <div><span style="color:#888;font-weight:600">Fecha evaluación:</span> ${r.fecha}</div>
+      <div><span style="color:#888;font-weight:600">Rancho:</span> [${r.rancho}] ${r.contrato}</div>
+      <div><span style="color:#888;font-weight:600">Jefe área:</span> ${r.jefe}</div>
+      <div><span style="color:#888;font-weight:600">Camioneta:</span> ${r.cam} / ${r.modelo}</div>
+      <div><span style="color:#888;font-weight:600">Placas:</span> ${r.placas||'—'}</div>
+      <div><span style="color:#888;font-weight:600">Evaluador:</span> ${r.evaluador}</div>
+      <div><span style="color:#888;font-weight:600">Negligencia:</span> ${r.negVal}</div>
+      <div><span style="color:#888;font-weight:600">Puntaje:</span> <strong style="font-size:16px">${r.puntaje}/100</strong></div>
+      <div><span style="color:#888;font-weight:600">Bono:</span> <span class="db-tag ${tc}">${tl}</span></div>
+    </div>
+    ${r.incumplidos&&r.incumplidos!=='Ninguno'?`<div style="background:#FCEBEB;border:1px solid #F0997B;border-radius:6px;padding:8px 12px;margin-bottom:10px;font-size:11px"><strong style="color:#A32D2D">Incumplimientos:</strong><br>${r.incumplidos}</div>`:''}
+    ${r.obsGeneral?`<div style="background:#f9f9f9;border:1px solid #e0ddd4;border-radius:6px;padding:8px 12px;margin-bottom:10px;font-size:11px"><strong>Observaciones:</strong><br>${r.obsGeneral}</div>`:''}
+    <details style="margin-bottom:10px"><summary style="cursor:pointer;font-size:12px;font-weight:600;color:#185FA5;padding:6px 0">🔧 Inventario de herramienta</summary>${herrHTML}</details>
+    <details style="margin-bottom:10px"><summary style="cursor:pointer;font-size:12px;font-weight:600;color:#185FA5;padding:6px 0">🩺 Inventario de botiquín</summary>${botHTML}</details>
+    <details><summary style="cursor:pointer;font-size:12px;font-weight:600;color:#185FA5;padding:6px 0">📷 Fotografías (${r.nFotos||0})</summary>${fotosHTML}</details>
+  `;
+  document.getElementById('detail-modal').classList.add('open');
+}
+
+async function sincronizarAhora(){
+  if(!GS_URL){abrirConfig();return;}
+  if(!navigator.onLine){toast('⚠ Sin conexión a internet');updateConn('pending');return;}
+  if(syncPending.length>0){await syncPendientes();}
+  else{const ok=await pingGS();ok?showSyncBar('ok','✓ Todo sincronizado con Google Sheets'):showSyncBar('error','No se pudo conectar a Google Sheets');updateConn(ok?'ok':'error');}
+}
+
+function exportarCSV(){
+  if(historial.length===0){toast('⚠ Sin datos');return;}
+  const h=['ID','Fecha','Supervisor','Puesto','Semana','Rancho','Contrato','Cam','Modelo','Placas','Evaluador','Jefe','Km','Puntaje','Bono','Suspendido','Herr_Faltante','Incumplimientos','Negligencia','Fotos','Observaciones'];
+  const rows=historial.map(r=>[
+    r.id,r.fecha,r.nombre,r.puesto,r.semana,r.rancho,'"'+r.contrato+'"',
+    r.cam,r.modelo,r.placas,r.evaluador,r.jefe,r.km,r.puntaje,
+    '"'+r.bonoTxt+'"',r.bonoTag==='suspendido'?'SI':'NO',
+    r.herrFalta?'SI':'NO','"'+r.incumplidos+'"',r.negVal,
+    r.nFotos,'"'+r.obsGeneral+'"'
+  ]);
+  const csv=[h,...rows].map(r=>r.join(',')).join('\n');
+  const b=new Blob(['\uFEFF'+csv],{type:'text/csv;charset=utf-8'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(b);
+  a.download='BD_Bono_Supervisores_Agave_'+new Date().toISOString().slice(0,10)+'.csv';a.click();
+  toast('✓ Base de datos exportada');
+}
+
+function limpiarBD(){
+  if(historial.length===0){toast('La base de datos ya está vacía');return;}
+  if(confirm('¿Eliminar TODA la base de datos? Esta acción no se puede deshacer.')){historial=[];saveHist();renderDB();toast('Base de datos eliminada');}
+}
+
+// ============================================================
+// PDF EVALUACIÓN
+// ============================================================
+function generarPDFEval(){
+  const d=getDatos(), c=window._lastCalc||{total:0,bonoTxt:'–',incumplidos:[],cancelaBono:false};
+  const fecha=new Date().toLocaleDateString('es-MX',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
+  const obsItems=getObsItems();
+  let critRows='';
+  CRITERIOS.forEach(sec=>{
+    critRows+=`<tr><td colspan="6" style="background:#EBF3FB;font-weight:700;font-size:10px;padding:5px 8px;color:#185FA5">${sec.sec}</td></tr>`;
+    sec.items.forEach(item=>{
+      const v=getVal(item.id)||'–', badge=document.getElementById('s-'+item.id), est=badge?badge.textContent:'–', obs=obsItems[item.id]||'';
+      critRows+=`<tr><td style="font-size:10px;color:#999;width:36px">${item.id}</td><td style="font-size:10px">${item.crit}</td><td style="text-align:center;font-size:10px;width:38px">${item.peso}%</td><td style="text-align:center;font-size:11px;font-weight:700;width:36px">${v}</td><td style="font-size:10px;font-weight:700;color:${est.includes('Bien')?'#27500A':est.includes('Inc')?'#791F1F':'#888'};width:80px">${est}</td><td style="font-size:10px;color:#666;font-style:italic">${obs}</td></tr>`;
+    });
+  });
+  // Herramientas tabla
+  let herrRows='', botRows='';
+  HERRAMIENTAS.forEach((h,i)=>{const v=document.getElementById('herr-'+i).value||'—',obs=document.getElementById('herr-obs-'+i).value.trim();const col=v==='presente'?'#27500A':v==='falta'?'#791F1F':'#888';herrRows+=`<tr><td style="font-size:10px">${h}</td><td style="font-size:10px;font-weight:700;color:${col}">${v}</td><td style="font-size:10px;color:#666;font-style:italic">${obs}</td></tr>`;});
+  BOTIQUIN.forEach((h,i)=>{const v=document.getElementById('bot-'+i).value||'—',obs=document.getElementById('bot-obs-'+i).value.trim();const col=v==='presente'?'#27500A':v==='falta'?'#791F1F':'#888';botRows+=`<tr><td style="font-size:10px">${h}</td><td style="font-size:10px;font-weight:700;color:${col}">${v}</td><td style="font-size:10px;color:#666;font-style:italic">${obs}</td></tr>`;});
+  let incumpHTML=c.incumplidos&&c.incumplidos.length>0?`<div style="padding:8px 12px;background:#FCEBEB;border-radius:5px;border:1px solid #F0997B;margin:10px 0"><div style="font-weight:700;color:#A32D2D;font-size:11px;margin-bottom:5px">⚠ Criterios incumplidos (${c.incumplidos.length})</div><ul style="margin:0;padding-left:16px">${c.incumplidos.map(i=>`<li style="font-size:10px;margin:2px 0">${i.id} — ${i.crit}${obsItems[i.id]?'<br><em>Obs: '+obsItems[i.id]+'</em>':''}</li>`).join('')}</ul></div>`:'';
+  let fotosHTML=fotos.length>0?`<div style="margin-top:10px"><div style="font-size:11px;font-weight:700;background:#185FA5;color:white;padding:4px 10px;border-radius:3px;margin-bottom:8px">Fotografías de evidencia (${fotos.length})</div><div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px">${fotos.map((f,i)=>`<div style="aspect-ratio:1;border-radius:4px;overflow:hidden;border:1px solid #ddd"><img src="${f.dataUrl}" style="width:100%;height:100%;object-fit:cover"><div style="font-size:9px;text-align:center;color:#888">Foto ${i+1}</div></div>`).join('')}</div></div>`:'';
+  const obsGeneralHTML=d.obsGeneral?`<div style="padding:8px 12px;background:#f9f9f9;border:1px solid #e0ddd4;border-radius:5px;margin:8px 0"><div style="font-weight:700;color:#185FA5;font-size:11px;margin-bottom:3px">Observaciones generales</div><div style="font-size:11px">${d.obsGeneral.replace(/\n/g,'<br>')}</div></div>`:'';
+  const tc=c.bonoTxt.includes('500')?'#27500A':c.bonoTxt.includes('300')?'#633806':'#791F1F';
+  const bg=c.bonoTxt.includes('500')?'#EAF3DE':c.bonoTxt.includes('300')?'#FAEEDA':'#FCEBEB';
+  abrirVentana(`<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"><title>Evaluación — ${d.nombre}</title>
+  <style>*{box-sizing:border-box;margin:0;padding:0}body{font-family:Arial,sans-serif;font-size:11px;color:#222;padding:18px}.top{display:flex;justify-content:space-between;margin-bottom:12px;padding-bottom:8px;border-bottom:2px solid #185FA5}.top h1{font-size:14px;color:#185FA5;margin-bottom:2px}.top p{font-size:10px;color:#666}h2{font-size:11px;background:#185FA5;color:white;padding:4px 10px;margin:10px 0 5px;border-radius:3px}table{width:100%;border-collapse:collapse;margin:4px 0}th{background:#f0f4f8;padding:4px 7px;text-align:left;border:.5px solid #ccc;font-size:10px}td{padding:4px 7px;border:.5px solid #ddd;vertical-align:top}.score-sec{display:flex;align-items:center;gap:18px;padding:10px 14px;background:#f9f9f9;border:1px solid #ddd;border-radius:5px;margin:8px 0}.score-big{font-size:32px;font-weight:700;color:${tc}}.firmas{display:flex;justify-content:space-between;margin-top:30px}.firma{width:44%;text-align:center}.firma-line{border-top:1px solid #333;margin-bottom:4px;padding-top:4px}footer{margin-top:12px;font-size:9px;color:#aaa;text-align:center;border-top:1px solid #eee;padding-top:6px}@media print{@page{margin:1.5cm}body{padding:0}}</style></head><body>
+  <div class="top"><div><h1>Evaluación de Bono Semanal de Supervisores</h1><p>CONSOLIDACIÓN DE AGAVE S.A. DE C.V. | Dpto. de Campo | Magdalena, Jalisco</p></div><div style="font-size:10px;color:#888">${fecha}</div></div>
+  <h2>I. Datos del supervisor</h2>
+  <table><tr><th>Nombre</th><td>${d.nombre}</td><th>Puesto</th><td>${d.puesto}</td></tr><tr><th>Semana</th><td>${d.semana}</td><th>Camioneta / Placas</th><td>${d.cam} — ${d.placas}</td></tr><tr><th>Evaluador</th><td>${d.evaluador}</td><th>Rancho</th><td>[${d.rancho}] ${d.contrato}</td></tr><tr><th>Jefe área</th><td>${d.jefe}</td><th>Km / Fecha</th><td>${d.km} / ${d.fecha}</td></tr><tr><th>Negligencia</th><td colspan="3" style="font-weight:700;color:${d.negVal==='Si'?'#A32D2D':'#3B6D11'}">${d.negVal==='Si'?'SÍ — Bono suspendido':'No'}</td></tr></table>
+  <h2>II. Criterios de evaluación</h2>
+  <table><thead><tr><th>ID</th><th>Criterio</th><th>Peso</th><th>Resp.</th><th>Resultado</th><th>Observación</th></tr></thead><tbody>${critRows}</tbody></table>
+  ${incumpHTML}
+  <h2>III. Inventario de herramienta</h2>
+  <table><thead><tr><th>Herramienta</th><th style="width:90px">Estado</th><th>Obs.</th></tr></thead><tbody>${herrRows}</tbody></table>
+  <h2>IV. Inventario de botiquín</h2>
+  <table><thead><tr><th>Ítem</th><th style="width:90px">Estado</th><th>Obs.</th></tr></thead><tbody>${botRows}</tbody></table>
+  ${obsGeneralHTML}
+  <h2>V. Resultado final</h2>
+  <div class="score-sec"><div><div style="font-size:10px;color:#666;margin-bottom:2px">Puntaje total</div><div class="score-big">${c.total}<span style="font-size:14px;font-weight:400;color:#888">/100</span></div></div><div><div style="font-size:10px;color:#666;margin-bottom:4px">Resultado del bono</div><div style="padding:5px 12px;border-radius:4px;font-size:12px;font-weight:700;background:${bg};color:${tc}">${c.bonoTxt}</div></div><div style="flex:1;font-size:10px;color:#666">0–69 = Sin bono | 70–80 = $300 | 81–100 = $500<br>Cualquier incumplimiento = Bono suspendido</div></div>
+  ${fotosHTML}
+  <div class="firmas"><div class="firma"><div style="height:36px"></div><div class="firma-line"></div><strong>Firma del Evaluador</strong><div style="font-size:10px;margin-top:2px">${d.evaluador}</div></div><div class="firma"><div style="height:36px"></div><div class="firma-line"></div><strong>Firma del Supervisor Evaluado</strong><div style="font-size:10px;margin-top:2px">${d.nombre}</div></div></div>
+  <footer>Consolidación de Agave S.A. de C.V. | Sistema de Evaluación de Bono Semanal | ${new Date().toLocaleString('es-MX')}</footer>
+  <script>window.onload=function(){window.print()}<\/script>
+<!-- SYNC BAR -->
+<div class="sync-bar" id="sync-bar">
+  <i class="ti ti-cloud-upload" id="sync-icon"></i>
+  <span id="sync-msg">Sincronizando…</span>
+</div>
+
+<!-- CONFIG GOOGLE SHEETS -->
+<div class="cfg-modal" id="cfg-modal">
+  <div class="cfg-box">
+    <h3><i class="ti ti-brand-google"></i> Base de datos — Google Sheets</h3>
+
+    <div class="cfg-step">
+      <div class="sn">Paso 1 — Crear hoja</div>
+      <p>Ve a <strong>sheets.new</strong>, crea una hoja nueva. Puedes llamarla <em>BD_Bonos_Agave</em>.</p>
+    </div>
+
+    <div class="cfg-step">
+      <div class="sn">Paso 2 — Abrir Apps Script</div>
+      <p>Dentro de la hoja: <strong>Extensiones → Apps Script</strong>. Borra todo lo que haya y pega este código exactamente:</p>
+      <pre id="gs-code">function doPost(e){
+  try{
+    var ss=SpreadsheetApp.getActiveSpreadsheet();
+    var sheet=ss.getSheetByName('BD_Bonos')||ss.getActiveSheet();
+    var data=JSON.parse(e.postData.contents);
+    if(data.action==='ping')return out({ok:true});
+    if(data.action==='save'){
+      var r=data.row;
+      if(sheet.getLastRow()===0){
+        sheet.appendRow(['ID','Fecha','Supervisor','Puesto','Semana','Rancho',
+          'Contrato','Camioneta','Modelo','Placas','Evaluador','Jefe','Km',
+          'Puntaje','Bono','Suspendido','Herr_Falta','Incumplimientos',
+          'Negligencia','Fotos','Observaciones','Timestamp']);
+      }
+      sheet.appendRow([r.id,r.fecha,r.nombre,r.puesto,r.semana,r.rancho,
+        r.contrato,r.cam,r.modelo,r.placas,r.evaluador,r.jefe,r.km,
+        r.puntaje,r.bonoTxt,r.bonoTag==='suspendido'?'SI':'NO',
+        r.herrFalta?'SI':'NO',r.incumplidos,r.negVal,r.nFotos,
+        r.obsGeneral,new Date().toISOString()]);
+      return out({ok:true});
+    }
+    return out({ok:false,msg:'unknown'});
+  }catch(err){return out({ok:false,msg:err.toString()});}
+}
+function out(o){
+  return ContentService.createTextOutput(JSON.stringify(o))
+    .setMimeType(ContentService.MimeType.JSON);
+}</pre>
+      <button class="cam-btn" onclick="copiarCodigo()"><i class="ti ti-copy"></i> Copiar código</button>
+    </div>
+
+    <div class="cfg-step">
+      <div class="sn">Paso 3 — Publicar como Web App</div>
+      <p>En Apps Script: <strong>Implementar → Nueva implementación → Tipo: Aplicación web</strong>.</p>
+      <p>• Ejecutar como: <strong>Yo (tu cuenta Google)</strong><br>
+         • Quién tiene acceso: <strong>Cualquier persona</strong><br>
+         • Haz clic en <strong>Implementar</strong> y autoriza cuando te pida.</p>
+      <p>Copia la URL que aparece. Empieza así: <code>https://script.google.com/macros/s/…/exec</code></p>
+    </div>
+
+    <div class="cfg-step">
+      <div class="sn">Paso 4 — Pegar URL aquí</div>
+      <div class="field" style="margin-top:8px">
+        <label>URL del Web App</label>
+        <input type="text" id="cfg-url" placeholder="https://script.google.com/macros/s/…/exec">
+      </div>
+    </div>
+
+    <div style="display:flex;gap:8px;margin-top:16px;flex-wrap:wrap">
+      <button class="primary" onclick="guardarConfig()"><i class="ti ti-check"></i> Guardar y probar</button>
+      <button onclick="probarConexion()"><i class="ti ti-wifi"></i> Probar conexión</button>
+      <button onclick="document.getElementById('cfg-modal').classList.remove('open')"><i class="ti ti-x"></i> Cerrar</button>
+    </div>
+    <div id="cfg-result" style="margin-top:10px;font-size:12px;min-height:20px"></div>
+  </div>
+</div>
+
+</body></html>`);
+}
+
+// ============================================================
+// ACTA ADMINISTRATIVA
+// ============================================================
+function generarActa(){
+  const d=getDatos(), c=window._lastCalc||{total:0,bonoTxt:'–',incumplidos:[]};
+  const fecha=new Date().toLocaleDateString('es-MX',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
+  const folio='ACT-2026-'+String(Date.now()).slice(-4);
+  const obsItems=getObsItems();
+  const herrFalt=(c.herrFalta?HERRAMIENTAS.filter((_,i)=>document.getElementById('herr-'+i).value==='falta').concat(BOTIQUIN.filter((_,i)=>document.getElementById('bot-'+i).value==='falta')):[]);
+  const todosIncump=[...c.incumplidos,...herrFalt.map(h=>({id:'HERR',crit:h,peso:'N/A'}))];
+  const causa=d.negVal==='Si'?'Paro por negligencia o falla no reportada':todosIncump.map(i=>i.id+' — '+i.crit).join('; ')||'Incumplimiento';
+  let filas=todosIncump.slice(0,8).map((item,idx)=>`<tr><td style="text-align:center">${idx+1}</td><td style="font-weight:700">${item.id}</td><td>${item.crit}</td><td style="text-align:center">${item.peso||'—'}${item.peso&&item.peso!=='N/A'?'%':''}</td><td style="font-style:italic;color:#555">${obsItems[item.id]||''}</td><td style="color:#A32D2D;font-weight:700">Incumplimiento</td></tr>`).join('');
+  abrirVentana(`<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"><title>Acta — ${d.nombre} — ${folio}</title>
+  <style>*{box-sizing:border-box;margin:0;padding:0}body{font-family:Arial,sans-serif;font-size:11px;color:#222;padding:18px}.hdr{text-align:center;border:2px solid #A32D2D;padding:12px;margin-bottom:12px;border-radius:4px}.hdr h1{font-size:15px;color:#A32D2D;margin-bottom:3px}.hdr p{font-size:10px;color:#666}.folio-row{display:flex;justify-content:space-between;font-size:10px;margin-bottom:10px;padding:5px 10px;background:#f5f5f0;border-radius:4px}h2{font-size:11px;background:#A32D2D;color:white;padding:4px 10px;margin:10px 0 5px;border-radius:3px}table{width:100%;border-collapse:collapse;margin:4px 0;font-size:10px}th{background:#f0f0f0;padding:4px 7px;text-align:left;border:.5px solid #ccc;font-weight:700}td{padding:4px 7px;border:.5px solid #ddd;vertical-align:top}.esc{background:#FFF8E8;border:1px solid #EF9F27;padding:8px 12px;border-radius:4px;margin:4px 0}.erow{display:flex;gap:8px;margin:3px 0}.enum{font-weight:700;color:#854F0B;min-width:50px}.firmas{display:flex;justify-content:space-between;margin-top:32px}.firma{width:44%;text-align:center}.firma-line{border-top:1px solid #333;margin-bottom:4px;padding-top:4px}footer{margin-top:12px;font-size:9px;color:#aaa;text-align:center;border-top:1px solid #eee;padding-top:6px}@media print{@page{margin:1.5cm}body{padding:0}}</style></head><body>
+  <div class="hdr"><h1>ACTA ADMINISTRATIVA DE INCUMPLIMIENTO</h1><p>CONSOLIDACIÓN DE AGAVE S.A. DE C.V. | Departamento de Campo | Magdalena, Jalisco</p></div>
+  <div class="folio-row"><span><strong>Folio:</strong> ${folio}</span><span><strong>Fecha:</strong> ${fecha}</span></div>
+  <h2>I. Datos del trabajador</h2>
+  <table><tr><th>Nombre completo</th><td>${d.nombre}</td><th>Puesto</th><td>${d.puesto}</td></tr><tr><th>Camioneta / Placas</th><td>${d.cam} — ${d.placas}</td><th>Semana evaluada</th><td>${d.semana}</td></tr><tr><th>Rancho / Parcela</th><td>[${d.rancho}] ${d.contrato}</td><th>Jefe de área</th><td>${d.jefe}</td></tr><tr><th>No. actas previas</th><td></td><th>Evaluador</th><td>${d.evaluador}</td></tr></table>
+  <h2>II. Descripción del incumplimiento</h2>
+  <table><thead><tr><th style="width:25px">#</th><th style="width:45px">ID</th><th>Criterio / Herramienta</th><th style="width:45px">Peso</th><th>Observaciones</th><th style="width:90px">Tipo</th></tr></thead><tbody>${filas||'<tr><td colspan="6" style="text-align:center;color:#888">Ver sección III</td></tr>'}</tbody></table>
+  <h2>III. Impacto en el bono</h2>
+  <table><tr><th>Puntaje obtenido</th><td><strong>${c.total}/100</strong></td><th>Resultado</th><td style="color:#A32D2D;font-weight:700">⛔ BONO SUSPENDIDO (puntaje conservado)</td></tr><tr><th>Causa de suspensión</th><td colspan="3">${causa}</td></tr></table>
+  <h2>IV. Criterio escalatorio</h2>
+  <div class="esc"><div class="erow"><span class="enum">1a Acta</span><span>Amonestación verbal + bono reducido o suspendido</span></div><div class="erow"><span class="enum">2a Acta</span><span>Amonestación escrita + bono suspendido</span></div><div class="erow"><span class="enum">3a Acta</span><span>Amonestación escrita + suspensión 1 día sin goce de sueldo</span></div><div class="erow"><span class="enum">4a Acta</span><span>Suspensión 2–3 días + evaluación de continuidad laboral</span></div><div class="erow"><span class="enum">5a+ Acta</span><span>Rescisión de contrato sin responsabilidad para la empresa</span></div></div>
+  <h2>V. Compromisos del trabajador</h2>
+  <p style="margin-bottom:5px">El trabajador, notificado del presente documento, se compromete a:</p>
+  <ol style="padding-left:18px;font-size:10px"><li style="margin:3px 0">Cumplir con todos los criterios y mantener completo el inventario de herramienta y botiquín.</li><li style="margin:3px 0">No reincidir en las faltas descritas en este documento.</li><li style="margin:3px 0">Notificar de inmediato cualquier incidencia vehicular o de parcela a su superior directo.</li></ol>
+  <h2>VI. Firmas de conformidad</h2>
+  <div class="firmas"><div class="firma"><div style="height:40px"></div><div class="firma-line"></div><strong>Firma del Trabajador</strong><div style="font-size:10px;margin-top:2px">${d.nombre}</div></div><div class="firma"><div style="height:40px"></div><div class="firma-line"></div><strong>Firma Responsable RRHH / Evaluador</strong><div style="font-size:10px;margin-top:2px">${d.evaluador}</div></div></div>
+  <p style="font-size:9px;color:#999;margin-top:6px;font-style:italic">La firma no implica aceptación de culpa, únicamente constancia de notificación formal al trabajador.</p>
+  <footer>Folio: ${folio} | Consolidación de Agave S.A. de C.V. | ${new Date().toLocaleString('es-MX')}</footer>
+  <script>window.onload=function(){window.print()}<\/script></body></html>`);
+}
+
+function abrirVentana(html){
+  const w=window.open('','_blank','width=960,height=730');
+  if(w){w.document.write(html);w.document.close();}
+  else{const b=new Blob([html],{type:'text/html;charset=utf-8'});const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='doc_bono_agave.html';a.click();toast('Archivo descargado (activa ventanas emergentes para vista previa)');}
+}
+
+function limpiarForm(){
+  ['f-nombre','f-puesto','f-semana','f-modelo','f-placas','f-jefe','f-km','obs-general'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+  ['f-cam','f-eval','f-lugar'].forEach(id=>document.getElementById(id).value='');
+  ['cam-info','parcela-info'].forEach(id=>{document.getElementById(id).style.display='none';});
+  document.getElementById('neg-sel').value='No';
+  document.getElementById('f-fecha').value=new Date().toLocaleDateString('es-MX');
+  fotos=[];renderFotos();
+  buildItems();buildHerramientas();recalc();
+  toast('✓ Formulario limpiado — listo para nueva evaluación');
+}
+
+function showTab(t,ev){
+  document.querySelectorAll('.tab-pane').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(b=>b.classList.remove('active'));
+  document.getElementById('tab-'+t).classList.add('active');
+  if(ev&&ev.target)ev.target.classList.add('active');
+  if(t==='db')renderDB();
+}
+
+function toast(msg){
+  const el=document.getElementById('toast');el.textContent=msg;el.classList.add('show');
+  setTimeout(()=>el.classList.remove('show'),3000);
+}
+
+// INIT
+initSelects();buildItems();buildHerramientas();recalc();
+
+// ── PWA Service Worker registration
+if('serviceWorker' in navigator){
+  window.addEventListener('load',()=>{
+    navigator.serviceWorker.register('sw.js')
+      .then(()=>console.log('SW registrado'))
+      .catch(e=>console.log('SW error:',e));
+  });
+}
+
+// ── Install prompt (Android)
+let deferredPrompt=null;
+window.addEventListener('beforeinstallprompt',(e)=>{
+  e.preventDefault();
+  deferredPrompt=e;
+  // Show install button
+  const btn=document.getElementById('install-btn');
+  if(btn)btn.style.display='flex';
+});
+window.addEventListener('appinstalled',()=>{
+  const btn=document.getElementById('install-btn');
+  if(btn)btn.style.display='none';
+  toast('✓ App instalada en tu pantalla de inicio');
+});
+
+function instalarApp(){
+  if(deferredPrompt){
+    deferredPrompt.prompt();
+    deferredPrompt.userChoice.then(r=>{
+      if(r.outcome==='accepted')toast('✓ Instalando app…');
+      deferredPrompt=null;
+    });
+  }else{
+    toast('Para instalar: menú del navegador → Instalar app / Agregar a pantalla de inicio');
+  }
+}
+</script>
+<!-- MOBILE BOTTOM NAV -->
+<nav style="display:none;position:fixed;bottom:0;left:0;right:0;background:white;border-top:1px solid #e0ddd4;z-index:100;padding:8px 0 env(safe-area-inset-bottom)" id="mobile-nav">
+  <div style="display:flex;justify-content:space-around">
+    <button onclick="showTab('eval',event)" style="flex:1;border:none;background:none;padding:8px 4px;font-size:10px;color:#185FA5;display:flex;flex-direction:column;align-items:center;gap:3px;font-family:Arial,sans-serif">
+      <i class="ti ti-clipboard-list" style="font-size:22px"></i>Evaluar
+    </button>
+    <button onclick="showTab('db',event)" style="flex:1;border:none;background:none;padding:8px 4px;font-size:10px;color:#666;display:flex;flex-direction:column;align-items:center;gap:3px;font-family:Arial,sans-serif">
+      <i class="ti ti-database" style="font-size:22px"></i>Base de datos
+    </button>
+    <button onclick="abrirCamara('environment')" style="flex:1;border:none;background:none;padding:8px 4px;font-size:10px;color:#666;display:flex;flex-direction:column;align-items:center;gap:3px;font-family:Arial,sans-serif">
+      <i class="ti ti-camera" style="font-size:22px"></i>Evidencia
+    </button>
+    <button onclick="guardarEvaluacion()" style="flex:1;border:none;background:none;padding:8px 4px;font-size:10px;color:#3B6D11;display:flex;flex-direction:column;align-items:center;gap:3px;font-family:Arial,sans-serif">
+      <i class="ti ti-device-floppy" style="font-size:22px"></i>Guardar
+    </button>
+  </div>
+</nav>
+<style>
+@media(max-width:640px){
+  #mobile-nav{display:block!important}
+  .container{padding-bottom:80px}
+  .tabs{display:none}
+  .topbar h1{font-size:13px}
+}
+</style>
+
+</body>
+</html>
