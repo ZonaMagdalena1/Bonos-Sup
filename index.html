@@ -132,7 +132,7 @@ button.success:hover{background:#27500A}
 .stat-card{background:white;border:1px solid #e0ddd4;border-radius:8px;padding:14px 16px;text-align:center}
 .stat-card .sv{font-size:26px;font-weight:700;color:#185FA5}
 .stat-card .sl{font-size:11px;color:#888;margin-top:2px}
-.detail-modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:8000;align-items:center;justify-content:center}
+.detail-modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:8000;align-items:flex-start;justify-content:center;padding-top:40px;overflow-y:auto}
 .detail-modal.open{display:flex}
 .detail-box{background:white;border-radius:12px;padding:24px;max-width:700px;width:95%;max-height:90vh;overflow-y:auto}
 .detail-box h3{font-size:15px;color:#185FA5;margin-bottom:14px;border-bottom:1px solid #e0ddd4;padding-bottom:8px}
@@ -163,7 +163,7 @@ button.success:hover{background:#27500A}
 .sync-bar.ok{background:#EAF3DE;color:#27500A;border-bottom:1px solid #9FE1CB}
 .sync-bar.error{background:#FCEBEB;color:#791F1F;border-bottom:1px solid #F0997B}
 .sync-bar.pending{background:#FFF8E8;color:#854F0B;border-bottom:1px solid #EF9F27}
-.cfg-modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:9500;align-items:center;justify-content:center}
+.cfg-modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:9500;align-items:flex-start;justify-content:center;padding-top:60px;overflow-y:auto}
 .cfg-modal.open{display:flex}
 .cfg-box{background:white;border-radius:12px;padding:28px;max-width:540px;width:95%;max-height:92vh;overflow-y:auto}
 .cfg-box h3{font-size:16px;color:#185FA5;margin-bottom:16px;border-bottom:1px solid #e0ddd4;padding-bottom:10px;display:flex;align-items:center;gap:8px}
@@ -192,6 +192,41 @@ button.success:hover{background:#27500A}
       <i class="ti ti-download"></i> Instalar app
     </button>
     <span style="font-size:11px;opacity:.7">Consolidación de Agave S.A. de C.V.</span>
+  </div>
+</div>
+
+<!-- CONFIG PANEL (inline fallback) -->
+<div id="config-panel" style="display:none;background:#EBF3FB;border-bottom:2px solid #185FA5;padding:16px 24px">
+  <div style="max-width:980px;margin:0 auto">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+      <strong style="color:#185FA5;font-size:14px"><i class="ti ti-brand-google"></i> Configurar Google Sheets como base de datos</strong>
+      <button onclick="document.getElementById('config-panel').style.display='none'" style="padding:4px 10px;font-size:12px">✕ Cerrar</button>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;font-size:12px">
+      <div style="background:white;border-radius:8px;padding:12px;border-left:3px solid #185FA5">
+        <div style="font-weight:700;color:#185FA5;margin-bottom:6px">Paso 1 — Crear hoja</div>
+        <p style="color:#444;margin-bottom:4px">Ve a <strong>sheets.new</strong> y crea una hoja nueva.</p>
+        <p style="color:#444">Nómbrala <strong>BD_Bonos_Agave</strong>.</p>
+      </div>
+      <div style="background:white;border-radius:8px;padding:12px;border-left:3px solid #185FA5">
+        <div style="font-weight:700;color:#185FA5;margin-bottom:6px">Paso 2 — Apps Script</div>
+        <p style="color:#444;margin-bottom:6px">En la hoja: <strong>Extensiones → Apps Script</strong>. Borra todo y pega el código:</p>
+        <button onclick="copiarCodigo()" style="padding:5px 10px;font-size:11px;background:#185FA5;color:white;border:none;border-radius:5px;cursor:pointer"><i class="ti ti-copy"></i> Copiar código</button>
+      </div>
+      <div style="background:white;border-radius:8px;padding:12px;border-left:3px solid #185FA5">
+        <div style="font-weight:700;color:#185FA5;margin-bottom:6px">Paso 3 — Publicar Web App</div>
+        <p style="color:#444">En Apps Script: <strong>Implementar → Nueva implementación → Aplicación web</strong>.<br>Ejecutar como: <em>Yo</em> | Acceso: <em>Cualquier persona</em>.<br>Copia la URL que te da.</p>
+      </div>
+      <div style="background:white;border-radius:8px;padding:12px;border-left:3px solid #185FA5">
+        <div style="font-weight:700;color:#185FA5;margin-bottom:6px">Paso 4 — Pegar URL</div>
+        <input type="text" id="cfg-url2" placeholder="https://script.google.com/macros/s/…/exec" style="width:100%;font-size:11px;padding:6px 8px;border:1px solid #d0ccc4;border-radius:5px;margin-bottom:6px">
+        <div style="display:flex;gap:6px">
+          <button onclick="guardarConfigDesdePanel()" style="padding:5px 10px;font-size:11px;background:#3B6D11;color:white;border:none;border-radius:5px;cursor:pointer"><i class="ti ti-check"></i> Guardar y probar</button>
+          <button onclick="probarConexionPanel()" style="padding:5px 10px;font-size:11px;background:white;border:1px solid #d0ccc4;border-radius:5px;cursor:pointer"><i class="ti ti-wifi"></i> Probar</button>
+        </div>
+        <div id="cfg-result2" style="margin-top:6px;font-size:11px;min-height:16px"></div>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -709,9 +744,20 @@ async function syncPendientes(){
 }
 
 function abrirConfig(){
-  document.getElementById('cfg-modal').classList.add('open');
-  document.getElementById('cfg-url').value=GS_URL||'';
-  document.getElementById('cfg-result').innerHTML='';
+  // Try modal first, fall back to inline panel
+  const modal = document.getElementById('cfg-modal');
+  const panel = document.getElementById('config-panel');
+  if(modal){
+    modal.classList.add('open');
+    const urlEl = document.getElementById('cfg-url');
+    if(urlEl) urlEl.value=GS_URL||'';
+    const resEl = document.getElementById('cfg-result');
+    if(resEl) resEl.innerHTML='';
+  }
+  // Always also show inline panel
+  if(panel) panel.style.display='block';
+  // Scroll to top
+  window.scrollTo({top:0,behavior:'smooth'});
 }
 
 function copiarCodigo(){
@@ -719,8 +765,36 @@ function copiarCodigo(){
   navigator.clipboard.writeText(txt).then(()=>toast('✓ Código copiado al portapapeles')).catch(()=>toast('Selecciona y copia el código manualmente'));
 }
 
+function guardarConfigDesdePanel(){
+  const url=(document.getElementById('cfg-url2').value||'').trim();
+  if(!url){document.getElementById('cfg-result2').innerHTML='<span style="color:#A32D2D">⚠ Ingresa la URL</span>';return;}
+  GS_URL=url;
+  // Sync to main input
+  const main=document.getElementById('cfg-url');
+  if(main)main.value=url;
+  localStorage.setItem('bono_gs_url',url);
+  probarConexionPanel();
+}
+
+async function probarConexionPanel(){
+  const res=document.getElementById('cfg-result2');
+  if(res)res.innerHTML='<span style="color:#185FA5">Probando…</span>';
+  const ok=await pingGS();
+  if(ok){
+    if(res)res.innerHTML='<span style="color:#27500A">✓ Conectado correctamente a Google Sheets</span>';
+    updateConn('ok');
+    document.getElementById('config-panel').style.display='none';
+    showSyncBar('ok','✓ Google Sheets configurado correctamente');
+    if(syncPending.length>0)syncPendientes();
+  }else{
+    if(res)res.innerHTML='<span style="color:#A32D2D">✗ No se pudo conectar. Verifica la URL.</span>';
+    updateConn('error');
+  }
+}
+
 function guardarConfig(){
   const url=document.getElementById('cfg-url').value.trim();
+  const u2=document.getElementById('cfg-url2');if(u2)u2.value=url;
   if(!url){document.getElementById('cfg-result').innerHTML='<span style="color:#A32D2D">⚠ Ingresa la URL del Web App</span>';return;}
   GS_URL=url;localStorage.setItem('bono_gs_url',url);
   probarConexion();
@@ -1485,11 +1559,16 @@ function toast(msg){
 
 // INIT
 initSelects();buildItems();buildHerramientas();recalc();
+// Pre-fill config inputs if URL already saved
+if(GS_URL){
+  const u2=document.getElementById('cfg-url2');
+  if(u2)u2.value=GS_URL;
+}
 
 // ── PWA Service Worker registration
 if('serviceWorker' in navigator){
   window.addEventListener('load',()=>{
-    navigator.serviceWorker.register('sw.js')
+    navigator.serviceWorker.register('./sw.js')
       .then(()=>console.log('SW registrado'))
       .catch(e=>console.log('SW error:',e));
   });
