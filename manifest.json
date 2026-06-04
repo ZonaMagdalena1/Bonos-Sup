@@ -1,50 +1,27 @@
-const CACHE = 'bonos-agave-v2';
-const ASSETS = [
-  '/Bonos-Sup/',
-  '/Bonos-Sup/index.html',
-  '/Bonos-Sup/manifest.json',
-  'https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.19.0/dist/tabler-icons.min.css'
-];
-
-self.addEventListener('install', e => {
-  e.waitUntil(
-    caches.open(CACHE).then(cache =>
-      Promise.allSettled(ASSETS.map(url => cache.add(url).catch(() => null)))
-    )
-  );
-  self.skipWaiting();
-});
-
-self.addEventListener('activate', e => {
-  e.waitUntil(
-    caches.keys().then(keys =>
-      Promise.all(keys.filter(k => k !== CACHE).map(k => caches.delete(k)))
-    )
-  );
-  self.clients.claim();
-});
-
-self.addEventListener('fetch', e => {
-  const url = new URL(e.request.url);
-  if (url.hostname.includes('script.google.com')) {
-    e.respondWith(
-      fetch(e.request).catch(() =>
-        new Response(JSON.stringify({ok:false,msg:'offline'}),
-          {headers:{'Content-Type':'application/json'}})
-      )
-    );
-    return;
-  }
-  e.respondWith(
-    caches.match(e.request).then(cached => {
-      if (cached) return cached;
-      return fetch(e.request).then(response => {
-        if (response && response.status === 200) {
-          const clone = response.clone();
-          caches.open(CACHE).then(cache => cache.put(e.request, clone));
-        }
-        return response;
-      }).catch(() => caches.match('/Bonos-Sup/index.html'));
-    })
-  );
-});
+{
+  "name": "Bonos Supervisores — Consolidación de Agave",
+  "short_name": "Bonos Agave",
+  "description": "Sistema de evaluación de bono semanal para supervisores",
+  "start_url": "/Bonos-Sup/",
+  "scope": "/Bonos-Sup/",
+  "display": "standalone",
+  "background_color": "#f5f5f0",
+  "theme_color": "#185FA5",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["business", "productivity"],
+  "lang": "es"
+}
