@@ -1686,7 +1686,7 @@ function autoDescargarPDF(reg){
         // Auto-cerrar después de imprimir/guardar
         window.onafterprint=function(){window.close();};
       };
-    <\/script></body></html>`;
+    \u003C/script></body></html>`;
 
     // Abrir ventana de impresión (guardado como PDF)
     const w=window.open('','_blank','width=960,height=730');
@@ -1898,7 +1898,7 @@ function generarPDFEval(){
   ${fotosHTML}
   <div class="firmas"><div class="firma"><div style="height:36px"></div><div class="firma-line"></div><strong>Firma del Evaluador</strong><div style="font-size:10px;margin-top:2px">${d.evaluador}</div></div><div class="firma"><div style="height:36px"></div><div class="firma-line"></div><strong>Firma del Supervisor Evaluado</strong><div style="font-size:10px;margin-top:2px">${d.nombre}</div></div></div>
   <footer>Consolidación de Agave S.A. de C.V. | Sistema de Evaluación de Bono Semanal | ${new Date().toLocaleString('es-MX')}</footer>
-  <script>window.onload=function(){window.print()}<\/script>
+  <script>window.onload=function(){window.print()}\u003C/script>
 <!-- SYNC BAR -->
 <div class="sync-bar" id="sync-bar">
   <i class="ti ti-cloud-upload" id="sync-icon"></i>
@@ -2023,7 +2023,7 @@ function generarActa(){
   <div class="firmas"><div class="firma"><div style="height:40px"></div><div class="firma-line"></div><strong>Firma del Trabajador</strong><div style="font-size:10px;margin-top:2px">${d.nombre}</div></div><div class="firma"><div style="height:40px"></div><div class="firma-line"></div><strong>Firma Responsable RRHH / Evaluador</strong><div style="font-size:10px;margin-top:2px">${d.evaluador}</div></div></div>
   <p style="font-size:9px;color:#999;margin-top:6px;font-style:italic">La firma no implica aceptación de culpa, únicamente constancia de notificación formal al trabajador.</p>
   <footer>Folio: ${folio} | Consolidación de Agave S.A. de C.V. | ${new Date().toLocaleString('es-MX')}</footer>
-  <script>window.onload=function(){window.print()}<\/script></body></html>`);
+  <script>window.onload=function(){window.print()}\u003C/script></body></html>`);
 }
 
 function abrirVentana(html){
