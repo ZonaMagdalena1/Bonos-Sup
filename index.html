@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -262,7 +263,13 @@ button.success:hover{background:#27500A}
     </div>
     <div class="field">
       <label>Semana evaluada</label>
-      <input type="text" id="f-semana" placeholder="ej. 26/05 – 01/06/2026">
+      <div style="display:flex;gap:6px;align-items:center">
+        <input type="text" id="f-semana" placeholder="ej. 26/05 – 01/06/2026" style="flex:1">
+        <button type="button" onclick="calcularSemana()" title="Calcular semana automáticamente" style="padding:6px 10px;font-size:12px;white-space:nowrap;border:1px solid #d0ccc4;border-radius:6px;background:#EBF3FB;color:#185FA5;cursor:pointer;font-family:Arial,sans-serif">
+          <i class="ti ti-calendar-stats"></i> Auto
+        </button>
+      </div>
+      <div id="semana-info" style="font-size:11px;color:#185FA5;margin-top:3px;display:none"></div>
     </div>
   </div>
   <div class="grid3" style="margin-bottom:12px">
@@ -303,7 +310,7 @@ button.success:hover{background:#27500A}
   </div>
   <div class="grid2" style="margin-top:10px">
     <div class="field"><label>Kilometraje actual</label><input type="text" id="f-km" placeholder="Km actuales del vehículo"></div>
-    <div class="field"><label>Fecha de evaluación</label><input type="text" id="f-fecha" placeholder="dd/mm/aaaa"></div>
+    <div class="field"><label>Fecha de evaluación</label><input type="text" id="f-fecha" placeholder="dd/mm/aaaa" oninput="calcularSemana()"></div>
   </div>
 </div>
 
@@ -385,17 +392,32 @@ button.success:hover{background:#27500A}
   </div>
   <div class="incump-badge" id="incump-count"></div>
 </div>
+
+<!-- MENSAJE MOTIVACIONAL -->
+<div id="msg-motivacional" style="display:none;border-radius:10px;padding:14px 20px;margin-top:10px;text-align:center;transition:all .4s">
+  <div id="msg-emoji" style="font-size:32px;margin-bottom:6px"></div>
+  <div id="msg-titulo" style="font-size:15px;font-weight:700;margin-bottom:4px"></div>
+  <div id="msg-texto" style="font-size:13px;line-height:1.6"></div>
+</div>
+
 <!-- AJUSTE MANUAL DE BONO -->
-<div id="bono-override-box" style="display:none;background:white;border:1px solid #e0ddd4;border-radius:10px;padding:14px 18px;margin-top:10px">
-  <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
-    <div style="font-size:13px;font-weight:600;color:#185FA5"><i class="ti ti-adjustments"></i> Ajuste de bono por observación</div>
-    <select id="bono-override-sel" onchange="aplicarOverrideBono()" style="font-size:13px;padding:6px 10px;border:1px solid #d0ccc4;border-radius:6px;background:white;min-width:220px;outline:none">
-      <option value="">— Sin ajuste —</option>
-      <option value="bajar300">Bajar a Bono Regular ($300 MXN)</option>
-      <option value="bajar0">Retirar bono (Sin bono)</option>
-    </select>
-    <div style="flex:1">
-      <input type="text" id="bono-override-motivo" placeholder="Motivo del ajuste (obligatorio)…" style="width:100%;font-size:12px;padding:6px 10px;border:1px solid #d0ccc4;border-radius:6px;outline:none">
+<div id="bono-override-box" style="display:none;background:#FFF8E8;border:1px solid #EF9F27;border-radius:10px;padding:14px 18px;margin-top:10px">
+  <div style="font-size:12px;font-weight:600;color:#854F0B;margin-bottom:10px;display:flex;align-items:center;gap:6px">
+    <i class="ti ti-adjustments"></i> Ajuste de bono por observación
+    <span style="font-size:11px;font-weight:400;color:#666;margin-left:4px">— el puntaje real siempre queda registrado</span>
+  </div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+    <div>
+      <label style="font-size:11px;color:#666;font-weight:600;display:block;margin-bottom:4px;text-transform:uppercase">Ajuste de bono</label>
+      <select id="bono-override-sel" onchange="aplicarOverrideBono()" style="width:100%;font-size:13px;padding:7px 10px;border:1px solid #EF9F27;border-radius:6px;background:white;outline:none">
+        <option value="">— Sin ajuste —</option>
+        <option value="bajar300">Bajar a Bono Regular ($300 MXN)</option>
+        <option value="bajar0">Retirar bono (Sin bono)</option>
+      </select>
+    </div>
+    <div>
+      <label style="font-size:11px;color:#666;font-weight:600;display:block;margin-bottom:4px;text-transform:uppercase">Motivo del ajuste <span style="color:#A32D2D">*</span></label>
+      <input type="text" id="bono-override-motivo" onchange="aplicarOverrideBono()" placeholder="Describe el motivo del ajuste…" style="width:100%;font-size:12px;padding:7px 10px;border:1px solid #EF9F27;border-radius:6px;outline:none">
     </div>
   </div>
 </div>
@@ -882,6 +904,111 @@ setTimeout(async()=>{
 // ============================================================
 // INIT
 // ============================================================
+function calcularSemana(){
+  // La semana va de Miércoles a Martes (según el sistema de bono)
+  // Busca el miércoles anterior o actual y el martes siguiente
+  const fechaStr = document.getElementById('f-fecha').value.trim();
+  let fecha;
+
+  // Intentar parsear fecha en formato dd/mm/aaaa o d/m/aaaa
+  if(fechaStr){
+    const partes = fechaStr.split('/');
+    if(partes.length===3){
+      const d=parseInt(partes[0]), m=parseInt(partes[1])-1, y=parseInt(partes[2]);
+      if(!isNaN(d)&&!isNaN(m)&&!isNaN(y)&&y>2000){
+        fecha=new Date(y,m,d);
+      }
+    }
+  }
+  if(!fecha||isNaN(fecha.getTime())) fecha=new Date(); // usar hoy si no hay fecha válida
+
+  // Calcular inicio de semana (Miércoles anterior o actual)
+  // 0=Dom,1=Lun,2=Mar,3=Mié,4=Jue,5=Vie,6=Sáb
+  const dia = fecha.getDay();
+  // Días desde el último miércoles (3)
+  const diasDesdeMier = (dia + 7 - 3) % 7;
+  const inicio = new Date(fecha);
+  inicio.setDate(fecha.getDate() - diasDesdeMier);
+  const fin = new Date(inicio);
+  fin.setDate(inicio.getDate() + 6); // martes siguiente
+
+  const fmt = d => d.getDate().toString().padStart(2,'0')+'/'+(d.getMonth()+1).toString().padStart(2,'0')+'/'+d.getFullYear();
+  const semanaTexto = fmt(inicio) + ' – ' + fmt(fin);
+
+  // Calcular número de semana del año
+  const primerDia = new Date(fecha.getFullYear(),0,1);
+  const numSemana = Math.ceil(((fecha-primerDia)/86400000 + primerDia.getDay()+1)/7);
+
+  document.getElementById('f-semana').value = semanaTexto;
+
+  const info = document.getElementById('semana-info');
+  if(info){
+    info.style.display='block';
+    info.innerHTML='<i class="ti ti-calendar-week"></i> Semana #'+numSemana+' del año — Mié '+fmt(inicio)+' al Mar '+fmt(fin);
+  }
+}
+
+// ============================================================
+// MENSAJES MOTIVACIONALES
+// ============================================================
+const MSGS_500 = [
+  {emoji:'🏆', titulo:'¡Bono de Excelencia alcanzado!', texto:'Excelente trabajo esta semana. Tu dedicación y profesionalismo se reflejan en cada punto de la evaluación. ¡Sigue así!'},
+  {emoji:'⭐', titulo:'¡Resultado sobresaliente!', texto:'Tu compromiso con el trabajo y el cuidado de los recursos de la empresa hacen la diferencia. ¡Felicidades, te lo ganaste!'},
+  {emoji:'🌟', titulo:'¡100% comprometido con la excelencia!', texto:'Semana impecable. El equipo de campo necesita supervisores como tú. ¡Gracias por tu esfuerzo y entrega!'},
+  {emoji:'🎯', titulo:'¡Meta alcanzada!', texto:'Superaste todos los criterios de evaluación. Tu trabajo es un ejemplo para el equipo. ¡Bien hecho!'},
+  {emoji:'💪', titulo:'¡Bono de Excelencia conquistado!', texto:'Tu disciplina, puntualidad y cuidado del vehículo hablan de un profesional de alto nivel. ¡Felicidades!'},
+];
+
+const MSGS_300 = [
+  {emoji:'👍', titulo:'¡Bono Regular alcanzado!', texto:'Buen trabajo esta semana. Con un poco más de atención en algunos puntos puedes llegar al bono de excelencia la próxima semana. ¡Tú puedes!'},
+  {emoji:'📈', titulo:'¡Vas por buen camino!', texto:'Lograste el bono esta semana. Revisa los puntos de mejora y la próxima semana apunta al bono de $500. ¡El potencial está ahí!'},
+  {emoji:'✅', titulo:'¡Bono conseguido!', texto:'Cumpliste con los criterios principales. Sigue trabajando en los detalles y el bono de excelencia estará a tu alcance. ¡Adelante!'},
+];
+
+const MSGS_SINBONO = [
+  {emoji:'💡', titulo:'Esta semana fue de aprendizaje', texto:'No alcanzamos el bono esta vez, pero cada evaluación es una oportunidad de mejorar. Identifica los puntos débiles y trabaja en ellos. ¡El siguiente bono puede ser tuyo!'},
+  {emoji:'🔄', titulo:'¡La próxima semana es una nueva oportunidad!', texto:'El bono es alcanzable con constancia y atención a los detalles. Revisa los criterios y empieza fuerte la próxima semana. ¡No te rindas!'},
+  {emoji:'🌱', titulo:'Cada semana es un nuevo inicio', texto:'Los mejores supervisores también han tenido semanas difíciles. Lo importante es levantarse, mejorar y volver más fuerte. ¡Tú tienes el potencial!'},
+];
+
+const MSGS_SUSPENDIDO = [
+  {emoji:'⚠️', titulo:'Bono suspendido esta semana', texto:'Sabemos que puedes hacerlo mejor. Atiende los puntos que generaron el incumplimiento y la próxima semana demuestra de qué estás hecho. ¡El equipo cuenta contigo!'},
+  {emoji:'🔧', titulo:'Momento de corregir y avanzar', texto:'Este resultado es una señal para reforzar los puntos pendientes. Con compromiso y atención, el bono de excelencia está al alcance. ¡Vamos con todo la próxima semana!'},
+];
+
+function updateMensajeMotivacional(bonoTag, sc, cancelaBono){
+  const box=document.getElementById('msg-motivacional');
+  const emoji=document.getElementById('msg-emoji');
+  const titulo=document.getElementById('msg-titulo');
+  const texto=document.getElementById('msg-texto');
+  if(!box)return;
+
+  if(sc===0){box.style.display='none';return;}
+
+  let msgs, bg, border, color;
+
+  if(cancelaBono||bonoTag==='suspendido'||bonoTag==='sinbono_ajustado'){
+    msgs=MSGS_SUSPENDIDO; bg='#FFF0F0'; border='#F0997B'; color='#791F1F';
+  }else if(bonoTag==='500'||bonoTag==='500'){
+    msgs=MSGS_500; bg='#EAF3DE'; border='#9FE1CB'; color='#27500A';
+  }else if(bonoTag==='300'||bonoTag==='300_ajustado'){
+    msgs=MSGS_300; bg='#EBF3FB'; border='#a8ccee'; color='#185FA5';
+  }else{
+    msgs=MSGS_SINBONO; bg='#F5F5F0'; border='#d0ccc4'; color='#555';
+  }
+
+  // Seleccionar mensaje aleatorio
+  const msg=msgs[Math.floor(Math.random()*msgs.length)];
+  box.style.background=bg;
+  box.style.border='1px solid '+border;
+  emoji.textContent=msg.emoji;
+  titulo.style.color=color;
+  titulo.textContent=msg.titulo;
+  texto.style.color=color;
+  texto.textContent=msg.texto;
+  box.style.display='block';
+}
+
 function initSelects(){
   // Supervisores
   const sN=document.getElementById('f-nombre');
@@ -897,6 +1024,7 @@ function initSelects(){
   EVALUADORES.forEach(e=>{const o=document.createElement('option');o.value=e.nombre;o.textContent=e.nombre+' — '+e.puesto;sE.appendChild(o);});
   // Fecha hoy
   document.getElementById('f-fecha').value=new Date().toLocaleDateString('es-MX');
+  calcularSemana(); // Auto-calcular semana al cargar
   // Filtros DB
   const fN=document.getElementById('flt-nombre');
   SUPERVISORES.forEach(p=>{const o=document.createElement('option');o.value=p.nombre;o.textContent=p.nombre;fN.appendChild(o);});
@@ -1042,9 +1170,41 @@ function buildInventario(gridId, items, prefix, resumId){
         <option value="na">N/A</option>
       </select>
       <textarea class="herr-obs" id="${prefix}-obs-${i}" rows="2" placeholder="Observación…"></textarea>
-      <span class="herr-status" id="${prefix}-st-${i}"></span>`;
+      <span class="herr-status" id="${prefix}-st-${i}"></span>
+      <div id="${prefix}-descuento-${i}" style="display:none;margin-top:6px;background:#FCEBEB;border:1px solid #F0997B;border-radius:5px;padding:6px 8px">
+        <div style="font-size:10px;font-weight:700;color:#791F1F;margin-bottom:4px"><i class="ti ti-receipt-tax"></i> Descuento vía nómina</div>
+        <div style="display:flex;gap:6px;align-items:center">
+          <div style="flex:1">
+            <input type="number" id="${prefix}-precio-${i}" min="0" step="0.01" placeholder="Valor mercado $" style="width:100%;font-size:11px;padding:4px 6px;border:1px solid #F0997B;border-radius:4px;outline:none" oninput="updateDescuento('${prefix}',${i})">
+          </div>
+          <div style="flex:1">
+            <select id="${prefix}-cuotas-${i}" onchange="updateDescuento('${prefix}',${i})" style="width:100%;font-size:11px;padding:4px 6px;border:1px solid #F0997B;border-radius:4px;outline:none;background:white">
+              <option value="">Cuotas</option>
+              <option value="1">1 quincena</option>
+              <option value="2">2 quincenas</option>
+              <option value="3">3 quincenas</option>
+              <option value="4">4 quincenas</option>
+            </select>
+          </div>
+        </div>
+        <div id="${prefix}-descuento-resumen-${i}" style="font-size:10px;color:#791F1F;margin-top:4px;font-weight:600"></div>
+      </div>`;
     grid.appendChild(div);
   });
+}
+
+function updateDescuento(prefix, i){
+  const precio=parseFloat(document.getElementById(prefix+'-precio-'+i).value)||0;
+  const cuotas=parseInt(document.getElementById(prefix+'-cuotas-'+i).value)||0;
+  const resumen=document.getElementById(prefix+'-descuento-resumen-'+i);
+  if(precio>0&&cuotas>0){
+    const porCuota=(precio/cuotas).toFixed(2);
+    resumen.textContent='Total: $'+precio.toFixed(2)+' MXN — $'+porCuota+' por quincena x '+cuotas+' quincena(s)';
+  }else if(precio>0){
+    resumen.textContent='Ingresa el número de cuotas';
+  }else{
+    resumen.textContent='';
+  }
 }
 
 function updateHerr(prefix, i, gridId, resumId){
@@ -1056,7 +1216,21 @@ function updateHerr(prefix, i, gridId, resumId){
   item.className='herr-item'+cls;
   st.className='herr-status'+(val==='presente'?' ok':val==='falta'?' falta':val==='noprop'?' noprop':'');
   st.textContent=val==='presente'?'✓ Presente':val==='falta'?'✗ Falta / Dañado':val==='noprop'?'⚠ No proporcionado':val==='na'?'N/A':'';
-  // actualizar resumen
+  // Mostrar/ocultar caja de descuento por nómina
+  const descBox=document.getElementById(prefix+'-descuento-'+i);
+  if(descBox){
+    descBox.style.display=val==='falta'?'block':'none';
+    if(val!=='falta'){
+      // Limpiar campos al cambiar estado
+      const precioEl=document.getElementById(prefix+'-precio-'+i);
+      const cuotasEl=document.getElementById(prefix+'-cuotas-'+i);
+      const resEl=document.getElementById(prefix+'-descuento-resumen-'+i);
+      if(precioEl)precioEl.value='';
+      if(cuotasEl)cuotasEl.value='';
+      if(resEl)resEl.textContent='';
+    }
+  }
+  // Actualizar resumen
   const items=prefix==='herr'?HERRAMIENTAS:BOTIQUIN;
   let pres=0,total=0;
   items.forEach((_,j)=>{const v=document.getElementById(prefix+'-'+j).value;if(v&&v!=='na')total++;if(v==='presente')pres++;});
@@ -1149,13 +1323,31 @@ function recalc(){
   ic.innerHTML=totalIncump>0?'<span style="color:#A32D2D">'+totalIncump+' incumplimiento(s)</span>':sc>0?'<span style="color:#3B6D11">Sin incumplimientos</span>':'';
   document.getElementById('btn-acta').style.display=(totalIncump>0||cancelaBono)?'flex':'none';
   window._lastCalc={total:sc,bonoTxt,incumplidos,cancelaBono,herrFalta,bonoTag,bonoTeoricoMXN};
+  updateMensajeMotivacional(bonoTag, sc, cancelaBono);
 
-  // Mostrar ajuste solo cuando hay bono $500 aprobado
+  // Mostrar ajuste para cualquier bono aprobado ($500 o $300)
   const overrideBox=document.getElementById('bono-override-box');
   if(overrideBox){
-    overrideBox.style.display=(bonoTag==='500'&&!cancelaBono)?'block':'none';
-    if(bonoTag!=='500'){
-      document.getElementById('bono-override-sel').value='';
+    const hayBono=(bonoTag==='500'||bonoTag==='300')&&!cancelaBono;
+    overrideBox.style.display=hayBono?'block':'none';
+    // Actualizar opciones según bono actual
+    const overrideSel=document.getElementById('bono-override-sel');
+    if(overrideSel){
+      // Guardar selección actual
+      const selActual=overrideSel.value;
+      overrideSel.innerHTML='<option value="">— Sin ajuste —</option>';
+      if(bonoTag==='500'){
+        overrideSel.innerHTML+='<option value="bajar300">Bajar a Bono Regular ($300 MXN)</option>';
+        overrideSel.innerHTML+='<option value="bajar0">Retirar bono (Sin bono)</option>';
+      }else if(bonoTag==='300'){
+        overrideSel.innerHTML+='<option value="bajar0">Retirar bono (Sin bono)</option>';
+      }
+      // Restaurar selección si sigue siendo válida
+      if(selActual&&overrideSel.querySelector('option[value="'+selActual+'"]'))
+        overrideSel.value=selActual;
+    }
+    if(!hayBono){
+      if(overrideSel)overrideSel.value='';
       document.getElementById('bono-override-motivo').value='';
     }
   }
@@ -1163,37 +1355,43 @@ function recalc(){
 
 function aplicarOverrideBono(){
   const sel=document.getElementById('bono-override-sel').value;
+  const motivo=document.getElementById('bono-override-motivo').value.trim();
   const br=document.getElementById('bono-result');
   const numEl=document.getElementById('score-num');
   const fill=document.getElementById('prog-fill');
   const c=window._lastCalc;
   if(!c)return;
 
+  const motivoTxt=motivo?' — '+motivo:'';
+
   if(sel==='bajar300'){
-    br.textContent='✓ Bono Regular: $300 MXN (ajustado por observación)';
+    br.textContent='✓ Bono Regular: $300 MXN (ajustado'+motivoTxt+')';
     br.className='bono bono-med';
     fill.style.background='#EF9F27';
     numEl.className='score-num amber';
-    window._lastCalc.bonoTag='300';
-    window._lastCalc.bonoTxt='$300 MXN (ajustado por observación)';
+    window._lastCalc.bonoTag='300_ajustado';
+    window._lastCalc.bonoTxt='$300 MXN ajustado — puntaje real: '+c.total+'/100'+motivoTxt;
     window._lastCalc.bonoTeoricoMXN=300;
   }else if(sel==='bajar0'){
-    br.textContent='Sin bono (retirado por observación)';
+    br.textContent='Sin bono (retirado'+motivoTxt+')';
     br.className='bono bono-no';
     fill.style.background='#E24B4A';
     numEl.className='score-num red';
-    window._lastCalc.bonoTag='sinbono';
-    window._lastCalc.bonoTxt='Sin bono (retirado por observación)';
+    window._lastCalc.bonoTag='sinbono_ajustado';
+    window._lastCalc.bonoTxt='Sin bono ajustado — puntaje real: '+c.total+'/100'+motivoTxt;
     window._lastCalc.bonoTeoricoMXN=0;
   }else{
-    // Restaurar original
-    br.textContent='✓ Bono aprobado: $500 MXN';
-    br.className='bono bono-ok';
-    fill.style.background='#639922';
-    numEl.className='score-num green';
-    window._lastCalc.bonoTag='500';
-    window._lastCalc.bonoTxt='✓ Bono aprobado: $500 MXN';
-    window._lastCalc.bonoTeoricoMXN=500;
+    // Restaurar original según puntaje real
+    const sc=c.total;
+    if(sc>=81){
+      br.textContent='✓ Bono aprobado: $500 MXN';br.className='bono bono-ok';
+      fill.style.background='#639922';numEl.className='score-num green';
+      window._lastCalc.bonoTag='500';window._lastCalc.bonoTxt='✓ Bono aprobado: $500 MXN';window._lastCalc.bonoTeoricoMXN=500;
+    }else{
+      br.textContent='✓ Bono aprobado: $300 MXN';br.className='bono bono-med';
+      fill.style.background='#EF9F27';numEl.className='score-num amber';
+      window._lastCalc.bonoTag='300';window._lastCalc.bonoTxt='✓ Bono aprobado: $300 MXN';window._lastCalc.bonoTeoricoMXN=300;
+    }
   }
 }
 
@@ -1233,7 +1431,9 @@ function getInventarioSnap(prefix, lista){
   return lista.map((nombre,i)=>({
     nombre,
     estado:document.getElementById(prefix+'-'+i).value||'',
-    obs:document.getElementById(prefix+'-obs-'+i).value.trim()||''
+    obs:document.getElementById(prefix+'-obs-'+i).value.trim()||'',
+    descuentoPrecio:parseFloat(document.getElementById(prefix+'-precio-'+i)&&document.getElementById(prefix+'-precio-'+i).value)||0,
+    descuentoCuotas:parseInt(document.getElementById(prefix+'-cuotas-'+i)&&document.getElementById(prefix+'-cuotas-'+i).value)||0
   }));
 }
 
@@ -1332,7 +1532,181 @@ function guardarEvaluacion(){
   }else{
     showSyncBar('error','Guardado solo en este dispositivo — configura Google Sheets para compartir',false);
   }
-  toast('✓ Evaluación guardada — '+fotos.length+' foto(s)');
+  toast('✓ Evaluación guardada — '+fotos.length+' foto(s). Generando PDF…');
+  // Auto-generar y descargar PDF después de guardar
+  setTimeout(()=>autoDescargarPDF(reg), 800);
+}
+
+function autoDescargarPDF(reg){
+  try{
+    const d=getDatos();
+    const c=window._lastCalc||{total:0,bonoTxt:'–',incumplidos:[],cancelaBono:false};
+    const fecha=new Date().toLocaleDateString('es-MX',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
+    const obsItems=getObsItems();
+
+    // Build criteria rows
+    let critRows='';
+    CRITERIOS.forEach(sec=>{
+      critRows+=`<tr><td colspan="6" style="background:#EBF3FB;font-weight:700;font-size:10px;padding:5px 8px;color:#185FA5">${sec.sec}</td></tr>`;
+      sec.items.forEach(item=>{
+        const v=getVal(item.id)||'–';
+        const badge=document.getElementById('s-'+item.id);
+        const est=badge?badge.textContent:'–';
+        const obs=obsItems[item.id]||'';
+        critRows+=`<tr><td style="font-size:10px;color:#999;width:36px">${item.id}</td>
+          <td style="font-size:10px">${item.crit}</td>
+          <td style="text-align:center;font-size:10px;width:38px">${item.peso}%</td>
+          <td style="text-align:center;font-size:11px;font-weight:700;width:36px">${v}</td>
+          <td style="font-size:10px;font-weight:700;color:${est.includes('Bien')?'#27500A':est.includes('Inc')?'#791F1F':'#888'};width:80px">${est}</td>
+          <td style="font-size:10px;color:#666;font-style:italic">${obs}</td></tr>`;
+      });
+    });
+
+    // Herramienta rows
+    let herrRows='',botRows='';
+    HERRAMIENTAS.forEach((h,i)=>{
+      const v=document.getElementById('herr-'+i).value||'—';
+      const obs=document.getElementById('herr-obs-'+i).value.trim();
+      const precio=document.getElementById('herr-precio-'+i).value;
+      const cuotas=document.getElementById('herr-cuotas-'+i).value;
+      const col=v==='presente'?'#27500A':v==='falta'?'#791F1F':v==='noprop'?'#854F0B':'#888';
+      const descInfo=v==='falta'&&precio?` — Descuento: $${parseFloat(precio).toFixed(2)} en ${cuotas} quincena(s)`:'';
+      herrRows+=`<tr><td style="font-size:10px">${h}</td><td style="font-size:10px;font-weight:700;color:${col}">${v}</td><td style="font-size:10px;color:#666">${obs}${descInfo}</td></tr>`;
+    });
+    BOTIQUIN.forEach((h,i)=>{
+      const v=document.getElementById('bot-'+i).value||'—';
+      const obs=document.getElementById('bot-obs-'+i).value.trim();
+      const col=v==='presente'?'#27500A':v==='falta'?'#791F1F':v==='noprop'?'#854F0B':'#888';
+      botRows+=`<tr><td style="font-size:10px">${h}</td><td style="font-size:10px;font-weight:700;color:${col}">${v}</td><td style="font-size:10px;color:#666">${obs}</td></tr>`;
+    });
+
+    // Incumplidos
+    let incumpHTML=c.incumplidos&&c.incumplidos.length>0?
+      `<div style="padding:8px 12px;background:#FCEBEB;border-radius:5px;border:1px solid #F0997B;margin:10px 0">
+        <div style="font-weight:700;color:#A32D2D;font-size:11px;margin-bottom:5px">⚠ Puntos incumplidos (${c.incumplidos.length})</div>
+        <ul style="margin:0;padding-left:16px">${c.incumplidos.map(i=>`<li style="font-size:10px;margin:2px 0">${i.id} — ${i.crit}${obsItems[i.id]?'<br><em>Obs: '+obsItems[i.id]+'</em>':''}</li>`).join('')}</ul>
+      </div>`:'';
+
+    // Override bono
+    const overrideMotivo=d.bonoOverrideMotivo||document.getElementById('bono-override-motivo').value.trim();
+    const overrideHTML=overrideMotivo?
+      `<div style="padding:8px 12px;background:#FFF8E8;border-radius:5px;border:1px solid #EF9F27;margin:8px 0;font-size:11px">
+        <strong style="color:#854F0B">Ajuste de bono:</strong> ${overrideMotivo}
+      </div>`:'';
+
+    // Fotos
+    let fotosHTML=fotos.length>0?
+      `<div style="margin-top:10px">
+        <div style="font-size:11px;font-weight:700;background:#185FA5;color:white;padding:4px 10px;border-radius:3px;margin-bottom:8px">Fotografías de evidencia (${fotos.length})</div>
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px">
+          ${fotos.map((f,i)=>`<div style="aspect-ratio:1;border-radius:4px;overflow:hidden;border:1px solid #ddd">
+            <img src="${f.dataUrl}" style="width:100%;height:100%;object-fit:cover">
+            <div style="font-size:9px;text-align:center;color:#888">Foto ${i+1}</div>
+          </div>`).join('')}
+        </div>
+      </div>`:'';
+
+    const obsGeneralHTML=d.obsGeneral?
+      `<div style="padding:8px 12px;background:#f9f9f9;border:1px solid #e0ddd4;border-radius:5px;margin:8px 0">
+        <div style="font-weight:700;color:#185FA5;font-size:11px;margin-bottom:3px">Observaciones generales</div>
+        <div style="font-size:11px">${d.obsGeneral.replace(/
+/g,'<br>')}</div>
+      </div>`:'';
+
+    const tc=c.bonoTxt.includes('500')?'#27500A':c.bonoTxt.includes('300')?'#633806':'#791F1F';
+    const bg=c.bonoTxt.includes('500')?'#EAF3DE':c.bonoTxt.includes('300')?'#FAEEDA':'#FCEBEB';
+
+    // Get logo
+    const logoEl=document.querySelector('.topbar img');
+    const logoSrc=logoEl?logoEl.src:'';
+
+    const html=`<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8">
+    <title>Evaluación — ${d.nombre} — ${d.semana}</title>
+    <style>
+      *{box-sizing:border-box;margin:0;padding:0}
+      body{font-family:Arial,sans-serif;font-size:11px;color:#222;padding:18px}
+      .top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px;padding-bottom:10px;border-bottom:2px solid #185FA5}
+      .top h1{font-size:14px;color:#185FA5;margin-bottom:2px}
+      .top p{font-size:10px;color:#666}
+      h2{font-size:11px;background:#185FA5;color:white;padding:4px 10px;margin:10px 0 5px;border-radius:3px}
+      table{width:100%;border-collapse:collapse;margin:4px 0}
+      th{background:#f0f4f8;padding:4px 7px;text-align:left;border:.5px solid #ccc;font-size:10px}
+      td{padding:4px 7px;border:.5px solid #ddd;vertical-align:top}
+      .score-sec{display:flex;align-items:center;gap:18px;padding:10px 14px;background:#f9f9f9;border:1px solid #ddd;border-radius:5px;margin:8px 0}
+      .score-big{font-size:32px;font-weight:700;color:${tc}}
+      .bono-pill{padding:5px 12px;border-radius:4px;font-size:12px;font-weight:700;background:${bg};color:${tc}}
+      .firmas{display:flex;justify-content:space-between;margin-top:32px}
+      .firma{width:44%;text-align:center}
+      .firma-line{border-top:1px solid #333;margin-bottom:4px;padding-top:4px}
+      footer{margin-top:14px;font-size:9px;color:#aaa;text-align:center;border-top:1px solid #eee;padding-top:6px}
+      @media print{@page{margin:1.5cm}body{padding:0}}
+    </style></head><body>
+    <div class="top">
+      <div style="display:flex;align-items:center;gap:12px">
+        ${logoSrc?`<img src="${logoSrc}" style="height:44px;width:auto">`:''}
+        <div><h1>Evaluación de Bono Semanal de Supervisores</h1>
+        <p>CONSOLIDACIÓN DE AGAVE S.A. DE C.V. | Dpto. de Campo | Magdalena, Jalisco</p></div>
+      </div>
+      <div style="font-size:10px;color:#888;text-align:right">${fecha}<br>Folio: ${reg.id}</div>
+    </div>
+    <h2>I. Datos del supervisor</h2>
+    <table><tr><th>Nombre</th><td>${d.nombre}</td><th>Puesto</th><td>${d.puesto}</td></tr>
+    <tr><th>Semana evaluada</th><td>${d.semana}</td><th>Camioneta / Placas</th><td>${d.cam} — ${d.placas}</td></tr>
+    <tr><th>Evaluador</th><td>${d.evaluador}</td><th>Rancho</th><td>[${d.rancho}] ${d.contrato}</td></tr>
+    <tr><th>Jefe área</th><td>${d.jefe}</td><th>Km / Fecha</th><td>${d.km} / ${d.fecha}</td></tr>
+    <tr><th>Negligencia</th><td colspan="3" style="font-weight:700;color:${d.negVal==='Si'?'#A32D2D':'#3B6D11'}">${d.negVal==='Si'?'SÍ — Bono suspendido':'No'}</td></tr></table>
+    <h2>II. Criterios de evaluación</h2>
+    <table><thead><tr><th>ID</th><th>Criterio</th><th>Peso</th><th>Resp.</th><th>Resultado</th><th>Observación</th></tr></thead>
+    <tbody>${critRows}</tbody></table>
+    ${incumpHTML}
+    <h2>III. Inventario de herramienta</h2>
+    <table><thead><tr><th>Herramienta</th><th style="width:100px">Estado</th><th>Obs. / Descuento</th></tr></thead><tbody>${herrRows}</tbody></table>
+    <h2>IV. Inventario de botiquín</h2>
+    <table><thead><tr><th>Ítem</th><th style="width:100px">Estado</th><th>Obs.</th></tr></thead><tbody>${botRows}</tbody></table>
+    ${obsGeneralHTML}
+    ${overrideHTML}
+    <h2>V. Resultado final</h2>
+    <div class="score-sec">
+      <div><div style="font-size:10px;color:#666;margin-bottom:2px">Puntaje real</div>
+      <div class="score-big">${c.total}<span style="font-size:14px;font-weight:400;color:#888">/100</span></div></div>
+      <div><div style="font-size:10px;color:#666;margin-bottom:4px">Resultado del bono</div>
+      <div class="bono-pill">${c.bonoTxt}</div></div>
+      <div style="flex:1;font-size:10px;color:#666">0–69 = Sin bono | 70–80 = $300 | 81–100 = $500<br>Incumplimiento = Bono suspendido (puntaje conservado)</div>
+    </div>
+    ${fotosHTML}
+    <div class="firmas">
+      <div class="firma"><div style="height:36px"></div><div class="firma-line"></div>
+      <strong>Firma del Evaluador</strong><div style="font-size:10px;margin-top:2px">${d.evaluador}</div></div>
+      <div class="firma"><div style="height:36px"></div><div class="firma-line"></div>
+      <strong>Firma del Supervisor Evaluado</strong><div style="font-size:10px;margin-top:2px">${d.nombre}</div></div>
+    </div>
+    <footer>Consolidación de Agave S.A. de C.V. | Folio: ${reg.id} | ${new Date().toLocaleString('es-MX')}</footer>
+    <script>
+      window.onload=function(){
+        window.print();
+        // Auto-cerrar después de imprimir/guardar
+        window.onafterprint=function(){window.close();};
+      };
+    <\/script></body></html>`;
+
+    // Abrir ventana de impresión (guardado como PDF)
+    const w=window.open('','_blank','width=960,height=730');
+    if(w){
+      w.document.write(html);
+      w.document.close();
+    }else{
+      // Fallback: descargar como archivo HTML
+      const b=new Blob([html],{type:'text/html;charset=utf-8'});
+      const a=document.createElement('a');
+      a.href=URL.createObjectURL(b);
+      a.download='Evaluacion_'+d.nombre.replace(/\s+/g,'_')+'_'+d.semana.replace(/[^\w]/g,'_')+'.html';
+      a.click();
+      toast('✓ PDF guardado como archivo');
+    }
+  }catch(err){
+    console.error('Error generando PDF:',err);
+    toast('⚠ No se pudo generar el PDF automático');
+  }
 }
 
 // ============================================================
@@ -1665,6 +2039,7 @@ function limpiarForm(){
   ['cam-info','parcela-info'].forEach(id=>{document.getElementById(id).style.display='none';});
   document.getElementById('neg-sel').value='No';
   document.getElementById('f-fecha').value=new Date().toLocaleDateString('es-MX');
+  calcularSemana();
   fotos=[];renderFotos();
   buildItems();buildHerramientas();recalc();
   toast('✓ Formulario limpiado — listo para nueva evaluación');
