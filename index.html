@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -1979,6 +1978,30 @@ document.addEventListener('DOMContentLoaded',()=>{
     };
     evalSel.parentNode.appendChild(b);
   }
+});
+</script>
+
+<script>
+window.CATALOGOS={supervisores:JSON.parse(localStorage.getItem('supervisores_extra')||'[]'),
+evaluadores:JSON.parse(localStorage.getItem('evaluadores_extra')||'[]')};
+function agregarSupervisor(){
+ const n=prompt('Nombre del supervisor');
+ if(!n)return;
+ CATALOGOS.supervisores.push({nombre:n,puesto:'SUPERVISOR'});
+ localStorage.setItem('supervisores_extra',JSON.stringify(CATALOGOS.supervisores));
+ alert('Supervisor agregado. Recarga la página para verlo en listas.');
+}
+function agregarEvaluador(){
+ const n=prompt('Nombre del evaluador');
+ if(!n)return;
+ CATALOGOS.evaluadores.push({nombre:n,puesto:'EVALUADOR'});
+ localStorage.setItem('evaluadores_extra',JSON.stringify(CATALOGOS.evaluadores));
+ alert('Evaluador agregado. Recarga la página para verlo en listas.');
+}
+document.addEventListener('DOMContentLoaded',()=>{
+ let b1=document.createElement('button');b1.type='button';b1.textContent='+ Supervisor';b1.onclick=agregarSupervisor;
+ let b2=document.createElement('button');b2.type='button';b2.textContent='+ Evaluador';b2.onclick=agregarEvaluador;
+ document.body.prepend(b2);document.body.prepend(b1);
 });
 </script>
 </body>
