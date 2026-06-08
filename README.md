@@ -2,7 +2,7 @@
 
 Sistema de evaluación de bono semanal para supervisores de campo.
 
-🌐 **App en línea:** https://ZonaMagdalena1.github.io/bonos-supervisores
+🌐 **App en línea:** [[https://ZonaMagdalena1.github.io/bonos-supervisores](https://zonamagdalena1.github.io/Bonos-Sup/)](https://zonamagdalena1.github.io/Bonos-Sup/)
 
 ## Características
 - Checklist completo de evaluación semanal
