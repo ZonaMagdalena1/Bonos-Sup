@@ -151,6 +151,19 @@ button.success:hover{background:#27500A}
   .item .peso,.item .badge{display:none}
   .score-bar{flex-direction:column;text-align:center}
   .stat-row{grid-template-columns:1fr 1fr}
+  /* Larger touch targets on mobile */
+  .field input,.field select,.field textarea{font-size:16px!important;padding:10px 12px}
+  button{padding:11px 18px;font-size:14px}
+  .herr-item select{font-size:15px;padding:8px 10px}
+  .item select,.item input[type=number]{font-size:15px;padding:7px 9px}
+  /* Card collapse toggle on mobile */
+  .card-title{cursor:pointer;user-select:none}
+  .card-title::after{content:'▲';margin-left:auto;font-size:10px;color:#aaa;transition:transform .2s}
+  .card.collapsed .card-title::after{content:'▼';transform:rotate(0deg)}
+  .card.collapsed > *:not(.card-title){display:none!important}
+  .stat-row{grid-template-columns:1fr 1fr!important}
+  /* DB table scroll hint */
+  .tbl-wrap{-webkit-overflow-scrolling:touch}
 }
 </style>
 </head>
@@ -214,25 +227,31 @@ button.success:hover{background:#27500A}
 
 <!-- ===== TAB EVALUACIÓN ===== -->
 <div id="tab-eval" class="tab-pane active">
-<div class="card" style="margin-top:10px">
-  <div class="card-title"><i class="ti ti-adjustments"></i> Tipo de checklist</div>
-  <div class="grid2">
-    <div class="field">
-      <label>Selecciona tipo de evaluación</label>
-      <select id="tipo-checklist" onchange="toggleChecklistType()">
-        <option value="camioneta">Checklist Camionetas</option>
-        <option value="tractor">Checklist Tractoristas</option>
-      </select>
-    </div>
-  </div>
-</div>
-
 
 <div class="card">
-  <div class="card-title"><i class="ti ti-user-check"></i> Datos del supervisor y vehículo</div>
+  <!-- SELECTOR MODO -->
+  <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;padding:10px 14px;background:#EBF3FB;border-radius:8px;border:1px solid #a8ccee">
+    <i class="ti ti-toggle-left" style="font-size:20px;color:#185FA5"></i>
+    <span style="font-size:12px;font-weight:600;color:#185FA5">Tipo de evaluación:</span>
+    <select id="modo-eval" onchange="cambiarModo()" style="font-size:13px;padding:6px 12px;border:1px solid #185FA5;border-radius:6px;background:white;color:#185FA5;font-weight:600;outline:none;cursor:pointer">
+      <option value="camioneta">🚛 Supervisor de Campo — Camioneta</option>
+      <option value="tractor">🚜 Tractorista — Tractor</option>
+    </select>
+    <span id="modo-badge" style="font-size:11px;padding:3px 10px;border-radius:12px;background:#185FA5;color:white;font-weight:600">SUPERVISOR</span>
+  </div>
+
+  <div class="card-title" id="card-datos-title"><i class="ti ti-user-check"></i> <span id="card-datos-lbl">Datos del supervisor y vehículo</span></div>
+
+  <!-- FILA 1 COMPARTIDA -->
   <div class="grid3" style="margin-bottom:12px">
-    <div class="field"><label>Supervisor evaluado</label>
-      <select id="f-nombre" onchange="onPersonaChange('supervisor')"><option value="">— Selecciona supervisor —</option></select></div>
+    <div class="field">
+      <label id="lbl-nombre">Supervisor evaluado</label>
+      <select id="f-nombre" onchange="onPersonaChange()"><option value="">— Selecciona —</option></select>
+      <div style="margin-top:5px;display:none" id="nuevo-person-box">
+        <input type="text" id="nuevo-person-input" placeholder="Nombre completo del nuevo tractorista…" style="font-size:12px;padding:6px 10px;border:1px solid #EF9F27;border-radius:6px;width:100%">
+        <button onclick="agregarTractorista()" style="margin-top:4px;padding:4px 10px;font-size:11px;background:#3B6D11;color:white;border:none;border-radius:5px;cursor:pointer;width:100%"><i class="ti ti-plus"></i> Agregar tractorista</button>
+      </div>
+    </div>
     <div class="field"><label>Puesto</label><input type="text" id="f-puesto" readonly placeholder="Se llena automático"></div>
     <div class="field"><label>Semana evaluada</label>
       <div style="display:flex;gap:6px;align-items:center">
@@ -242,23 +261,83 @@ button.success:hover{background:#27500A}
       <div id="semana-info" style="font-size:11px;color:#185FA5;margin-top:3px;display:none"></div>
     </div>
   </div>
-  <div class="grid3" style="margin-bottom:12px">
+
+  <!-- FILA CAMIONETA (se oculta en modo tractor) -->
+  <div id="row-camioneta" class="grid3" style="margin-bottom:12px">
     <div class="field"><label>No. Económico / Camioneta</label>
       <select id="f-cam" onchange="onCamChange()"><option value="">— Selecciona camioneta —</option></select>
       <div class="info-chip" id="cam-info"></div></div>
     <div class="field"><label>Modelo / Año</label><input type="text" id="f-modelo" readonly placeholder="Se llena automático"></div>
     <div class="field"><label>Placas</label><input type="text" id="f-placas" readonly placeholder="Se llena automático"></div>
   </div>
+
+  <!-- FILA TRACTOR (se oculta en modo camioneta) -->
+  <div id="row-tractor" class="grid3" style="margin-bottom:12px;display:none">
+    <div class="field"><label>No. Económico / Tractor</label>
+      <select id="f-tractor" onchange="onTractorChange()"><option value="">— Selecciona tractor —</option></select>
+      <div class="info-chip" id="tractor-info"></div></div>
+    <div class="field"><label>Modelo del tractor</label><input type="text" id="f-modelo-tractor" readonly placeholder="Se llena automático"></div>
+    <div class="field"><label>Horometro actual (hrs)</label><input type="text" id="f-horometro" placeholder="Ej. 1,245 hrs"></div>
+  </div>
+
+  <!-- FILA TRACTOR — Tipo actividad + Estándares -->
+  <div id="row-tractor-act" style="display:none;margin-bottom:12px">
+    <div class="grid2">
+      <div class="field">
+        <label>Tipo de actividad de la semana</label>
+        <select id="f-tipo-actividad" onchange="onActividadChange()" style="font-size:13px;padding:8px 10px;border:1px solid #d0ccc4;border-radius:6px;width:100%;background:white;outline:none">
+          <option value="">— Selecciona la actividad principal —</option>
+          <option value="preparacion">🌱 Preparación de parcela (Bono: $500 Exc / $300 Reg)</option>
+          <option value="acarreo">💧 Acarreo de pipas (Bono: $365 Exc / $255 Reg)</option>
+        </select>
+        <div id="actividad-info" class="info-chip" style="display:none"></div>
+      </div>
+      <div class="field">
+        <label>Actividad específica (para estándar de rendimiento)</label>
+        <select id="f-actividad-especifica" style="font-size:13px;padding:8px 10px;border:1px solid #d0ccc4;border-radius:6px;width:100%;background:white;outline:none">
+          <option value="">— Selecciona para ver estándar —</option>
+          <option value="0">Retiro de agave con escrepa (0.75 ha/día)</option>
+          <option value="1">Subsuelo sencillo (1.5 ha/día)</option>
+          <option value="2">Subsuelo cruzado (2.0 ha/día)</option>
+          <option value="3">Rastra (3.5 ha/día)</option>
+          <option value="4">Zanjas / Cunetas (80 ml/día)</option>
+        </select>
+      </div>
+    </div>
+    <!-- Tabla de estándares consultable -->
+    <div id="std-box" style="display:none;margin-top:8px;background:#f5f5f0;border:1px solid #e0ddd4;border-radius:8px;padding:10px 14px;font-size:11px">
+      <strong style="color:#185FA5;display:block;margin-bottom:6px"><i class="ti ti-info-circle"></i> Estándar de referencia seleccionado</strong>
+      <div id="std-content"></div>
+    </div>
+    <button onclick="toggleStdTable()" style="margin-top:8px;padding:5px 12px;font-size:11px;background:#EBF3FB;color:#185FA5;border:1px solid #a8ccee;border-radius:5px;cursor:pointer">
+      <i class="ti ti-table"></i> Ver tabla completa de estándares
+    </button>
+    <div id="std-table-full" style="display:none;margin-top:8px;overflow-x:auto">
+      <table style="width:100%;font-size:11px;border-collapse:collapse;background:white;border-radius:8px;overflow:hidden;border:1px solid #e0ddd4">
+        <thead><tr style="background:#185FA5;color:white">
+          <th style="padding:7px 10px;text-align:left">Actividad</th>
+          <th style="padding:7px 10px">Estándar</th>
+          <th style="padding:7px 10px;background:#3B6D11">8–10 Excelente</th>
+          <th style="padding:7px 10px;background:#854F0B">5–7 Aceptable</th>
+          <th style="padding:7px 10px;background:#A32D2D">0–4 Deficiente</th>
+        </tr></thead>
+        <tbody id="std-table-body"></tbody>
+      </table>
+      <div style="font-size:10px;color:#888;margin-top:5px;padding:4px 6px;background:#FFF8E8;border-radius:4px;border-left:3px solid #EF9F27">⚠ Tolerancias aceptadas únicamente por: topografía compleja, humedad excesiva o dureza inusual del suelo. Deben documentarse con justificante escrito.</div>
+    </div>
+  </div>
+
+  <!-- FILA 3 COMPARTIDA -->
   <div class="grid3">
     <div class="field"><label>Parcela / Rancho</label>
       <select id="f-lugar" onchange="onParcelaChange()"><option value="">— Selecciona parcela —</option></select>
       <div class="info-chip" id="parcela-info"></div></div>
-    <div class="field"><label>Jefe de área</label><input type="text" id="f-jefe" readonly placeholder="Se llena automático"></div>
+    <div class="field"><label id="lbl-jefe">Jefe de área</label><input type="text" id="f-jefe" readonly placeholder="Se llena automático"></div>
     <div class="field"><label>Evaluador</label>
       <select id="f-eval"><option value="">— Selecciona evaluador —</option></select></div>
   </div>
   <div class="grid2" style="margin-top:10px">
-    <div class="field"><label>Kilometraje actual</label><input type="text" id="f-km" placeholder="Km actuales del vehículo"></div>
+    <div class="field"><label id="lbl-km">Kilometraje actual</label><input type="text" id="f-km" placeholder="Km actuales del vehículo"></div>
     <div class="field"><label>Fecha de evaluación</label><input type="text" id="f-fecha" placeholder="dd/mm/aaaa" oninput="calcularSemana()"></div>
   </div>
 </div>
@@ -269,6 +348,7 @@ button.success:hover{background:#27500A}
   <div id="items-container"></div>
 </div>
 
+<div id="card-herr-cam">
 <div class="card">
   <div class="card-title"><i class="ti ti-tool"></i> Inventario de herramienta
     <span style="margin-left:auto;font-size:11px;font-weight:400;color:#888" id="herr-resumen">— / — items presentes</span></div>
@@ -280,13 +360,23 @@ button.success:hover{background:#27500A}
     <span style="margin-left:auto;font-size:11px;font-weight:400;color:#888" id="bot-resumen">— / — items presentes</span></div>
   <div class="herr-grid" id="bot-grid"></div>
 </div>
+</div>
+
+<div id="card-herr-tractor" style="display:none">
+<div class="card">
+  <div class="card-title"><i class="ti ti-tools"></i> Inventario de herramienta del tractor
+    <span style="margin-left:auto;font-size:11px;font-weight:400;color:#888" id="herrt-resumen">— / — items presentes</span></div>
+  <div style="font-size:11px;color:#791F1F;background:#FAECE7;border:1px solid #F0997B;border-radius:5px;padding:6px 10px;margin-bottom:8px"><i class="ti ti-alert-triangle"></i> <strong>Política:</strong> Si falta una herramienta se suspende el bono y se realiza descuento vía nómina al valor de mercado.</div>
+  <div class="herr-grid" id="herrt-grid"></div>
+</div>
+</div>
 
 <div class="card">
   <div class="card-title"><i class="ti ti-alert-triangle"></i> Cláusula de paro por negligencia</div>
   <div id="neg-box" class="neg-box ok">
     <div class="neg-label g" id="neg-titulo"><i class="ti ti-circle-check"></i> Sin negligencia registrada</div>
     <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
-      <label style="font-size:13px;color:#555">¿Hubo paro por negligencia o falla no reportada a tiempo?</label>
+      <label id="lbl-neg" style="font-size:13px;color:#555">¿Hubo paro por negligencia o falla no reportada a tiempo?</label>
       <select id="neg-sel" onchange="recalc()" style="font-size:13px;padding:6px 10px;border:1px solid #d0ccc4;border-radius:6px;background:white;min-width:220px;outline:none">
         <option value="No">No</option>
         <option value="Si">Sí — Bono SUSPENDIDO (puntaje se conserva)</option>
@@ -317,712 +407,6 @@ button.success:hover{background:#27500A}
     <button class="cam-btn" onclick="abrirCamara('user')"><i class="ti ti-camera-selfie"></i> Cámara frontal</button>
   </div>
   <div class="foto-grid" id="foto-grid"></div>
-</div>
-
-
-
-
-  <div class="grid2" style="margin-bottom:12px">
-    <div class="field">
-      <label>Actividad realizada</label>
-      <select>
-        <option>Subsuelo sencillo</option>
-        <option>Subsuelo cruzado</option>
-        <option>Rastra</option>
-        <option>Zanjas / Cunetas</option>
-        <option>Retiro de agave</option>
-      </select>
-    </div>
-
-    <div class="field">
-      <label>Rendimiento semanal</label>
-      <input type="number" placeholder="0 - 10">
-    </div>
-  </div>
-
-  <div class="section-title"><i class="ti ti-checklist"></i> Checklist tractorista</div>
-  <div class="herr-grid">
-
-    <div class="herr-item">
-      <label>BONO SEMANAL DE TRACTORISTAS  –  CONSOLIDACIÓN DE AGAVE S.A. DE C.V.</label>
-      <select>
-        <option value="">Seleccionar</option>
-        <option>Cumple</option>
-        <option>No cumple</option>
-        <option>N/A</option>
-      </select>
-    </div>
-
-    <div class="herr-item">
-      <label>Nombre:</label>
-      <select>
-        <option value="">Seleccionar</option>
-        <option>Cumple</option>
-        <option>No cumple</option>
-        <option>N/A</option>
-      </select>
-    </div>
-
-    <div class="herr-item">
-      <label>SALVADOR CORREA GONZALEZ</label>
-      <select>
-        <option value="">Seleccionar</option>
-        <option>Cumple</option>
-        <option>No cumple</option>
-        <option>N/A</option>
-      </select>
-    </div>
-
-    <div class="herr-item">
-      <label>Puesto:</label>
-      <select>
-        <option value="">Seleccionar</option>
-        <option>Cumple</option>
-        <option>No cumple</option>
-        <option>N/A</option>
-      </select>
-    </div>
-
-    <div class="herr-item">
-      <label>TRACTORISTA</label>
-      <select>
-        <option value="">Seleccionar</option>
-        <option>Cumple</option>
-        <option>No cumple</option>
-        <option>N/A</option>
-      </select>
-    </div>
-
-    <div class="herr-item">
-      <label>Semana evaluada:</label>
-      <select>
-        <option value="">Seleccionar</option>
-        <option>Cumple</option>
-        <option>No cumple</option>
-        <option>N/A</option>
-      </select>
-    </div>
-
-    <div class="herr-item">
-      <label>No. Tractor:</label>
-      <select>
-        <option value="">Seleccionar</option>
-        <option>Cumple</option>
-        <option>No cumple</option>
-        <option>N/A</option>
-      </select>
-    </div>
-
-    <div class="herr-item">
-      <label>Modelo:</label>
-      <select>
-        <option value="">Seleccionar</option>
-        <option>Cumple</option>
-        <option>No cumple</option>
-        <option>N/A</option>
-      </select>
-    </div>
-
-    <div class="herr-item">
-      <label>NEW HOLLAND</label>
-      <select>
-        <option value="">Seleccionar</option>
-        <option>Cumple</option>
-        <option>No cumple</option>
-        <option>N/A</option>
-      </select>
-    </div>
-
-    <div class="herr-item">
-      <label>Evaluador:</label>
-      <select>
-        <option value="">Seleccionar</option>
-        <option>Cumple</option>
-        <option>No cumple</option>
-        <option>N/A</option>
-      </select>
-    </div>
-
-    <div class="herr-item">
-      <label>Jorge López Carranza</label>
-      <select>
-        <option value="">Seleccionar</option>
-        <option>Cumple</option>
-        <option>No cumple</option>
-        <option>N/A</option>
-      </select>
-    </div>
-
-    <div class="herr-item">
-      <label>Parcela:</label>
-      <select>
-        <option value="">Seleccionar</option>
-        <option>Cumple</option>
-        <option>No cumple</option>
-        <option>N/A</option>
-      </select>
-    </div>
-
-    <div class="herr-item">
-      <label>Horometro:</label>
-      <select>
-        <option value="">Seleccionar</option>
-        <option>Cumple</option>
-        <option>No cumple</option>
-        <option>N/A</option>
-      </select>
-    </div>
-
-    <div class="herr-item">
-      <label>Tipo de actividad de la semana:</label>
-      <select>
-        <option value="">Seleccionar</option>
-        <option>Cumple</option>
-        <option>No cumple</option>
-        <option>N/A</option>
-      </select>
-    </div>
-
-    <div class="herr-item">
-      <label>Preparación de tierras / Acarreo de pipas</label>
-      <select>
-        <option value="">Seleccionar</option>
-        <option>Cumple</option>
-        <option>No cumple</option>
-        <option>N/A</option>
-      </select>
-    </div>
-
-    <div class="herr-item">
-      <label>Criterio / Indicador</label>
-      <select>
-        <option value="">Seleccionar</option>
-        <option>Cumple</option>
-        <option>No cumple</option>
-        <option>N/A</option>
-      </select>
-    </div>
-
-    <div class="herr-item">
-      <label>Tipo</label>
-      <select>
-        <option value="">Seleccionar</option>
-        <option>Cumple</option>
-        <option>No cumple</option>
-        <option>N/A</option>
-      </select>
-    </div>
-
-    <div class="herr-item">
-      <label>Calificación</label>
-      <select>
-        <option value="">Seleccionar</option>
-        <option>Cumple</option>
-        <option>No cumple</option>
-        <option>N/A</option>
-      </select>
-    </div>
-
-    <div class="herr-item">
-      <label>Peso %</label>
-      <select>
-        <option value="">Seleccionar</option>
-        <option>Cumple</option>
-        <option>No cumple</option>
-        <option>N/A</option>
-      </select>
-    </div>
-
-    <div class="herr-item">
-      <label>Resultado
-ponderado</label>
-      <select>
-        <option value="">Seleccionar</option>
-        <option>Cumple</option>
-        <option>No cumple</option>
-        <option>N/A</option>
-      </select>
-    </div>
-
-    <div class="herr-item">
-      <label>1.  ASISTENCIA</label>
-      <select>
-        <option value="">Seleccionar</option>
-        <option>Cumple</option>
-        <option>No cumple</option>
-        <option>N/A</option>
-      </select>
-    </div>
-
-    <div class="herr-item">
-      <label>Asistió todos los días del periodo semanal (0 faltas, sin excepciones)</label>
-      <select>
-        <option value="">Seleccionar</option>
-        <option>Cumple</option>
-        <option>No cumple</option>
-        <option>N/A</option>
-      </select>
-    </div>
-
-    <div class="herr-item">
-      <label>✔ Sí  /  ✘ No</label>
-      <select>
-        <option value="">Seleccionar</option>
-        <option>Cumple</option>
-        <option>No cumple</option>
-        <option>N/A</option>
-      </select>
-    </div>
-
-    <div class="herr-item">
-      <label>2.- HORARIO</label>
-      <select>
-        <option value="">Seleccionar</option>
-        <option>Cumple</option>
-        <option>No cumple</option>
-        <option>N/A</option>
-      </select>
-    </div>
-
-    <div class="herr-item">
-      <label>Cumplió turno completo asignado con mínimo 8 horas efectivas en parcela</label>
-      <select>
-        <option value="">Seleccionar</option>
-        <option>Cumple</option>
-        <option>No cumple</option>
-        <option>N/A</option>
-      </select>
-    </div>
-
-  </div>
-</div>
-
-
-<div class="card" id="tractor-module" style="display:none; margin-top:15px">
-  <div class="card-title">
-    <i class="ti ti-tractor"></i>
-    Evaluación Tractoristas
-  </div>
-
-  <div class="grid3">
-    <div class="field">
-      <label>Tractorista</label>
-      <select id="tractorista-select">
-        <option value="">Seleccionar tractorista</option>
-        <option>Juan Perez</option>
-        <option>Pedro Gonzalez</option>
-        <option>Ramon Lopez</option>
-        <option>Carlos Hernandez</option>
-      </select>
-    </div>
-
-    <div class="field">
-      <label>Número de tractor</label>
-      <select id="tractor-select">
-        <option value="">Seleccionar tractor</option>
-        <option>TR-01</option>
-        <option>TR-02</option>
-        <option>TR-03</option>
-        <option>TR-04</option>
-      </select>
-    </div>
-
-    <div class="field">
-      <label>Horómetro</label>
-      <input type="number" placeholder="Horas del tractor">
-    </div>
-  </div>
-
-  <div class="grid3" style="margin-top:10px">
-    <div class="field">
-      <label>Actividad realizada</label>
-      <select>
-        <option>Subsuelo sencillo</option>
-        <option>Subsuelo cruzado</option>
-        <option>Rastra</option>
-        <option>Zanjas / Cunetas</option>
-        <option>Retiro de agave</option>
-      </select>
-    </div>
-
-    <div class="field">
-      <label>Rendimiento</label>
-      <input type="number" placeholder="0-10">
-    </div>
-
-    <div class="field">
-      <label>Velocidad GPS</label>
-      <input type="text" placeholder="Km/h">
-    </div>
-  </div>
-
-  <div class="section-title" style="margin-top:18px">
-    Checklist complementario tractoristas
-  </div>
-
-  <div class="herr-grid">
-
-    <div class="herr-item">
-      <label>BONO SEMANAL DE TRACTORISTAS  –  CONSOLIDACIÓN DE AGAVE S.A. DE C.V.</label>
-      <select>
-        <option value="">Seleccionar</option>
-        <option>Cumple</option>
-        <option>No cumple</option>
-        <option>No aplica</option>
-      </select>
-    </div>
-
-    <div class="herr-item">
-      <label>Nombre:</label>
-      <select>
-        <option value="">Seleccionar</option>
-        <option>Cumple</option>
-        <option>No cumple</option>
-        <option>No aplica</option>
-      </select>
-    </div>
-
-    <div class="herr-item">
-      <label>SALVADOR CORREA GONZALEZ</label>
-      <select>
-        <option value="">Seleccionar</option>
-        <option>Cumple</option>
-        <option>No cumple</option>
-        <option>No aplica</option>
-      </select>
-    </div>
-
-    <div class="herr-item">
-      <label>Puesto:</label>
-      <select>
-        <option value="">Seleccionar</option>
-        <option>Cumple</option>
-        <option>No cumple</option>
-        <option>No aplica</option>
-      </select>
-    </div>
-
-    <div class="herr-item">
-      <label>TRACTORISTA</label>
-      <select>
-        <option value="">Seleccionar</option>
-        <option>Cumple</option>
-        <option>No cumple</option>
-        <option>No aplica</option>
-      </select>
-    </div>
-
-    <div class="herr-item">
-      <label>Semana evaluada:</label>
-      <select>
-        <option value="">Seleccionar</option>
-        <option>Cumple</option>
-        <option>No cumple</option>
-        <option>No aplica</option>
-      </select>
-    </div>
-
-    <div class="herr-item">
-      <label>No. Tractor:</label>
-      <select>
-        <option value="">Seleccionar</option>
-        <option>Cumple</option>
-        <option>No cumple</option>
-        <option>No aplica</option>
-      </select>
-    </div>
-
-    <div class="herr-item">
-      <label>Modelo:</label>
-      <select>
-        <option value="">Seleccionar</option>
-        <option>Cumple</option>
-        <option>No cumple</option>
-        <option>No aplica</option>
-      </select>
-    </div>
-
-    <div class="herr-item">
-      <label>NEW HOLLAND</label>
-      <select>
-        <option value="">Seleccionar</option>
-        <option>Cumple</option>
-        <option>No cumple</option>
-        <option>No aplica</option>
-      </select>
-    </div>
-
-    <div class="herr-item">
-      <label>Evaluador:</label>
-      <select>
-        <option value="">Seleccionar</option>
-        <option>Cumple</option>
-        <option>No cumple</option>
-        <option>No aplica</option>
-      </select>
-    </div>
-
-    <div class="herr-item">
-      <label>Jorge López Carranza</label>
-      <select>
-        <option value="">Seleccionar</option>
-        <option>Cumple</option>
-        <option>No cumple</option>
-        <option>No aplica</option>
-      </select>
-    </div>
-
-    <div class="herr-item">
-      <label>Parcela:</label>
-      <select>
-        <option value="">Seleccionar</option>
-        <option>Cumple</option>
-        <option>No cumple</option>
-        <option>No aplica</option>
-      </select>
-    </div>
-
-    <div class="herr-item">
-      <label>Horometro:</label>
-      <select>
-        <option value="">Seleccionar</option>
-        <option>Cumple</option>
-        <option>No cumple</option>
-        <option>No aplica</option>
-      </select>
-    </div>
-
-    <div class="herr-item">
-      <label>Tipo de actividad de la semana:</label>
-      <select>
-        <option value="">Seleccionar</option>
-        <option>Cumple</option>
-        <option>No cumple</option>
-        <option>No aplica</option>
-      </select>
-    </div>
-
-    <div class="herr-item">
-      <label>Preparación de tierras / Acarreo de pipas</label>
-      <select>
-        <option value="">Seleccionar</option>
-        <option>Cumple</option>
-        <option>No cumple</option>
-        <option>No aplica</option>
-      </select>
-    </div>
-
-    <div class="herr-item">
-      <label>Criterio / Indicador</label>
-      <select>
-        <option value="">Seleccionar</option>
-        <option>Cumple</option>
-        <option>No cumple</option>
-        <option>No aplica</option>
-      </select>
-    </div>
-
-    <div class="herr-item">
-      <label>Calificación</label>
-      <select>
-        <option value="">Seleccionar</option>
-        <option>Cumple</option>
-        <option>No cumple</option>
-        <option>No aplica</option>
-      </select>
-    </div>
-
-    <div class="herr-item">
-      <label>Peso %</label>
-      <select>
-        <option value="">Seleccionar</option>
-        <option>Cumple</option>
-        <option>No cumple</option>
-        <option>No aplica</option>
-      </select>
-    </div>
-
-    <div class="herr-item">
-      <label>Resultado
-ponderado</label>
-      <select>
-        <option value="">Seleccionar</option>
-        <option>Cumple</option>
-        <option>No cumple</option>
-        <option>No aplica</option>
-      </select>
-    </div>
-
-    <div class="herr-item">
-      <label>1.  ASISTENCIA</label>
-      <select>
-        <option value="">Seleccionar</option>
-        <option>Cumple</option>
-        <option>No cumple</option>
-        <option>No aplica</option>
-      </select>
-    </div>
-
-    <div class="herr-item">
-      <label>Asistió todos los días del periodo semanal (0 faltas, sin excepciones)</label>
-      <select>
-        <option value="">Seleccionar</option>
-        <option>Cumple</option>
-        <option>No cumple</option>
-        <option>No aplica</option>
-      </select>
-    </div>
-
-    <div class="herr-item">
-      <label>✔ Sí  /  ✘ No</label>
-      <select>
-        <option value="">Seleccionar</option>
-        <option>Cumple</option>
-        <option>No cumple</option>
-        <option>No aplica</option>
-      </select>
-    </div>
-
-    <div class="herr-item">
-      <label>2.- HORARIO</label>
-      <select>
-        <option value="">Seleccionar</option>
-        <option>Cumple</option>
-        <option>No cumple</option>
-        <option>No aplica</option>
-      </select>
-    </div>
-
-    <div class="herr-item">
-      <label>Cumplió turno completo asignado con mínimo 8 horas efectivas en parcela</label>
-      <select>
-        <option value="">Seleccionar</option>
-        <option>Cumple</option>
-        <option>No cumple</option>
-        <option>No aplica</option>
-      </select>
-    </div>
-
-    <div class="herr-item">
-      <label>Sin excesos de velocidad constantes o reiterados (verificado por GPS)</label>
-      <select>
-        <option value="">Seleccionar</option>
-        <option>Cumple</option>
-        <option>No cumple</option>
-        <option>No aplica</option>
-      </select>
-    </div>
-
-    <div class="herr-item">
-      <label>3.  RENDIMIENTO</label>
-      <select>
-        <option value="">Seleccionar</option>
-        <option>Cumple</option>
-        <option>No cumple</option>
-        <option>No aplica</option>
-      </select>
-    </div>
-
-    <div class="herr-item">
-      <label>Escala  0 – 10</label>
-      <select>
-        <option value="">Seleccionar</option>
-        <option>Cumple</option>
-        <option>No cumple</option>
-        <option>No aplica</option>
-      </select>
-    </div>
-
-    <div class="herr-item">
-      <label>4.  EVALUACIÓN ESTÉTICA DEL TRACTOR</label>
-      <select>
-        <option value="">Seleccionar</option>
-        <option>Cumple</option>
-        <option>No cumple</option>
-        <option>No aplica</option>
-      </select>
-    </div>
-
-    <div class="herr-item">
-      <label>Tractor limpio, sin basura ni acumulación excesiva de tierra</label>
-      <select>
-        <option value="">Seleccionar</option>
-        <option>Cumple</option>
-        <option>No cumple</option>
-        <option>No aplica</option>
-      </select>
-    </div>
-
-    <div class="herr-item">
-      <label>Sin golpes ni daños atribuibles a negligencia del operador</label>
-      <select>
-        <option value="">Seleccionar</option>
-        <option>Cumple</option>
-        <option>No cumple</option>
-        <option>No aplica</option>
-      </select>
-    </div>
-
-    <div class="herr-item">
-      <label>Faros, calaveras y luces completamente funcionales</label>
-      <select>
-        <option value="">Seleccionar</option>
-        <option>Cumple</option>
-        <option>No cumple</option>
-        <option>No aplica</option>
-      </select>
-    </div>
-
-    <div class="herr-item">
-      <label>5.  HERRAMIENTAS DEL TRACTOR</label>
-      <select>
-        <option value="">Seleccionar</option>
-        <option>Cumple</option>
-        <option>No cumple</option>
-        <option>No aplica</option>
-      </select>
-    </div>
-
-    <div class="herr-item">
-      <label>Llave perica 12" y 15 "</label>
-      <select>
-        <option value="">Seleccionar</option>
-        <option>Cumple</option>
-        <option>No cumple</option>
-        <option>No aplica</option>
-      </select>
-    </div>
-
-    <div class="herr-item">
-      <label>Marro 3lb</label>
-      <select>
-        <option value="">Seleccionar</option>
-        <option>Cumple</option>
-        <option>No cumple</option>
-        <option>No aplica</option>
-      </select>
-    </div>
-
-    <div class="herr-item">
-      <label>Pinzas de presión 12"</label>
-      <select>
-        <option value="">Seleccionar</option>
-        <option>Cumple</option>
-        <option>No cumple</option>
-        <option>No aplica</option>
-      </select>
-    </div>
-
-  </div>
-
-  <div class="card" style="margin-top:18px">
-    <div class="card-title">
-      Observaciones tractorista
-    </div>
-
-    <textarea style="width:100%;min-height:100px;border-radius:10px;padding:10px"
-    placeholder="Agregar observaciones, daños, negligencias o comentarios"></textarea>
-  </div>
 </div>
 
 <div class="score-bar">
@@ -1070,16 +454,19 @@ ponderado</label>
 
 <!-- ===== TAB BASE DE DATOS ===== -->
 <div id="tab-db" class="tab-pane">
-<div class="stat-row">
+<div class="stat-row" style="grid-template-columns:repeat(5,1fr)">
   <div class="stat-card"><div class="sv" id="stat-total">0</div><div class="sl">Total evaluaciones</div></div>
   <div class="stat-card"><div class="sv" id="stat-bono500" style="color:#3B6D11">0</div><div class="sl">Bono $500 MXN</div></div>
   <div class="stat-card"><div class="sv" id="stat-bono300" style="color:#854F0B">0</div><div class="sl">Bono $300 MXN</div></div>
   <div class="stat-card"><div class="sv" id="stat-suspendido" style="color:#A32D2D">0</div><div class="sl">Bono suspendido</div></div>
+  <div class="stat-card"><div class="sv" id="stat-promedio" style="color:#185FA5">—</div><div class="sl">Puntaje promedio</div></div>
 </div>
 <div class="card">
   <div class="card-title"><i class="ti ti-database"></i> Consulta de evaluaciones
     <button style="margin-left:auto;padding:5px 12px;font-size:12px" onclick="sincronizarAhora()"><i class="ti ti-refresh"></i> Sincronizar</button>
     <button style="padding:5px 12px;font-size:12px" onclick="exportarCSV()"><i class="ti ti-file-spreadsheet"></i> Exportar CSV</button>
+    <button style="padding:5px 12px;font-size:12px;background:#EBF3FB;color:#185FA5;border-color:#a8ccee" onclick="exportarJSON()"><i class="ti ti-file-download"></i> Respaldo JSON</button>
+    <label style="padding:5px 12px;font-size:12px;border:1px solid #9FE1CB;background:#E1F5EE;color:#27500A;border-radius:7px;cursor:pointer;display:flex;align-items:center;gap:6px;font-weight:500;font-family:Arial,sans-serif"><i class="ti ti-file-upload"></i> Importar JSON<input type="file" id="import-json-input" accept=".json" style="display:none" onchange="importarJSON(event)"></label>
     <button style="padding:5px 12px;font-size:12px;color:#A32D2D;border-color:#F0997B" onclick="limpiarBD()"><i class="ti ti-trash"></i> Limpiar BD</button>
   </div>
   <div class="db-filters">
@@ -1183,12 +570,12 @@ function out(o){return ContentService.createTextOutput(JSON.stringify(o)).setMim
   </div>
 </div>
 
-<nav style="display:none;position:fixed;bottom:0;left:0;right:0;background:white;border-top:1px solid #e0ddd4;z-index:100;padding:8px 0 env(safe-area-inset-bottom)" id="mobile-nav">
+<nav style="display:none;position:fixed;bottom:0;left:0;right:0;background:white;border-top:2px solid #e0ddd4;z-index:100;padding:6px 0 env(safe-area-inset-bottom);box-shadow:0 -2px 12px rgba(0,0,0,.08)" id="mobile-nav">
   <div style="display:flex;justify-content:space-around">
-    <button onclick="showTab('eval',event)" style="flex:1;border:none;background:none;padding:8px 4px;font-size:10px;color:#185FA5;display:flex;flex-direction:column;align-items:center;gap:3px;font-family:Arial,sans-serif"><i class="ti ti-clipboard-list" style="font-size:22px"></i>Evaluar</button>
-    <button onclick="showTab('db',event)" style="flex:1;border:none;background:none;padding:8px 4px;font-size:10px;color:#666;display:flex;flex-direction:column;align-items:center;gap:3px;font-family:Arial,sans-serif"><i class="ti ti-database" style="font-size:22px"></i>Base de datos</button>
-    <button onclick="abrirCamara('environment')" style="flex:1;border:none;background:none;padding:8px 4px;font-size:10px;color:#666;display:flex;flex-direction:column;align-items:center;gap:3px;font-family:Arial,sans-serif"><i class="ti ti-camera" style="font-size:22px"></i>Evidencia</button>
-    <button onclick="guardarEvaluacion()" style="flex:1;border:none;background:none;padding:8px 4px;font-size:10px;color:#3B6D11;display:flex;flex-direction:column;align-items:center;gap:3px;font-family:Arial,sans-serif"><i class="ti ti-device-floppy" style="font-size:22px"></i>Guardar</button>
+    <button id="mnav-eval" onclick="showTab('eval',event);setMNav('eval')" style="flex:1;border:none;background:none;padding:8px 4px;font-size:10px;color:#185FA5;display:flex;flex-direction:column;align-items:center;gap:3px;font-family:Arial,sans-serif;font-weight:600"><i class="ti ti-clipboard-list" style="font-size:24px"></i>Evaluar</button>
+    <button id="mnav-db" onclick="showTab('db',event);setMNav('db')" style="flex:1;border:none;background:none;padding:8px 4px;font-size:10px;color:#888;display:flex;flex-direction:column;align-items:center;gap:3px;font-family:Arial,sans-serif"><i class="ti ti-database" style="font-size:24px"></i>Base de datos</button>
+    <button onclick="abrirCamara('environment')" style="flex:1;border:none;background:none;padding:8px 4px;font-size:10px;color:#888;display:flex;flex-direction:column;align-items:center;gap:3px;font-family:Arial,sans-serif"><i class="ti ti-camera" style="font-size:24px"></i>Evidencia</button>
+    <button onclick="guardarEvaluacion()" style="flex:1;border:none;background:#3B6D11;border-radius:10px;margin:4px 6px;padding:8px 4px;font-size:10px;color:white;display:flex;flex-direction:column;align-items:center;gap:3px;font-family:Arial,sans-serif;font-weight:600"><i class="ti ti-device-floppy" style="font-size:24px"></i>Guardar</button>
   </div>
 </nav>
 <style>@media(max-width:640px){#mobile-nav{display:block!important}.container{padding-bottom:80px}.tabs{display:none}}</style>
@@ -1342,6 +729,71 @@ const EVALUADORES=[
   {nombre:"LEONEL GUZMAN MENDOZA",puesto:"MTTO TALLER OFICINA MAGDALENA"}
 ];
 const SUPERVISORES=PERSONAL.filter(p=>["SUPERVISOR","JEFE DE AREA","COORDINADOR DE CULTIVO","FITOSANITARIO"].includes(p.puesto));
+
+// ── TRACTORES ─────────────────────────────────────────────────
+const TRACTORES=[
+  {eco:"CAT-01",modelo:"New Holland TC35DA",serie:"G609841",hp:"90 H.P."},
+  {eco:"CAT-04",modelo:"KUBOTA M8540",serie:"66330",hp:"85 H.P."},
+  {eco:"CAT-05",modelo:"KUBOTA M8540",serie:"66281",hp:"85 H.P."},
+  {eco:"CAT-07",modelo:"New Holland 6610S",serie:"S35551M",hp:"90 H.P."},
+  {eco:"CAT-08",modelo:"New Holland 6610S",serie:"S35912M",hp:"90 H.P."},
+  {eco:"CAT-09",modelo:"New Holland TD85F",serie:"50280",hp:"80 H.P."},
+  {eco:"CAT-10",modelo:"New Holland Workmaster 40",serie:"10311",hp:"40 H.P."},
+  {eco:"CAT-13",modelo:"New Holland Workmaster 40",serie:"10189",hp:"40 H.P."},
+  {eco:"CAT-14",modelo:"New Holland Workmaster 40",serie:"10308",hp:"40 H.P."},
+  {eco:"CAT-15",modelo:"New Holland Workmaster 40",serie:"10303",hp:"40 H.P."},
+  {eco:"CAT-16",modelo:"New Holland Workmaster 40",serie:"310206",hp:"40 H.P."},
+  {eco:"CAT-19",modelo:"New Holland 7610S",serie:"S507223M",hp:"105 H.P."},
+  {eco:"CAT-20",modelo:"New Holland TD85F",serie:"NH10071M",hp:"110 H.P."},
+  {eco:"CAT-21",modelo:"New Holland TD90F",serie:"ZNAB50183",hp:"90 H.P."}
+];
+// ── TRACTORISTAS ───────────────────────────────────────────────
+let TRACTORISTAS_LIST=[
+  {nombre:"SALVADOR CORREA GONZALEZ",puesto:"TRACTORISTA"},
+  {nombre:"HOMERO GALLEGOS NAVARRO",puesto:"TRACTORISTA"},
+  {nombre:"BALTAZAR PALOS RIVERA",puesto:"TRACTORISTA"},
+  {nombre:"JOSE VENTURA FLORES CORTES",puesto:"TRACTORISTA"}
+];
+try{const t=localStorage.getItem('tractoristas_extra');if(t)TRACTORISTAS_LIST=[...TRACTORISTAS_LIST,...JSON.parse(t)];}catch(e){}
+function saveTractoristas(){try{const base=["SALVADOR CORREA GONZALEZ","HOMERO GALLEGOS NAVARRO","BALTAZAR PALOS RIVERA","JOSE VENTURA FLORES CORTES"];const extras=TRACTORISTAS_LIST.filter(t=>!base.includes(t.nombre));localStorage.setItem('tractoristas_extra',JSON.stringify(extras));}catch(e){}}
+
+// ── CRITERIOS TRACTORISTA ──────────────────────────────────────
+const CRITERIOS_TRACTOR=[
+  {sec:"1. Asistencia",icon:"ti-calendar-check",items:[
+    {id:"t1.1",crit:"Asistió todos los días del periodo semanal (0 faltas, sin excepciones)",tipo:"sinno",peso:20,cancela:false}
+  ]},
+  {sec:"2. Horario y velocidad",icon:"ti-clock",items:[
+    {id:"t2.1",crit:"Cumplió turno completo con mínimo 8 horas efectivas en parcela",tipo:"sinno",peso:15,cancela:false},
+    {id:"t2.2",crit:"Sin excesos de velocidad constantes o reiterados (verificado por GPS)",tipo:"sinno",peso:5,cancela:false}
+  ]},
+  {sec:"3. Rendimiento",icon:"ti-tractor",items:[
+    {id:"t3.1",crit:"Rendimiento conforme al estándar de la actividad asignada del periodo",tipo:"escala",peso:25,cancela:false}
+  ]},
+  {sec:"4. Evaluación estética del tractor 🚜",icon:"ti-settings-2",items:[
+    {id:"t4.1",crit:"Tractor limpio, sin basura ni acumulación excesiva de tierra",tipo:"sinno",peso:4,cancela:false},
+    {id:"t4.2",crit:"Sin golpes ni daños atribuibles a negligencia del operador",tipo:"sinno",peso:4,cancela:false},
+    {id:"t4.3",crit:"Faros, calaveras y luces completamente funcionales",tipo:"sinno",peso:4,cancela:false}
+  ]},
+  {sec:"6. Mantenimiento del tractor",icon:"ti-engine",items:[
+    {id:"t6.1",crit:"Reporte fotográfico semanal de puntos de engrasado enviado a coordinación",tipo:"sinno",peso:3,cancela:false},
+    {id:"t6.2",crit:"Revisión diaria de nivel y estado de aceite y anticongelante reportada",tipo:"sinno",peso:5,cancela:false},
+    {id:"t6.3",crit:"Estado y presión de llantas + brazos de levante revisados y reportados",tipo:"sinno",peso:4,cancela:false},
+    {id:"t6.4",crit:"Pernos adecuados para el uso de implementos verificados",tipo:"sinno",peso:3,cancela:false}
+  ]}
+];
+// ── HERRAMIENTAS TRACTORISTA ───────────────────────────────────
+const HERRAMIENTAS_TRACTOR=["Llave perica 12\"","Llave perica 15\"","Marro 3lb","Pinzas de presión 12\"","Desarmador plano","Desarmador cruz","Pinzas electricista 9\"","Juego de franelas","Cepillo"];
+// ── TABLA DE ESTÁNDARES DE RENDIMIENTO ────────────────────────
+const ESTANDARES_TRACTOR=[
+  {actividad:"Retiro de agave con escrepa",estandar:"0.75 ha/día",ex:"≥ 0.75 ha/día",acep:"0.55–0.74 ha/día",def:"< 0.55 ha/día"},
+  {actividad:"Subsuelo sencillo",estandar:"1.5 ha/día",ex:"≥ 1.5 ha/día",acep:"1.1–1.49 ha/día",def:"< 1.1 ha/día"},
+  {actividad:"Subsuelo cruzado",estandar:"2.0 ha/día",ex:"≥ 2.0 ha/día",acep:"1.5–1.99 ha/día",def:"< 1.5 ha/día"},
+  {actividad:"Rastra",estandar:"3.5 ha/día",ex:"≥ 3.5 ha/día",acep:"2.7–3.49 ha/día",def:"< 2.7 ha/día"},
+  {actividad:"Zanjas / Cunetas",estandar:"80 ml/día",ex:"≥ 80 ml/día",acep:"56–76 ml/día",def:"< 48 ml/día"}
+];
+// ── HOROMETRO / TIPO ACTIVIDAD en estado ──────────────────────
+let modoEval='camioneta'; // 'camioneta' | 'tractor'
+
 const HERRAMIENTAS=["Gato hidráulico","Cruceta","Triángulo de seguridad","Compresor","Eslingas para remolcar","Cables pasa corriente","Cepillo / escobeta / brocha","Franelas de limpieza","Extintor","Pinzas","Llaves (juego completo)","Desarmadores (juego)","Estuche de herramienta completo"];
 const BOTIQUIN=["Mochila botiquín","Vendas","Gasas","Curitas","Agua oxigenada","Jabón neutro para heridas","Tijeras punta redonda","Cinta de curación","Lava ojos","Agua para lavado de ojos","Pomada de árnica"];
 const CRITERIOS=[
@@ -1371,6 +823,11 @@ const CRITERIOS=[
     {id:"5.1",crit:"Niveles de fluidos correctos y reportados (aceite, anticongelante, hidráulico, frenos)",tipo:"sinno",peso:6,cancela:false},
     {id:"5.2",crit:"Estado de llantas reportado y en condiciones adecuadas",tipo:"sinno",peso:6,cancela:false},
     {id:"5.3",crit:"Sin excesos de velocidad constantes o reiterados (verificado por GPS)",tipo:"sinno",peso:6,cancela:false}
+  ]},
+  {sec:"6. Comunicación y reporte de actividades",icon:"ti-message-report",items:[
+    {id:"6.1",crit:"Envío puntual del reporte de actividades diario (WhatsApp / sistema antes de las 4 p.m.)",tipo:"escala",peso:4,cancela:false},
+    {id:"6.2",crit:"Respuesta oportuna a mensajes del jefe de área (máx. 30 min en horario laboral)",tipo:"sinno",peso:3,cancela:false},
+    {id:"6.3",crit:"Notificación inmediata de incidencias: accidentes, daños, paros, situaciones de riesgo",tipo:"sinno",peso:3,cancela:true}
   ]}
 ];
 
@@ -1510,18 +967,83 @@ function updateMensajeMotivacional(bonoTag,sc,cancelaBono){
 // INIT SELECTS
 // ============================================================
 function initSelects(){
-  const sN=document.getElementById('f-nombre');SUPERVISORES.forEach(p=>{const o=document.createElement('option');o.value=p.nombre;o.textContent=p.nombre+' ('+p.puesto+')';sN.appendChild(o);});
+  // Supervisores
+  const sN=document.getElementById('f-nombre');
+  SUPERVISORES.forEach(p=>{const o=document.createElement('option');o.value=p.nombre;o.textContent=p.nombre+' ('+p.puesto+')';sN.appendChild(o);});
+  // Camionetas
   const sC=document.getElementById('f-cam');CAMIONETAS.forEach(c=>{const o=document.createElement('option');o.value=c.eco;o.textContent=c.eco+' — '+c.modelo+' '+c.anio+' ('+c.placas+')';sC.appendChild(o);});
+  // Tractores
+  const sT=document.getElementById('f-tractor');TRACTORES.forEach(t=>{const o=document.createElement('option');o.value=t.eco;o.textContent=t.eco+' — '+t.modelo+' ('+t.hp+')';sT.appendChild(o);});
+  // Parcelas
   const sL=document.getElementById('f-lugar');PARCELAS.forEach(p=>{const o=document.createElement('option');o.value=p.rancho;o.textContent='['+p.rancho+'] '+p.contrato;sL.appendChild(o);});
+  // Evaluadores
   const sE=document.getElementById('f-eval');EVALUADORES.forEach(e=>{const o=document.createElement('option');o.value=e.nombre;o.textContent=e.nombre+' — '+e.puesto;sE.appendChild(o);});
   document.getElementById('f-fecha').value=new Date().toLocaleDateString('es-MX');calcularSemana();
+  // Filtros BD
   const fN=document.getElementById('flt-nombre');SUPERVISORES.forEach(p=>{const o=document.createElement('option');o.value=p.nombre;o.textContent=p.nombre;fN.appendChild(o);});
+  TRACTORISTAS_LIST.forEach(p=>{const o=document.createElement('option');o.value=p.nombre;o.textContent=p.nombre+' (Tractorista)';fN.appendChild(o);});
   const fP=document.getElementById('flt-parcela');PARCELAS.forEach(p=>{const o=document.createElement('option');o.value=p.rancho;o.textContent='['+p.rancho+'] '+p.contrato.substring(0,35);fP.appendChild(o);});
   if(GS_URL){const u2=document.getElementById('cfg-url2');if(u2)u2.value=GS_URL;}
+  // Llenar tabla estándares
+  const tb=document.getElementById('std-table-body');if(tb){ESTANDARES_TRACTOR.forEach(e=>{const tr=document.createElement('tr');tr.innerHTML=`<td style="padding:6px 10px;border-bottom:1px solid #f0ede6">${e.actividad}</td><td style="padding:6px 10px;text-align:center;border-bottom:1px solid #f0ede6;font-weight:600">${e.estandar}</td><td style="padding:6px 10px;text-align:center;border-bottom:1px solid #f0ede6;color:#27500A;font-size:10px">${e.ex}</td><td style="padding:6px 10px;text-align:center;border-bottom:1px solid #f0ede6;color:#854F0B;font-size:10px">${e.acep}</td><td style="padding:6px 10px;text-align:center;border-bottom:1px solid #f0ede6;color:#A32D2D;font-size:10px">${e.def}</td>`;tb.appendChild(tr);});};
+  // Actividad selector → mostrar estándar
+  document.getElementById('f-actividad-especifica').addEventListener('change',function(){
+    const i=this.value,box=document.getElementById('std-box'),ct=document.getElementById('std-content');if(i===''){box.style.display='none';return;}const e=ESTANDARES_TRACTOR[parseInt(i)];if(!e){box.style.display='none';return;}
+    box.style.display='block';ct.innerHTML=`<strong>${e.actividad}</strong> — Estándar: <strong>${e.estandar}</strong><br><span style="color:#27500A">✓ Excelente (8–10): ${e.ex}</span> &nbsp;|&nbsp; <span style="color:#854F0B">Aceptable (5–7): ${e.acep}</span> &nbsp;|&nbsp; <span style="color:#A32D2D">✗ Deficiente (0–4): ${e.def}</span>`;
+  });
 }
-function onPersonaChange(tipo){
-  if(tipo==='supervisor'){const v=document.getElementById('f-nombre').value;const p=PERSONAL.find(x=>x.nombre===v);document.getElementById('f-puesto').value=p?p.puesto:'';}
+function toggleStdTable(){const t=document.getElementById('std-table-full');t.style.display=t.style.display==='none'?'block':'none';}
+
+// ============================================================
+// CAMBIAR MODO (camioneta <-> tractor)
+// ============================================================
+function cambiarModo(){
+  modoEval=document.getElementById('modo-eval').value;
+  const esT=modoEval==='tractor';
+  // Badge
+  const badge=document.getElementById('modo-badge');badge.textContent=esT?'TRACTORISTA':'SUPERVISOR';badge.style.background=esT?'#3B6D11':'#185FA5';
+  // Card titulo
+  document.getElementById('card-datos-lbl').textContent=esT?'Datos del tractorista y tractor':'Datos del supervisor y vehículo';
+  // Filas específicas
+  document.getElementById('row-camioneta').style.display=esT?'none':'grid';
+  document.getElementById('row-tractor').style.display=esT?'grid':'none';
+  document.getElementById('row-tractor-act').style.display=esT?'block':'none';
+  document.getElementById('card-herr-cam').style.display=esT?'none':'block';
+  document.getElementById('card-herr-tractor').style.display=esT?'block':'none';
+  // Labels
+  document.getElementById('lbl-nombre').textContent=esT?'Tractorista':'Supervisor evaluado';
+  document.getElementById('lbl-km').textContent=esT?'Horometro / Kilometraje':'Kilometraje actual';
+  document.getElementById('lbl-neg').textContent=esT?'¿Hubo paro por negligencia, mal uso o falla no reportada del tractor/implemento?':'¿Hubo paro por negligencia o falla no reportada a tiempo?';
+  // Reconstruir selector de personas
+  const sN=document.getElementById('f-nombre');sN.innerHTML='<option value="">— Selecciona —</option>';
+  const lista=esT?TRACTORISTAS_LIST:SUPERVISORES;
+  lista.forEach(p=>{const o=document.createElement('option');o.value=p.nombre;o.textContent=p.nombre+(p.puesto?' ('+p.puesto+')':'');sN.appendChild(o);});
+  if(esT){const oNuevo=document.createElement('option');oNuevo.value='__nuevo__';oNuevo.textContent='➕ Agregar nuevo tractorista…';sN.appendChild(oNuevo);}
+  document.getElementById('f-nombre').value='';document.getElementById('f-puesto').value='';
+  document.getElementById('nuevo-person-box').style.display='none';
+  buildItems();buildHerramientas();recalc();
 }
+function onPersonaChange(){
+  const v=document.getElementById('f-nombre').value;
+  if(v==='__nuevo__'){document.getElementById('nuevo-person-box').style.display='block';document.getElementById('f-nombre').value='';return;}
+  document.getElementById('nuevo-person-box').style.display='none';
+  const lista=modoEval==='tractor'?TRACTORISTAS_LIST:PERSONAL;
+  const p=lista.find(x=>x.nombre===v);
+  document.getElementById('f-puesto').value=p?p.puesto:'';
+}
+function agregarTractorista(){
+  const inp=document.getElementById('nuevo-person-input'),nombre=inp.value.trim().toUpperCase();
+  if(!nombre){toast('⚠ Escribe el nombre del tractorista');return;}
+  if(TRACTORISTAS_LIST.find(t=>t.nombre===nombre)){toast('⚠ El tractorista ya existe en la lista');return;}
+  TRACTORISTAS_LIST.push({nombre,puesto:'TRACTORISTA'});saveTractoristas();
+  // Actualizar select
+  const sN=document.getElementById('f-nombre');const o=document.createElement('option');o.value=nombre;o.textContent=nombre+' (TRACTORISTA)';
+  sN.insertBefore(o,sN.lastElementChild);sN.value=nombre;
+  document.getElementById('f-puesto').value='TRACTORISTA';inp.value='';
+  document.getElementById('nuevo-person-box').style.display='none';
+  toast('✓ Tractorista agregado: '+nombre);
+}
+
 const MODELOS_SIN_LONA=['HILUX','MITSUBISHI'];
 function onCamChange(){
   const v=document.getElementById('f-cam').value,c=CAMIONETAS.find(x=>x.eco===v),info=document.getElementById('cam-info');
@@ -1544,6 +1066,18 @@ function onCamChange(){
     const nota=document.getElementById('nota-lona');if(nota)nota.remove();
   }
 }
+function onTractorChange(){
+  const v=document.getElementById('f-tractor').value,t=TRACTORES.find(x=>x.eco===v),info=document.getElementById('tractor-info');
+  if(t){document.getElementById('f-modelo-tractor').value=t.modelo;info.style.display='block';info.innerHTML='<i class="ti ti-settings-2"></i> Serie: '+t.serie+' | '+t.hp;recalc();}
+  else{document.getElementById('f-modelo-tractor').value='';info.style.display='none';}
+}
+function onActividadChange(){
+  const v=document.getElementById('f-tipo-actividad').value,info=document.getElementById('actividad-info');
+  if(v==='preparacion'){info.style.display='block';info.innerHTML='<i class="ti ti-info-circle"></i> <strong>Preparación de parcela:</strong> Bono excelente $500 | Regular $300';}
+  else if(v==='acarreo'){info.style.display='block';info.innerHTML='<i class="ti ti-info-circle"></i> <strong>Acarreo de pipas:</strong> Bono excelente $365 | Regular $255';}
+  else{info.style.display='none';}
+  recalc();
+}
 function onParcelaChange(){
   const v=document.getElementById('f-lugar').value,p=PARCELAS.find(x=>x.rancho===v),info=document.getElementById('parcela-info');
   if(p){document.getElementById('f-jefe').value=p.jefe;info.style.display='block';info.innerHTML='<i class="ti ti-user"></i> Jefe: '+p.jefe+' | '+p.has+' ha | '+p.inv.toLocaleString()+' plantas';}
@@ -1555,7 +1089,8 @@ function onParcelaChange(){
 // ============================================================
 function buildItems(){
   const c=document.getElementById('items-container');c.innerHTML='';
-  CRITERIOS.forEach(sec=>{
+  const lista=modoEval==='tractor'?CRITERIOS_TRACTOR:CRITERIOS;
+  lista.forEach(sec=>{
     const st=document.createElement('div');st.className='section-title';st.innerHTML='<i class="ti '+sec.icon+'"></i> '+sec.sec;c.appendChild(st);
     sec.items.forEach(item=>{
       const row=document.createElement('div');row.className='item';
@@ -1570,8 +1105,12 @@ function buildItems(){
 // BUILD HERRAMIENTAS
 // ============================================================
 function buildHerramientas(){
-  buildInventario('herr-grid',HERRAMIENTAS,'herr','herr-resumen');
-  buildInventario('bot-grid',BOTIQUIN,'bot','bot-resumen');
+  if(modoEval==='tractor'){
+    buildInventario('herrt-grid',HERRAMIENTAS_TRACTOR,'herrt','herrt-resumen');
+  } else {
+    buildInventario('herr-grid',HERRAMIENTAS,'herr','herr-resumen');
+    buildInventario('bot-grid',BOTIQUIN,'bot','bot-resumen');
+  }
 }
 function buildInventario(gridId,items,prefix,resumId){
   const grid=document.getElementById(gridId);grid.innerHTML='';
@@ -1609,8 +1148,8 @@ function updateHerr(prefix,i,gridId,resumId){
   st.className='herr-status'+(val==='presente'?' ok':val==='falta'?' falta':'');
   st.textContent=val==='presente'?'✓ Presente':val==='falta'?'✗ Falta / Dañado':val==='noprop'?'⚠ No proporcionado':val==='na'?'N/A':'';
   const descBox=document.getElementById(prefix+'-descuento-'+i);if(descBox)descBox.style.display=val==='falta'?'block':'none';
-  const items2=prefix==='herr'?HERRAMIENTAS:BOTIQUIN;let pres=0,total=0;
-  items2.forEach((_,j)=>{const v=document.getElementById(prefix+'-'+j).value;if(v&&v!=='na')total++;if(v==='presente')pres++;});
+  const items2=prefix==='herr'?HERRAMIENTAS:prefix==='bot'?BOTIQUIN:HERRAMIENTAS_TRACTOR;let pres=0,total=0;
+  items2.forEach((_,j)=>{const v=(document.getElementById(prefix+'-'+j)||{}).value;if(v&&v!=='na')total++;if(v==='presente')pres++;});
   document.getElementById(resumId).textContent=pres+' / '+total+' ítems presentes';
 }
 
@@ -1619,16 +1158,20 @@ function updateHerr(prefix,i,gridId,resumId){
 // ============================================================
 function getVal(id){const el=document.getElementById('r-'+id);return el?el.value||null:null;}
 function hayIncumpHerramienta(){
-  for(let i=0;i<HERRAMIENTAS.length;i++)if(document.getElementById('herr-'+i).value==='falta')return true;
-  for(let i=0;i<BOTIQUIN.length;i++)if(document.getElementById('bot-'+i).value==='falta')return true;
+  if(modoEval==='tractor'){
+    for(let i=0;i<HERRAMIENTAS_TRACTOR.length;i++){const el=document.getElementById('herrt-'+i);if(el&&el.value==='falta')return true;}
+    return false;
+  }
+  for(let i=0;i<HERRAMIENTAS.length;i++)if(document.getElementById('herr-'+i)&&document.getElementById('herr-'+i).value==='falta')return true;
+  for(let i=0;i<BOTIQUIN.length;i++)if(document.getElementById('bot-'+i)&&document.getElementById('bot-'+i).value==='falta')return true;
   return false;
 }
 function recalc(){
   let total=0,incumplidos=[],cancelaBono=false,totalPosible=0;
-  CRITERIOS.forEach(sec=>{
+  const lista=modoEval==='tractor'?CRITERIOS_TRACTOR:CRITERIOS;
+  lista.forEach(sec=>{
     sec.items.forEach(item=>{
       const v=getVal(item.id);const badge=document.getElementById('s-'+item.id);
-      // N/A o vacío = cumplido (suma peso completo, cuenta en el total posible)
       totalPosible+=item.peso;
       if(!v||v==='NA'){
         badge.className='badge bien';badge.textContent='N/A ✓';total+=item.peso;return;
@@ -1647,14 +1190,19 @@ function recalc(){
   const neg=document.getElementById('neg-sel').value,negBox=document.getElementById('neg-box'),negTit=document.getElementById('neg-titulo');
   if(neg==='Si'){negBox.className='neg-box alerta';negTit.className='neg-label r';negTit.innerHTML='<i class="ti ti-alert-triangle"></i> Negligencia declarada — bono SUSPENDIDO';cancelaBono=true;}
   else{negBox.className='neg-box ok';negTit.className='neg-label g';negTit.innerHTML='<i class="ti ti-circle-check"></i> Sin negligencia registrada';}
-  // Normalizar a 100: puntaje = (obtenido / posible) * 100
   const sc=totalPosible>0?Math.round((total/totalPosible)*100):0;
   document.getElementById('score-num').textContent=sc;
   const fill=document.getElementById('prog-fill');fill.style.width=Math.min(sc,100)+'%';
   let bonoTxt='',bonoClass='',bonoTag='sinbono',bonoTeoricoMXN=0;
+  // Escala de bono según modo y tipo actividad
+  let bonoCom=500,bonoReg=300;
+  if(modoEval==='tractor'){
+    const act=document.getElementById('f-tipo-actividad')?document.getElementById('f-tipo-actividad').value:'';
+    if(act==='acarreo'){bonoCom=365;bonoReg=255;}
+  }
   if(cancelaBono){bonoTxt='⛔ BONO SUSPENDIDO — Puntaje registrado: '+sc+'/100';bonoClass='bono-no';fill.style.background='#E24B4A';document.getElementById('score-num').className='score-num red';bonoTag='suspendido';}
-  else if(sc>=81){bonoTxt='✓ Bono aprobado: $500 MXN';bonoClass='bono-ok';fill.style.background='#639922';document.getElementById('score-num').className='score-num green';bonoTag='500';bonoTeoricoMXN=500;}
-  else if(sc>=70){bonoTxt='✓ Bono aprobado: $300 MXN';bonoClass='bono-med';fill.style.background='#EF9F27';document.getElementById('score-num').className='score-num amber';bonoTag='300';bonoTeoricoMXN=300;}
+  else if(sc>=81){bonoTxt='✓ Bono aprobado: $'+bonoCom+' MXN';bonoClass='bono-ok';fill.style.background='#639922';document.getElementById('score-num').className='score-num green';bonoTag='500';bonoTeoricoMXN=bonoCom;}
+  else if(sc>=70){bonoTxt='✓ Bono aprobado: $'+bonoReg+' MXN';bonoClass='bono-med';fill.style.background='#EF9F27';document.getElementById('score-num').className='score-num amber';bonoTag='300';bonoTeoricoMXN=bonoReg;}
   else if(sc>0){bonoTxt='Sin bono (puntaje menor a 70)';bonoClass='bono-no';fill.style.background='#E24B4A';document.getElementById('score-num').className='score-num red';}
   else{bonoTxt='Complete la evaluación para ver el resultado';bonoClass='';document.getElementById('score-num').className='score-num';fill.style.background='#185FA5';}
   const br=document.getElementById('bono-result');br.textContent=bonoTxt;br.className='bono '+bonoClass;
@@ -1686,37 +1234,70 @@ function aplicarOverrideBono(){
 // ============================================================
 function getDatos(){
   const ranchoId=document.getElementById('f-lugar').value||'',p=PARCELAS.find(x=>x.rancho===ranchoId);
-  return{nombre:document.getElementById('f-nombre').value||'—',puesto:document.getElementById('f-puesto').value||'—',semana:document.getElementById('f-semana').value.trim()||'—',cam:document.getElementById('f-cam').value||'—',modelo:document.getElementById('f-modelo').value||'—',placas:document.getElementById('f-placas').value||'—',evaluador:document.getElementById('f-eval').value||'—',rancho:ranchoId||'—',contrato:p?p.contrato:'—',has:p?p.has:'—',inv:p?p.inv:'—',jefe:document.getElementById('f-jefe').value||'—',km:document.getElementById('f-km').value.trim()||'—',fecha:document.getElementById('f-fecha').value||new Date().toLocaleDateString('es-MX'),obsGeneral:document.getElementById('obs-general').value.trim()||'',negVal:document.getElementById('neg-sel').value};
+  const esT=modoEval==='tractor';
+  const tractorId=document.getElementById('f-tractor')?document.getElementById('f-tractor').value:'';
+  const tractorObj=TRACTORES.find(x=>x.eco===tractorId);
+  return{
+    tipo:modoEval,
+    nombre:document.getElementById('f-nombre').value||'—',
+    puesto:document.getElementById('f-puesto').value||'—',
+    semana:document.getElementById('f-semana').value.trim()||'—',
+    cam:esT?(tractorId||'—'):(document.getElementById('f-cam').value||'—'),
+    modelo:esT?(tractorObj?tractorObj.modelo:'—'):(document.getElementById('f-modelo').value||'—'),
+    placas:esT?(tractorObj?tractorObj.hp:'—'):(document.getElementById('f-placas').value||'—'),
+    evaluador:document.getElementById('f-eval').value||'—',
+    rancho:ranchoId||'—',contrato:p?p.contrato:'—',has:p?p.has:'—',inv:p?p.inv:'—',
+    jefe:document.getElementById('f-jefe').value||'—',
+    km:document.getElementById('f-km').value.trim()||'—',
+    fecha:document.getElementById('f-fecha').value||new Date().toLocaleDateString('es-MX'),
+    obsGeneral:document.getElementById('obs-general').value.trim()||'',
+    negVal:document.getElementById('neg-sel').value,
+    horometro:document.getElementById('f-horometro')?document.getElementById('f-horometro').value.trim():'',
+    tipoActividad:document.getElementById('f-tipo-actividad')?document.getElementById('f-tipo-actividad').value:'',
+    actividadEspecifica:document.getElementById('f-actividad-especifica')?(document.getElementById('f-actividad-especifica').options[document.getElementById('f-actividad-especifica').selectedIndex]?.text||''):'',
+  };
 }
 function getObsItems(){
-  const obs={};CRITERIOS.forEach(sec=>{sec.items.forEach(item=>{const el=document.getElementById('obs-'+item.id);if(el&&el.value.trim())obs[item.id]=el.value.trim();});});return obs;
+  const obs={};const lista=modoEval==='tractor'?CRITERIOS_TRACTOR:CRITERIOS;
+  lista.forEach(sec=>{sec.items.forEach(item=>{const el=document.getElementById('obs-'+item.id);if(el&&el.value.trim())obs[item.id]=el.value.trim();});});return obs;
 }
 function getInventarioSnap(prefix,lista){
-  return lista.map((nombre,i)=>({nombre,estado:document.getElementById(prefix+'-'+i).value||'',obs:(document.getElementById(prefix+'-obs-'+i).value||'').trim(),descuentoPrecio:parseFloat((document.getElementById(prefix+'-precio-'+i)||{}).value)||0,descuentoCuotas:parseInt((document.getElementById(prefix+'-cuotas-'+i)||{}).value)||0}));
+  return lista.map((nombre,i)=>({nombre,estado:(document.getElementById(prefix+'-'+i)||{}).value||'',obs:((document.getElementById(prefix+'-obs-'+i)||{}).value||'').trim(),descuentoPrecio:parseFloat(((document.getElementById(prefix+'-precio-'+i)||{}).value))||0,descuentoCuotas:parseInt(((document.getElementById(prefix+'-cuotas-'+i)||{}).value))||0}));
 }
 
 // ============================================================
-// FOTOS
-// ============================================================
-function agregarFotos(ev){Array.from(ev.target.files).forEach(f=>{const r=new FileReader();r.onload=e=>{fotos.push({dataUrl:e.target.result,nombre:f.name});renderFotos();};r.readAsDataURL(f);});ev.target.value='';}
-function dragOver(e){e.preventDefault();document.getElementById('foto-zone').classList.add('drag-over');}
-function dragLeave(){document.getElementById('foto-zone').classList.remove('drag-over');}
-function dropFotos(e){e.preventDefault();dragLeave();Array.from(e.dataTransfer.files).forEach(f=>{if(!f.type.startsWith('image/'))return;const r=new FileReader();r.onload=ev=>{fotos.push({dataUrl:ev.target.result,nombre:f.name});renderFotos();};r.readAsDataURL(f);});}
-function eliminarFoto(i){fotos.splice(i,1);renderFotos();}
+function delFoto(i){fotos.splice(i,1);renderFotos();}
 function renderFotos(){
-  document.getElementById('foto-count-lbl').textContent=fotos.length+' foto'+(fotos.length!==1?'s':'');
-  document.getElementById('foto-grid').innerHTML=fotos.map((f,i)=>`<div class="foto-thumb"><img src="${f.dataUrl}" alt="Foto ${i+1}"><button class="del-btn" onclick="eliminarFoto(${i})">✕</button><div class="flabel">Foto ${i+1}</div></div>`).join('');
+  document.getElementById("foto-cnt").textContent=fotos.length+" foto"+(fotos.length!==1?"s":"");
+  document.getElementById("foto-grid").innerHTML=fotos.map(function(f,i){
+    return "<div class='foto-thumb'><img src='"+f.d+"' alt='Foto "+(i+1)+"'><button class='del-btn' onclick='delFoto("+i+")'>x</button><div class='flabel'>Foto "+(i+1)+"</div></div>";
+  }).join("");
 }
-function abrirCamara(facing){
-  facing=facing||'environment';document.getElementById('cam-modal').classList.add('open');
-  if(camStream){camStream.getTracks().forEach(t=>t.stop());camStream=null;}
-  navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:facing},width:{ideal:1920},height:{ideal:1080}},audio:false}).then(s=>{camStream=s;document.getElementById('cam-video').srcObject=s;}).catch(()=>{toast('⚠ Sin acceso a cámara. Verifica permisos.');cerrarCamara();});
+function openCam(facing){
+  facing=facing||"environment";
+  document.getElementById("cammod").classList.add("open");
+  if(camStream){camStream.getTracks().forEach(function(t){t.stop();});camStream=null;}
+  navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:facing},width:{ideal:1920},height:{ideal:1080}},audio:false})
+    .then(function(s){camStream=s;document.getElementById("camvid").srcObject=s;})
+    .catch(function(){toast("Sin acceso a camara. Verifica permisos.");closeCam();});
 }
-function cerrarCamara(){if(camStream)camStream.getTracks().forEach(t=>t.stop());camStream=null;document.getElementById('cam-modal').classList.remove('open');document.getElementById('cam-video').srcObject=null;}
-function capturarFoto(){
-  const v=document.getElementById('cam-video'),canvas=document.getElementById('cam-canvas');
-  canvas.width=v.videoWidth;canvas.height=v.videoHeight;canvas.getContext('2d').drawImage(v,0,0);
-  fotos.push({dataUrl:canvas.toDataURL('image/jpeg',.85),nombre:'Cam_'+Date.now()+'.jpg'});renderFotos();toast('✓ Foto capturada');cerrarCamara();
+function closeCam(){
+  if(camStream)camStream.getTracks().forEach(function(t){t.stop();});camStream=null;
+  document.getElementById("cammod").classList.remove("open");
+  document.getElementById("camvid").srcObject=null;
+}
+function capFoto(){
+  var v=document.getElementById("camvid"),cv=document.getElementById("camcanv");
+  cv.width=v.videoWidth;cv.height=v.videoHeight;
+  cv.getContext("2d").drawImage(v,0,0);
+  fotos.push({d:cv.toDataURL("image/jpeg",.85),n:"Cam_"+Date.now()+".jpg"});
+  renderFotos();toast("Foto capturada");closeCam();
+}
+
+// ============================================================
+// GUARDAR
+// ============================================================
+function guardar(){
 }
 
 // ============================================================
@@ -1725,7 +1306,22 @@ function capturarFoto(){
 function guardarEvaluacion(){
   const c=window._lastCalc;if(!c||c.total===0){toast('⚠ Captura al menos un criterio antes de guardar');return;}
   const d=getDatos();
-  const reg={id:Date.now(),fecha:d.fecha,nombre:d.nombre,puesto:d.puesto,semana:d.semana,cam:d.cam,modelo:d.modelo,placas:d.placas,evaluador:d.evaluador,rancho:d.rancho,contrato:d.contrato,has:d.has,inv:d.inv,jefe:d.jefe,km:d.km,negVal:d.negVal,obsGeneral:d.obsGeneral,puntaje:c.total,bonoTxt:c.bonoTxt,bonoTag:c.bonoTag,bonoOverride:document.getElementById('bono-override-sel').value||'',bonoOverrideMotivo:document.getElementById('bono-override-motivo').value.trim()||'',incumplidos:c.incumplidos.map(i=>i.id+' — '+i.crit).join('; ')||'Ninguno',herrFalta:c.herrFalta,herramientas:getInventarioSnap('herr',HERRAMIENTAS),botiquin:getInventarioSnap('bot',BOTIQUIN),obsItems:getObsItems(),nFotos:fotos.length,fotosMini:fotos.slice(0,4).map(f=>f.dataUrl)};
+  const esT=modoEval==='tractor';
+  const herrSnap=esT?getInventarioSnap('herrt',HERRAMIENTAS_TRACTOR):getInventarioSnap('herr',HERRAMIENTAS);
+  const botSnap=esT?[]:getInventarioSnap('bot',BOTIQUIN);
+  const reg={
+    id:Date.now(),tipo:d.tipo,fecha:d.fecha,nombre:d.nombre,puesto:d.puesto,semana:d.semana,
+    cam:d.cam,modelo:d.modelo,placas:d.placas,evaluador:d.evaluador,rancho:d.rancho,
+    contrato:d.contrato,has:d.has,inv:d.inv,jefe:d.jefe,km:d.km,negVal:d.negVal,
+    obsGeneral:d.obsGeneral,horometro:d.horometro||'',tipoActividad:d.tipoActividad||'',
+    actividadEspecifica:d.actividadEspecifica||'',
+    puntaje:c.total,bonoTxt:c.bonoTxt,bonoTag:c.bonoTag,
+    bonoOverride:document.getElementById('bono-override-sel').value||'',
+    bonoOverrideMotivo:document.getElementById('bono-override-motivo').value.trim()||'',
+    incumplidos:c.incumplidos.map(i=>i.id+' — '+i.crit).join('; ')||'Ninguno',
+    herrFalta:c.herrFalta,herramientas:herrSnap,botiquin:botSnap,
+    obsItems:getObsItems(),nFotos:fotos.length,fotosMini:fotos.slice(0,4).map(f=>f.dataUrl)
+  };
   historial.unshift(reg);saveHist();renderDB();
   if(GS_URL&&navigator.onLine){showSyncBar('syncing','Guardando en Google Sheets…',false);sendToGS(reg).then(ok=>{if(ok){showSyncBar('ok','✓ Guardado en Google Sheets y localmente');updateConn('ok');}else{syncPending.push(reg);savePending();showSyncBar('pending','Guardado localmente — sin conexión a Sheets',false);updateConn('pending');}});}
   else if(GS_URL){syncPending.push(reg);savePending();showSyncBar('pending','Sin internet — guardado localmente. Se sincronizará automáticamente.',false);updateConn('pending');}
@@ -1753,11 +1349,20 @@ function generarPDFEval(){
   const checkY=(n=20)=>{if(y+n>272){doc.addPage();y=MT;}};
   const secH=(title,bg=[24,95,165])=>{checkY(10);rF(ML,y,PW-ML-MR,6.5,bg,1);setF(8,'bold',[255,255,255]);doc.text(title,ML+3,y+4.5);y+=8;};
   const row2=(items)=>{const cw=(PW-ML-MR)/2-1;for(let i=0;i<items.length;i+=2){checkY(8);[[ML,items[i]],[ML+cw+2,items[i+1]]].forEach(([x,it])=>{if(!it)return;rF(x,y,cw,7.5,[248,248,248]);doc.setLineWidth(.15);setDr([210,210,210]);doc.rect(x,y,cw,7.5);setF(6,'bold',[120,120,120]);doc.text((it.label||'').toUpperCase(),x+2,y+3);setF(8,'normal',[30,30,30]);doc.text(String(it.value||'—').substring(0,40),x+2,y+7);});y+=9;}};
-  // Header
-  rF(0,0,PW,24,[24,95,165]);setF(13,'bold',[255,255,255]);doc.text('Evaluación de Bono Semanal — Supervisores de Campo',PW/2,10,{align:'center'});setF(8,'normal',[200,230,255]);doc.text('CONSOLIDACIÓN DE AGAVE S.A. DE C.V.  |  Dpto. de Campo  |  Magdalena, Jalisco',PW/2,16,{align:'center'});setF(7,'normal',[200,230,255]);doc.text(fecha,PW-MR,9,{align:'right'});y=28;
+  // Header mejorado con banda de color y subtítulo
+  rF(0,0,PW,28,[24,95,165]);rF(0,24,PW,4,[12,68,124]);
+  setF(13,'bold',[255,255,255]);doc.text('Evaluación de Bono Semanal — Supervisores de Campo',PW/2,11,{align:'center'});setF(8,'normal',[200,230,255]);doc.text('CONSOLIDACIÓN DE AGAVE S.A. DE C.V.  |  Dpto. de Campo  |  Magdalena, Jalisco',PW/2,17,{align:'center'});
+  // Badge de fecha en esquina
+  rF(PW-50,2,46,8,[12,68,124],1);setF(6.5,'normal',[200,230,255]);doc.text(fecha,PW-MR,7.5,{align:'right'});
+  y=32;
   // Datos
   secH('I. Datos del Supervisor y Vehículo');
-  row2([{label:'Supervisor evaluado',value:d.nombre},{label:'Puesto',value:d.puesto},{label:'Semana evaluada',value:d.semana},{label:'Fecha evaluación',value:d.fecha},{label:'Camioneta / Eco.',value:d.cam},{label:'Modelo / Año',value:d.modelo},{label:'Placas',value:d.placas},{label:'Kilometraje',value:d.km},{label:'Rancho / Parcela',value:'['+d.rancho+'] '+(d.contrato||'').substring(0,38)},{label:'Jefe de área',value:d.jefe},{label:'Evaluador',value:d.evaluador},{label:'Negligencia',value:d.negVal==='Si'?'⚠ SÍ — Bono SUSPENDIDO':'No'}]);y+=2;
+  row2([{label:'Supervisor evaluado',value:d.nombre},{label:'Puesto',value:d.puesto},{label:'Semana evaluada',value:d.semana},{label:'Fecha evaluación',value:d.fecha},{label:'Camioneta / Eco.',value:d.cam},{label:'Modelo / Año',value:d.modelo},{label:'Placas',value:d.placas},{label:'Kilometraje',value:d.km},{label:'Rancho / Parcela',value:'['+d.rancho+'] '+(d.contrato||'').substring(0,38)},{label:'Jefe de área',value:d.jefe},{label:'Evaluador',value:d.evaluador},{label:'Negligencia',value:d.negVal==='Si'?'⚠ SÍ — Bono SUSPENDIDO':'No'}]);
+  // Resumen rápido (strip de resultado anticipado)
+  checkY(10);const rc2=c.bonoTag==='500'?[59,109,17]:c.bonoTag==='300'?[133,79,11]:[163,45,45],rb2=c.bonoTag==='500'?[234,243,222]:c.bonoTag==='300'?[250,238,218]:[252,235,235];
+  rF(ML,y,PW-ML-MR,8,rb2,1);doc.setLineWidth(.2);setDr(rc2);doc.roundedRect(ML,y,PW-ML-MR,8,1,1);
+  setF(7,'bold',rc2);doc.text('Puntaje: '+c.total+'/100  |  '+c.bonoTxt+'  |  Incumplimientos: '+(c.incumplidos.length)+'  |  Fotos: '+fotos.length,PW/2,y+5.2,{align:'center'});
+  y+=12;
   // Criterios
   secH('II. Criterios de Evaluación');
   const cols={id:ML,crit:ML+10,peso:ML+115,resp:ML+127,est:ML+140,obs:ML+165};
@@ -1881,6 +1486,7 @@ function renderDB(){
   if(fN)data=data.filter(r=>r.nombre===fN);if(fB)data=data.filter(r=>r.bonoTag===fB);if(fP)data=data.filter(r=>r.rancho===fP);if(fT)data=data.filter(r=>JSON.stringify(r).toLowerCase().includes(fT));
   data.sort((a,b)=>{let va=a[dbSortCol]||'',vb=b[dbSortCol]||'';if(dbSortCol==='puntaje'){va=Number(va);vb=Number(vb);}return dbSortAsc?(va>vb?1:-1):(va<vb?1:-1);});
   document.getElementById('stat-total').textContent=historial.length;document.getElementById('stat-bono500').textContent=historial.filter(r=>r.bonoTag==='500').length;document.getElementById('stat-bono300').textContent=historial.filter(r=>r.bonoTag==='300').length;document.getElementById('stat-suspendido').textContent=historial.filter(r=>r.bonoTag==='suspendido').length;
+  const promEl=document.getElementById('stat-promedio');if(promEl){const prom=historial.length>0?Math.round(historial.reduce((a,r)=>a+(r.puntaje||0),0)/historial.length):null;promEl.textContent=prom!==null?prom+'pts':'—';}
   const total2=data.length,pages=Math.ceil(total2/PER_PAGE)||1;if(dbPage>pages)dbPage=1;
   const slice=data.slice((dbPage-1)*PER_PAGE,dbPage*PER_PAGE);
   const body=document.getElementById('db-body'),empty=document.getElementById('db-empty');
@@ -1914,14 +1520,44 @@ function exportarCSV(){
   const csv=[h,...rows].map(r=>r.join(',')).join('\n');
   const b=new Blob(['\uFEFF'+csv],{type:'text/csv;charset=utf-8'});const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='BD_Bono_Supervisores_Agave_'+new Date().toISOString().slice(0,10)+'.csv';a.click();toast('✓ Base de datos exportada');
 }
+function exportarJSON(){
+  if(historial.length===0){toast('⚠ Sin datos para exportar');return;}
+  const payload={version:'bono_agave_v3',exportado:new Date().toISOString(),total:historial.length,registros:historial};
+  const b=new Blob([JSON.stringify(payload,null,2)],{type:'application/json'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(b);
+  a.download='Respaldo_Bonos_Agave_'+new Date().toISOString().slice(0,10)+'.json';a.click();
+  toast('✓ Respaldo JSON descargado ('+historial.length+' registros)');
+}
+function importarJSON(ev){
+  const file=ev.target.files[0];if(!file)return;
+  const r=new FileReader();
+  r.onload=e=>{
+    try{
+      const data=JSON.parse(e.target.result);
+      const regs=data.registros||data;
+      if(!Array.isArray(regs)||regs.length===0){toast('⚠ Archivo sin registros válidos');return;}
+      const confirm_msg='¿Importar '+regs.length+' evaluaciones?\n\nElige:\n• OK = AGREGAR a los datos actuales\n• Cancelar = no importar';
+      if(!confirm(confirm_msg)){ev.target.value='';return;}
+      // Evitar duplicados por ID
+      const idsActuales=new Set(historial.map(x=>x.id));
+      const nuevos=regs.filter(x=>!idsActuales.has(x.id));
+      historial=[...historial,...nuevos];
+      saveHist();renderDB();
+      toast('✓ Importados '+nuevos.length+' registros nuevos ('+( regs.length-nuevos.length)+' duplicados omitidos)');
+    }catch(err){toast('⚠ Error al leer el archivo JSON: '+err.message);}
+    ev.target.value='';
+  };
+  r.readAsText(file);
+}
 function limpiarBD(){if(historial.length===0){toast('La base de datos ya está vacía');return;}if(confirm('¿Eliminar TODA la base de datos? Esta acción no se puede deshacer.')){historial=[];saveHist();renderDB();toast('Base de datos eliminada');}}
 function limpiarForm(){
-  ['f-nombre','f-puesto','f-semana','f-modelo','f-placas','f-jefe','f-km','obs-general'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
-  ['f-cam','f-eval','f-lugar'].forEach(id=>document.getElementById(id).value='');
-  ['cam-info','parcela-info'].forEach(id=>{document.getElementById(id).style.display='none';});
+  ['f-nombre','f-puesto','f-semana','f-modelo','f-placas','f-jefe','f-km','obs-general','f-modelo-tractor','f-horometro'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+  ['f-cam','f-eval','f-lugar','f-tractor','f-tipo-actividad','f-actividad-especifica'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+  ['cam-info','parcela-info','tractor-info','actividad-info','std-box'].forEach(id=>{const el=document.getElementById(id);if(el)el.style.display='none';});
   document.getElementById('neg-sel').value='No';document.getElementById('f-fecha').value=new Date().toLocaleDateString('es-MX');
   calcularSemana();fotos=[];renderFotos();buildItems();buildHerramientas();recalc();
   document.getElementById('bono-override-sel').value='';document.getElementById('bono-override-motivo').value='';
+  const std=document.getElementById('std-table-full');if(std)std.style.display='none';
   toast('✓ Formulario limpiado — listo para nueva evaluación');
 }
 function showTab(t,ev){
@@ -1930,6 +1566,22 @@ function showTab(t,ev){
   if(t==='db')renderDB();
 }
 function toast(msg){const el=document.getElementById('toast');el.textContent=msg;el.classList.add('show');setTimeout(()=>el.classList.remove('show'),3000);}
+
+// Mobile nav active state
+function setMNav(tab){
+  ['eval','db'].forEach(t=>{const b=document.getElementById('mnav-'+t);if(!b)return;b.style.color=t===tab?'#185FA5':'#888';b.style.fontWeight=t===tab?'600':'400';});
+}
+
+// Collapsible cards on mobile
+document.addEventListener('DOMContentLoaded',()=>{
+  if(window.innerWidth<=640){
+    document.querySelectorAll('.card').forEach(card=>{
+      const title=card.querySelector('.card-title');
+      if(!title)return;
+      title.addEventListener('click',()=>{card.classList.toggle('collapsed');});
+    });
+  }
+});
 
 // ============================================================
 // INIT
@@ -1941,28 +1593,5 @@ window.addEventListener('beforeinstallprompt',(e)=>{e.preventDefault();deferredP
 window.addEventListener('appinstalled',()=>{const btn=document.getElementById('install-btn');if(btn)btn.style.display='none';toast('✓ App instalada en tu pantalla de inicio');});
 function instalarApp(){if(deferredPrompt){deferredPrompt.prompt();deferredPrompt.userChoice.then(r=>{if(r.outcome==='accepted')toast('✓ Instalando app…');deferredPrompt=null;});}else{toast('Para instalar: menú del navegador → Instalar app / Agregar a pantalla de inicio');}}
 </script>
-
-<script>
-
-function toggleChecklistType(){
-  const tipo = document.getElementById('tipo-checklist').value;
-  const tractor = document.getElementById('tractor-module');
-
-  if(tipo === 'tractor'){
-      tractor.style.display = 'block';
-  } else {
-      tractor.style.display = 'none';
-  }
-}
-
-window.addEventListener('load', ()=>{
-   toggleChecklistType();
-});
-else{
-    tractor.style.display = 'none';
-  }
-}
-</script>
-
 </body>
 </html>
