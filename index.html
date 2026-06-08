@@ -1224,9 +1224,27 @@ function aplicarOverrideBono(){
   const sel=document.getElementById('bono-override-sel').value,motivo=document.getElementById('bono-override-motivo').value.trim();
   const br=document.getElementById('bono-result'),numEl=document.getElementById('score-num'),fill=document.getElementById('prog-fill'),c=window._lastCalc;if(!c)return;
   const mt=motivo?' — '+motivo:'';
-  if(sel==='bajar300'){br.textContent='✓ Bono Regular: $300 MXN (ajustado'+mt+')';br.className='bono bono-med';fill.style.background='#EF9F27';numEl.className='score-num amber';window._lastCalc.bonoTag='300_ajustado';window._lastCalc.bonoTeoricoMXN=300;}
-  else if(sel==='bajar0'){br.textContent='Sin bono (retirado'+mt+')';br.className='bono bono-no';fill.style.background='#E24B4A';numEl.className='score-num red';window._lastCalc.bonoTag='sinbono_ajustado';window._lastCalc.bonoTeoricoMXN=0;}
-  else{const sc=c.total;if(sc>=81){br.textContent='✓ Bono aprobado: $500 MXN';br.className='bono bono-ok';fill.style.background='#639922';numEl.className='score-num green';window._lastCalc.bonoTag='500';window._lastCalc.bonoTeoricoMXN=500;}else{br.textContent='✓ Bono aprobado: $300 MXN';br.className='bono bono-med';fill.style.background='#EF9F27';numEl.className='score-num amber';window._lastCalc.bonoTag='300';window._lastCalc.bonoTeoricoMXN=300;}}
+  let txt='';
+  if(sel==='bajar300'){
+    txt='✓ Bono Regular: $300 MXN (ajustado'+mt+')';
+    br.textContent=txt;br.className='bono bono-med';fill.style.background='#EF9F27';numEl.className='score-num amber';
+    window._lastCalc.bonoTag='300_ajustado';window._lastCalc.bonoTeoricoMXN=300;window._lastCalc.bonoTxt=txt;
+  } else if(sel==='bajar0'){
+    txt='Sin bono (retirado'+mt+')';
+    br.textContent=txt;br.className='bono bono-no';fill.style.background='#E24B4A';numEl.className='score-num red';
+    window._lastCalc.bonoTag='sinbono_ajustado';window._lastCalc.bonoTeoricoMXN=0;window._lastCalc.bonoTxt=txt;
+  } else {
+    const sc=c.total;
+    if(sc>=81){
+      txt='✓ Bono aprobado: $500 MXN';
+      br.textContent=txt;br.className='bono bono-ok';fill.style.background='#639922';numEl.className='score-num green';
+      window._lastCalc.bonoTag='500';window._lastCalc.bonoTeoricoMXN=500;window._lastCalc.bonoTxt=txt;
+    } else {
+      txt='✓ Bono aprobado: $300 MXN';
+      br.textContent=txt;br.className='bono bono-med';fill.style.background='#EF9F27';numEl.className='score-num amber';
+      window._lastCalc.bonoTag='300';window._lastCalc.bonoTeoricoMXN=300;window._lastCalc.bonoTxt=txt;
+    }
+  }
 }
 
 // ============================================================
@@ -1344,7 +1362,8 @@ function generarPDFEval(){
   const d=getDatos(),c=window._lastCalc||{total:0,bonoTxt:'–',incumplidos:[],cancelaBono:false};
   const fecha=new Date().toLocaleDateString('es-MX',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
   const obsItems=getObsItems();
-  const esEx=c.bonoTxt.includes('500'),esReg=c.bonoTxt.includes('300');
+  const esEx=c.bonoTag==='500';
+  const esReg=(c.bonoTag==='300'||c.bonoTag==='300_ajustado');
   const colorResult=esEx?[59,109,17]:esReg?[133,79,11]:[163,45,45];
   const bgResult=esEx?[234,243,222]:esReg?[250,238,218]:[252,235,235];
   const{jsPDF}=window.jspdf;
@@ -1363,10 +1382,14 @@ function generarPDFEval(){
   rF(PW-50,2,46,8,[12,68,124],1);setF(6.5,'normal',[200,230,255]);doc.text(fecha,PW-MR,7.5,{align:'right'});
   y=32;
   // Datos
+  const overrideSel2=document.getElementById('bono-override-sel').value;
+  const overrideMotivo2=document.getElementById('bono-override-motivo').value.trim();
   secH('I. Datos del Supervisor y Vehículo');
-  row2([{label:'Supervisor evaluado',value:d.nombre},{label:'Puesto',value:d.puesto},{label:'Semana evaluada',value:d.semana},{label:'Fecha evaluación',value:d.fecha},{label:'Camioneta / Eco.',value:d.cam},{label:'Modelo / Año',value:d.modelo},{label:'Placas',value:d.placas},{label:'Kilometraje',value:d.km},{label:'Rancho / Parcela',value:'['+d.rancho+'] '+(d.contrato||'').substring(0,38)},{label:'Jefe de área',value:d.jefe},{label:'Evaluador',value:d.evaluador},{label:'Negligencia',value:d.negVal==='Si'?'⚠ SÍ — Bono SUSPENDIDO':'No'}]);
+  const datosRow=[{label:'Supervisor evaluado',value:d.nombre},{label:'Puesto',value:d.puesto},{label:'Semana evaluada',value:d.semana},{label:'Fecha evaluación',value:d.fecha},{label:'Camioneta / Eco.',value:d.cam},{label:'Modelo / Año',value:d.modelo},{label:'Placas',value:d.placas},{label:'Kilometraje',value:d.km},{label:'Rancho / Parcela',value:'['+d.rancho+'] '+(d.contrato||'').substring(0,38)},{label:'Jefe de área',value:d.jefe},{label:'Evaluador',value:d.evaluador},{label:'Negligencia',value:d.negVal==='Si'?'⚠ SÍ — Bono SUSPENDIDO':'No'}];
+  if(overrideSel2&&overrideMotivo2)datosRow.push({label:'Ajuste de bono',value:overrideMotivo2});
+  row2(datosRow);
   // Resumen rápido (strip de resultado anticipado)
-  checkY(10);const rc2=c.bonoTag==='500'?[59,109,17]:c.bonoTag==='300'?[133,79,11]:[163,45,45],rb2=c.bonoTag==='500'?[234,243,222]:c.bonoTag==='300'?[250,238,218]:[252,235,235];
+  checkY(10);const rc2=(c.bonoTag==='500')?[59,109,17]:(c.bonoTag==='300'||c.bonoTag==='300_ajustado')?[133,79,11]:[163,45,45],rb2=(c.bonoTag==='500')?[234,243,222]:(c.bonoTag==='300'||c.bonoTag==='300_ajustado')?[250,238,218]:[252,235,235];
   rF(ML,y,PW-ML-MR,8,rb2,1);doc.setLineWidth(.2);setDr(rc2);doc.roundedRect(ML,y,PW-ML-MR,8,1,1);
   setF(7,'bold',rc2);doc.text('Puntaje: '+c.total+'/100  |  '+c.bonoTxt+'  |  Incumplimientos: '+(c.incumplidos.length)+'  |  Fotos: '+fotos.length,PW/2,y+5.2,{align:'center'});
   y+=12;
