@@ -614,12 +614,13 @@ const PERSONAL=[
   {nombre:"JESUCRISTIAN GUZMAN LANDEROS",puesto:"FITOSANITARIO"},
   {nombre:"JORGE LÓPEZ CARRANZA",puesto:"COORDINADOR ADMINISTRATIVO"}
 ];
-// ── CAMBIO 1: Carlos Miranda agregado ──────────────────────────
+// ── EVALUADORES ──────────────────────────────────────────────────
 const EVALUADORES=[
   {nombre:"JORGE LÓPEZ CARRANZA",puesto:"COORDINADOR ADMINISTRATIVO"},
   {nombre:"TOMAS LISARAZU CASTAÑEDA RINCON",puesto:"COORDINADOR DE CULTIVO"},
   {nombre:"FRANCISCO VANEGAS ZEPEDA",puesto:"GERENTE GENERAL"},
-  {nombre:"CARLOS MIRANDA RODRIGUEZ",puesto:"MANTENIMIENTO"}
+  {nombre:"CARLOS MIRANDA RODRIGUEZ",puesto:"MANTENIMIENTO"},
+  {nombre:"LEONEL GUZMAN MENDOZA",puesto:"MTTO TALLER OFICINA MAGDALENA"}
 ];
 const SUPERVISORES=PERSONAL.filter(p=>["SUPERVISOR","JEFE DE AREA","COORDINADOR DE CULTIVO","FITOSANITARIO"].includes(p.puesto));
 const HERRAMIENTAS=["Gato hidráulico","Cruceta","Triángulo de seguridad","Compresor","Eslingas para remolcar","Cables pasa corriente","Cepillo / escobeta / brocha","Franelas de limpieza","Extintor","Pinzas","Llaves (juego completo)","Desarmadores (juego)","Estuche de herramienta completo"];
@@ -904,11 +905,12 @@ function hayIncumpHerramienta(){
   return false;
 }
 function recalc(){
-  let total=0,incumplidos=[],cancelaBono=false;
+  let total=0,incumplidos=[],cancelaBono=false,totalPosible=0;
   CRITERIOS.forEach(sec=>{
     sec.items.forEach(item=>{
       const v=getVal(item.id);const badge=document.getElementById('s-'+item.id);
-      // CAMBIO 2: sin respuesta (vacío) o NA = cumplido (suma el peso completo)
+      // N/A o vacío = cumplido (suma peso completo, cuenta en el total posible)
+      totalPosible+=item.peso;
       if(!v||v==='NA'){
         badge.className='badge bien';badge.textContent='N/A ✓';total+=item.peso;return;
       }
@@ -926,7 +928,9 @@ function recalc(){
   const neg=document.getElementById('neg-sel').value,negBox=document.getElementById('neg-box'),negTit=document.getElementById('neg-titulo');
   if(neg==='Si'){negBox.className='neg-box alerta';negTit.className='neg-label r';negTit.innerHTML='<i class="ti ti-alert-triangle"></i> Negligencia declarada — bono SUSPENDIDO';cancelaBono=true;}
   else{negBox.className='neg-box ok';negTit.className='neg-label g';negTit.innerHTML='<i class="ti ti-circle-check"></i> Sin negligencia registrada';}
-  const sc=Math.round(total);document.getElementById('score-num').textContent=sc;
+  // Normalizar a 100: puntaje = (obtenido / posible) * 100
+  const sc=totalPosible>0?Math.round((total/totalPosible)*100):0;
+  document.getElementById('score-num').textContent=sc;
   const fill=document.getElementById('prog-fill');fill.style.width=Math.min(sc,100)+'%';
   let bonoTxt='',bonoClass='',bonoTag='sinbono',bonoTeoricoMXN=0;
   if(cancelaBono){bonoTxt='⛔ BONO SUSPENDIDO — Puntaje registrado: '+sc+'/100';bonoClass='bono-no';fill.style.background='#E24B4A';document.getElementById('score-num').className='score-num red';bonoTag='suspendido';}
@@ -938,7 +942,7 @@ function recalc(){
   const totalIncump=incumplidos.length+(herrFalta?1:0);
   document.getElementById('incump-count').innerHTML=totalIncump>0?'<span style="color:#A32D2D">'+totalIncump+' incumplimiento(s)</span>':sc>0?'<span style="color:#3B6D11">Sin incumplimientos</span>':'';
   document.getElementById('btn-acta').style.display=(totalIncump>0||cancelaBono)?'flex':'none';
-  window._lastCalc={total:sc,bonoTxt,incumplidos,cancelaBono,herrFalta,bonoTag,bonoTeoricoMXN};
+  window._lastCalc={total:sc,totalRaw:total,totalPosible,incumplidos,cancelaBono,herrFalta,bonoTag,bonoTeoricoMXN,bonoTxt};
   updateMensajeMotivacional(bonoTag,sc,cancelaBono);
   const overrideBox=document.getElementById('bono-override-box');
   if(overrideBox){
