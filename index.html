@@ -256,6 +256,22 @@ button.success:hover{background:#27500A}
         <input type="text" id="nuevo-person-input" placeholder="Nombre completo del nuevo tractorista…" style="font-size:12px;padding:6px 10px;border:1px solid #EF9F27;border-radius:6px;width:100%">
         <button onclick="agregarTractorista()" style="margin-top:4px;padding:4px 10px;font-size:11px;background:#3B6D11;color:white;border:none;border-radius:5px;cursor:pointer;width:100%"><i class="ti ti-plus"></i> Agregar tractorista</button>
       </div>
+      <div id="nuevo-sup-box" style="display:none;margin-top:6px;background:#EBF3FB;border:1px solid #a8ccee;border-radius:7px;padding:10px 12px">
+        <div style="font-size:11px;font-weight:600;color:#185FA5;margin-bottom:7px"><i class="ti ti-user-plus"></i> Nuevo supervisor / personal</div>
+        <input type="text" id="nuevo-sup-nombre" placeholder="Nombre completo…" style="font-size:12px;padding:6px 10px;border:1px solid #a8ccee;border-radius:6px;width:100%;margin-bottom:5px;font-family:Arial,sans-serif">
+        <select id="nuevo-sup-puesto" style="font-size:12px;padding:6px 10px;border:1px solid #a8ccee;border-radius:6px;width:100%;margin-bottom:5px;background:white;font-family:Arial,sans-serif">
+          <option value="">— Selecciona puesto —</option>
+          <option value="SUPERVISOR">SUPERVISOR</option>
+          <option value="JEFE DE AREA">JEFE DE AREA</option>
+          <option value="COORDINADOR DE CULTIVO">COORDINADOR DE CULTIVO</option>
+          <option value="FITOSANITARIO">FITOSANITARIO</option>
+          <option value="GERENTE GENERAL">GERENTE GENERAL</option>
+        </select>
+        <div style="display:flex;gap:5px">
+          <button onclick="agregarSupervisor()" style="flex:1;padding:5px 0;font-size:11px;background:#185FA5;color:white;border:none;border-radius:5px;cursor:pointer;font-family:Arial,sans-serif"><i class="ti ti-check"></i> Agregar</button>
+          <button onclick="document.getElementById('nuevo-sup-box').style.display='none'" style="padding:5px 10px;font-size:11px;background:white;border:1px solid #a8ccee;border-radius:5px;cursor:pointer;font-family:Arial,sans-serif">Cancelar</button>
+        </div>
+      </div>
     </div>
     <div class="field"><label>Puesto</label><input type="text" id="f-puesto" readonly placeholder="Se llena automático"></div>
     <div class="field"><label>Semana evaluada</label>
@@ -339,7 +355,17 @@ button.success:hover{background:#27500A}
       <div class="info-chip" id="parcela-info"></div></div>
     <div class="field"><label id="lbl-jefe">Jefe de área</label><input type="text" id="f-jefe" readonly placeholder="Se llena automático"></div>
     <div class="field"><label>Evaluador</label>
-      <select id="f-eval"><option value="">— Selecciona evaluador —</option></select></div>
+      <select id="f-eval" onchange="onEvalChange()"><option value="">— Selecciona evaluador —</option></select>
+      <div id="nuevo-eval-box" style="display:none;margin-top:6px;background:#EBF3FB;border:1px solid #a8ccee;border-radius:7px;padding:10px 12px">
+        <div style="font-size:11px;font-weight:600;color:#185FA5;margin-bottom:7px"><i class="ti ti-user-plus"></i> Nuevo evaluador</div>
+        <input type="text" id="nuevo-eval-nombre" placeholder="Nombre completo…" style="font-size:12px;padding:6px 10px;border:1px solid #a8ccee;border-radius:6px;width:100%;margin-bottom:5px;font-family:Arial,sans-serif">
+        <input type="text" id="nuevo-eval-puesto" placeholder="Puesto (ej. JEFE DE AREA)" style="font-size:12px;padding:6px 10px;border:1px solid #a8ccee;border-radius:6px;width:100%;margin-bottom:5px;font-family:Arial,sans-serif">
+        <div style="display:flex;gap:5px">
+          <button onclick="agregarEvaluador()" style="flex:1;padding:5px 0;font-size:11px;background:#185FA5;color:white;border:none;border-radius:5px;cursor:pointer;font-family:Arial,sans-serif"><i class="ti ti-check"></i> Agregar</button>
+          <button onclick="document.getElementById('nuevo-eval-box').style.display='none'" style="padding:5px 10px;font-size:11px;background:white;border:1px solid #a8ccee;border-radius:5px;cursor:pointer;font-family:Arial,sans-serif">Cancelar</button>
+        </div>
+      </div>
+    </div>
   </div>
   <div class="grid2" style="margin-top:10px">
     <div class="field"><label id="lbl-km">Kilometraje actual</label><input type="text" id="f-km" placeholder="Km actuales del vehículo"></div>
@@ -756,7 +782,16 @@ const EVALUADORES=[
   {nombre:"CARLOS MIRANDA RODRIGUEZ",puesto:"MANTENIMIENTO"},
   {nombre:"LEONEL GUZMAN MENDOZA",puesto:"MTTO TALLER OFICINA MAGDALENA"}
 ];
+const SUPERVISORES_BASE=PERSONAL.filter(p=>["SUPERVISOR","JEFE DE AREA","COORDINADOR DE CULTIVO","FITOSANITARIO"].includes(p.puesto));
+let SUPERVISORES_EXTRA=[];
+let EVALUADORES_EXTRA=[];
+try{const s=localStorage.getItem('supervisores_extra');if(s)SUPERVISORES_EXTRA=JSON.parse(s);}catch(e){}
+try{const e=localStorage.getItem('evaluadores_extra');if(e)EVALUADORES_EXTRA=JSON.parse(e);}catch(e){}
+function getSupervisores(){return[...SUPERVISORES_BASE,...SUPERVISORES_EXTRA];}
+function getEvaluadores(){return[...EVALUADORES,...EVALUADORES_EXTRA];}
 const SUPERVISORES=PERSONAL.filter(p=>["SUPERVISOR","JEFE DE AREA","COORDINADOR DE CULTIVO","FITOSANITARIO"].includes(p.puesto));
+function saveSupervisoresExtra(){try{localStorage.setItem('supervisores_extra',JSON.stringify(SUPERVISORES_EXTRA));}catch(e){}}
+function saveEvaluadoresExtra(){try{localStorage.setItem('evaluadores_extra',JSON.stringify(EVALUADORES_EXTRA));}catch(e){}}
 
 // ── TRACTORES ─────────────────────────────────────────────────
 const TRACTORES=[
@@ -985,8 +1020,7 @@ function updateMensajeMotivacional(bonoTag,sc,cancelaBono){
 // ============================================================
 function initSelects(){
   // Supervisores
-  const sN=document.getElementById('f-nombre');
-  SUPERVISORES.forEach(p=>{const o=document.createElement('option');o.value=p.nombre;o.textContent=p.nombre+' ('+p.puesto+')';sN.appendChild(o);});
+  rebuildSelectSupervisores();
   // Camionetas
   const sC=document.getElementById('f-cam');CAMIONETAS.forEach(c=>{const o=document.createElement('option');o.value=c.eco;o.textContent=c.eco+' — '+c.modelo+' '+c.anio+' ('+c.placas+')';sC.appendChild(o);});
   // Tractores
@@ -994,11 +1028,10 @@ function initSelects(){
   // Parcelas
   const sL=document.getElementById('f-lugar');PARCELAS.forEach(p=>{const o=document.createElement('option');o.value=p.rancho;o.textContent='['+p.rancho+'] '+p.contrato;sL.appendChild(o);});
   // Evaluadores
-  const sE=document.getElementById('f-eval');EVALUADORES.forEach(e=>{const o=document.createElement('option');o.value=e.nombre;o.textContent=e.nombre+' — '+e.puesto;sE.appendChild(o);});
+  rebuildSelectEvaluadores();
   document.getElementById('f-fecha').value=new Date().toLocaleDateString('es-MX');calcularSemana();
   // Filtros BD
-  const fN=document.getElementById('flt-nombre');SUPERVISORES.forEach(p=>{const o=document.createElement('option');o.value=p.nombre;o.textContent=p.nombre;fN.appendChild(o);});
-  TRACTORISTAS_LIST.forEach(p=>{const o=document.createElement('option');o.value=p.nombre;o.textContent=p.nombre+' (Tractorista)';fN.appendChild(o);});
+  rebuildFiltroNombre();
   const fP=document.getElementById('flt-parcela');PARCELAS.forEach(p=>{const o=document.createElement('option');o.value=p.rancho;o.textContent='['+p.rancho+'] '+p.contrato.substring(0,35);fP.appendChild(o);});
   if(GS_URL){const u2=document.getElementById('cfg-url2');if(u2)u2.value=GS_URL;}
   // Llenar tabla estándares
@@ -1008,6 +1041,28 @@ function initSelects(){
     const i=this.value,box=document.getElementById('std-box'),ct=document.getElementById('std-content');if(i===''){box.style.display='none';return;}const e=ESTANDARES_TRACTOR[parseInt(i)];if(!e){box.style.display='none';return;}
     box.style.display='block';ct.innerHTML=`<strong>${e.actividad}</strong> — Estándar: <strong>${e.estandar}</strong><br><span style="color:#27500A">✓ Excelente (8–10): ${e.ex}</span> &nbsp;|&nbsp; <span style="color:#854F0B">Aceptable (5–7): ${e.acep}</span> &nbsp;|&nbsp; <span style="color:#A32D2D">✗ Deficiente (0–4): ${e.def}</span>`;
   });
+}
+function rebuildSelectSupervisores(){
+  const sN=document.getElementById('f-nombre');if(!sN)return;
+  const prev=sN.value;
+  sN.innerHTML='<option value="">— Selecciona —</option>';
+  getSupervisores().forEach(p=>{const o=document.createElement('option');o.value=p.nombre;o.textContent=p.nombre+' ('+p.puesto+')';sN.appendChild(o);});
+  const oNuevo=document.createElement('option');oNuevo.value='__nuevo_sup__';oNuevo.textContent='➕ Agregar nuevo supervisor…';sN.appendChild(oNuevo);
+  if(prev)sN.value=prev;
+}
+function rebuildSelectEvaluadores(){
+  const sE=document.getElementById('f-eval');if(!sE)return;
+  const prev=sE.value;
+  sE.innerHTML='<option value="">— Selecciona evaluador —</option>';
+  getEvaluadores().forEach(e=>{const o=document.createElement('option');o.value=e.nombre;o.textContent=e.nombre+' — '+e.puesto;sE.appendChild(o);});
+  const oNuevo=document.createElement('option');oNuevo.value='__nuevo_eval__';oNuevo.textContent='➕ Agregar nuevo evaluador…';sE.appendChild(oNuevo);
+  if(prev)sE.value=prev;
+}
+function rebuildFiltroNombre(){
+  const fN=document.getElementById('flt-nombre');if(!fN)return;
+  fN.innerHTML='<option value="">Todos</option>';
+  getSupervisores().forEach(p=>{const o=document.createElement('option');o.value=p.nombre;o.textContent=p.nombre;fN.appendChild(o);});
+  TRACTORISTAS_LIST.forEach(p=>{const o=document.createElement('option');o.value=p.nombre;o.textContent=p.nombre+' (Tractorista)';fN.appendChild(o);});
 }
 function toggleStdTable(){const t=document.getElementById('std-table-full');t.style.display=t.style.display==='none'?'block':'none';}
 
@@ -1104,9 +1159,10 @@ function cambiarModo(){
   document.getElementById('lbl-neg').textContent=esT?'¿Hubo paro por negligencia, mal uso o falla no reportada del tractor/implemento?':'¿Hubo paro por negligencia o falla no reportada a tiempo?';
   // Reconstruir selector de personas
   const sN=document.getElementById('f-nombre');sN.innerHTML='<option value="">— Selecciona —</option>';
-  const lista=esT?TRACTORISTAS_LIST:SUPERVISORES;
+  const lista=esT?TRACTORISTAS_LIST:getSupervisores();
   lista.forEach(p=>{const o=document.createElement('option');o.value=p.nombre;o.textContent=p.nombre+(p.puesto?' ('+p.puesto+')':'');sN.appendChild(o);});
   if(esT){const oNuevo=document.createElement('option');oNuevo.value='__nuevo__';oNuevo.textContent='➕ Agregar nuevo tractorista…';sN.appendChild(oNuevo);}
+  else{const oNuevo=document.createElement('option');oNuevo.value='__nuevo_sup__';oNuevo.textContent='➕ Agregar nuevo supervisor…';sN.appendChild(oNuevo);}
   document.getElementById('f-nombre').value='';document.getElementById('f-puesto').value='';
   document.getElementById('nuevo-person-box').style.display='none';
   buildItems();buildHerramientas();recalc();
@@ -1114,8 +1170,10 @@ function cambiarModo(){
 function onPersonaChange(){
   const v=document.getElementById('f-nombre').value;
   if(v==='__nuevo__'){document.getElementById('nuevo-person-box').style.display='block';document.getElementById('f-nombre').value='';return;}
+  if(v==='__nuevo_sup__'){document.getElementById('nuevo-sup-box').style.display='block';document.getElementById('f-nombre').value='';return;}
   document.getElementById('nuevo-person-box').style.display='none';
-  const lista=modoEval==='tractor'?TRACTORISTAS_LIST:PERSONAL;
+  document.getElementById('nuevo-sup-box').style.display='none';
+  const lista=modoEval==='tractor'?TRACTORISTAS_LIST:[...PERSONAL,...SUPERVISORES_EXTRA];
   const p=lista.find(x=>x.nombre===v);
   document.getElementById('f-puesto').value=p?p.puesto:'';
 }
@@ -1130,6 +1188,41 @@ function agregarTractorista(){
   document.getElementById('f-puesto').value='TRACTORISTA';inp.value='';
   document.getElementById('nuevo-person-box').style.display='none';
   toast('✓ Tractorista agregado: '+nombre);
+}
+function onEvalChange(){
+  const v=document.getElementById('f-eval').value;
+  if(v==='__nuevo_eval__'){
+    document.getElementById('nuevo-eval-box').style.display='block';
+    document.getElementById('f-eval').value='';
+  } else {
+    document.getElementById('nuevo-eval-box').style.display='none';
+  }
+}
+function agregarSupervisor(){
+  const inp=document.getElementById('nuevo-sup-nombre'),puestoSel=document.getElementById('nuevo-sup-puesto');
+  const nombre=inp.value.trim().toUpperCase(),puesto=puestoSel.value;
+  if(!nombre){toast('⚠ Escribe el nombre del supervisor');return;}
+  if(!puesto){toast('⚠ Selecciona el puesto');return;}
+  if(getSupervisores().find(s=>s.nombre===nombre)){toast('⚠ El supervisor ya existe en la lista');return;}
+  SUPERVISORES_EXTRA.push({nombre,puesto});saveSupervisoresExtra();
+  rebuildSelectSupervisores();rebuildFiltroNombre();
+  document.getElementById('f-nombre').value=nombre;
+  document.getElementById('f-puesto').value=puesto;
+  inp.value='';puestoSel.value='';
+  document.getElementById('nuevo-sup-box').style.display='none';
+  toast('✓ Supervisor agregado: '+nombre);
+}
+function agregarEvaluador(){
+  const inp=document.getElementById('nuevo-eval-nombre'),puestoInp=document.getElementById('nuevo-eval-puesto');
+  const nombre=inp.value.trim().toUpperCase(),puesto=puestoInp.value.trim().toUpperCase()||'EVALUADOR';
+  if(!nombre){toast('⚠ Escribe el nombre del evaluador');return;}
+  if(getEvaluadores().find(e=>e.nombre===nombre)){toast('⚠ El evaluador ya existe en la lista');return;}
+  EVALUADORES_EXTRA.push({nombre,puesto});saveEvaluadoresExtra();
+  rebuildSelectEvaluadores();
+  document.getElementById('f-eval').value=nombre;
+  inp.value='';puestoInp.value='';
+  document.getElementById('nuevo-eval-box').style.display='none';
+  toast('✓ Evaluador agregado: '+nombre);
 }
 
 const MODELOS_SIN_LONA=['HILUX','MITSUBISHI'];
