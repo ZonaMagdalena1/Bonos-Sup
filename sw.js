@@ -1,50 +1,53 @@
-const CACHE = 'bonos-agave-v2';
+const CACHE_NAME = 'bonos-agave-v4';
 const ASSETS = [
-  '/Bonos-Sup/',
-  '/Bonos-Sup/index.html',
-  '/Bonos-Sup/manifest.json',
-  'https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.19.0/dist/tabler-icons.min.css'
+  './index_agave_v4.html',
+  './manifest.json',
+  'https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.19.0/dist/tabler-icons.min.css',
+  'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js'
 ];
 
-self.addEventListener('install', e => {
-  e.waitUntil(
-    caches.open(CACHE).then(cache =>
-      Promise.allSettled(ASSETS.map(url => cache.add(url).catch(() => null)))
-    )
+// Instalación: guarda todos los recursos en caché
+self.addEventListener('install', event => {
+  event.waitUntil(
+    caches.open(CACHE_NAME).then(cache => {
+      return cache.addAll(ASSETS).catch(() => {
+        // Si algún recurso externo falla, continúa igual
+        return cache.add('./index_agave_v4.html');
+      });
+    })
   );
   self.skipWaiting();
 });
 
-self.addEventListener('activate', e => {
-  e.waitUntil(
+// Activación: limpia cachés antiguas
+self.addEventListener('activate', event => {
+  event.waitUntil(
     caches.keys().then(keys =>
-      Promise.all(keys.filter(k => k !== CACHE).map(k => caches.delete(k)))
+      Promise.all(
+        keys.filter(k => k !== CACHE_NAME).map(k => caches.delete(k))
+      )
     )
   );
   self.clients.claim();
 });
 
-self.addEventListener('fetch', e => {
-  const url = new URL(e.request.url);
-  if (url.hostname.includes('script.google.com')) {
-    e.respondWith(
-      fetch(e.request).catch(() =>
-        new Response(JSON.stringify({ok:false,msg:'offline'}),
-          {headers:{'Content-Type':'application/json'}})
-      )
-    );
-    return;
-  }
-  e.respondWith(
-    caches.match(e.request).then(cached => {
+// Fetch: primero caché, luego red (offline-first)
+self.addEventListener('fetch', event => {
+  event.respondWith(
+    caches.match(event.request).then(cached => {
       if (cached) return cached;
-      return fetch(e.request).then(response => {
-        if (response && response.status === 200) {
-          const clone = response.clone();
-          caches.open(CACHE).then(cache => cache.put(e.request, clone));
+      return fetch(event.request).then(response => {
+        // Solo cachea respuestas válidas
+        if (!response || response.status !== 200 || response.type === 'opaque') {
+          return response;
         }
+        const clone = response.clone();
+        caches.open(CACHE_NAME).then(cache => cache.put(event.request, clone));
         return response;
-      }).catch(() => caches.match('/Bonos-Sup/index.html'));
+      }).catch(() => {
+        // Sin red y sin caché: devuelve la app principal como fallback
+        return caches.match('./index_agave_v4.html');
+      });
     })
   );
 });
