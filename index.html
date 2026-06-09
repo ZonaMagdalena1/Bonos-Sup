@@ -230,14 +230,19 @@ button.success:hover{background:#27500A}
 
 <div class="card">
   <!-- SELECTOR MODO -->
-  <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;padding:10px 14px;background:#EBF3FB;border-radius:8px;border:1px solid #a8ccee">
-    <i class="ti ti-toggle-left" style="font-size:20px;color:#185FA5"></i>
-    <span style="font-size:12px;font-weight:600;color:#185FA5">Tipo de evaluación:</span>
-    <select id="modo-eval" onchange="cambiarModo()" style="font-size:13px;padding:6px 12px;border:1px solid #185FA5;border-radius:6px;background:white;color:#185FA5;font-weight:600;outline:none;cursor:pointer">
-      <option value="camioneta">🚛 Supervisor de Campo — Camioneta</option>
-      <option value="tractor">🚜 Tractorista — Tractor</option>
-    </select>
-    <span id="modo-badge" style="font-size:11px;padding:3px 10px;border-radius:12px;background:#185FA5;color:white;font-weight:600">SUPERVISOR</span>
+  <div style="margin-bottom:14px">
+    <button type="button" onclick="toggleModoSelector()" style="font-size:12px;padding:6px 14px;border-radius:6px;background:#EBF3FB;color:#185FA5;border:1px solid #a8ccee;cursor:pointer;display:flex;align-items:center;gap:6px;font-family:Arial,sans-serif">
+      <i class="ti ti-toggle-left"></i> Evaluar tractorista
+      <span id="modo-badge" style="font-size:11px;padding:2px 8px;border-radius:10px;background:#185FA5;color:white;font-weight:600;display:none">TRACTORISTA</span>
+    </button>
+    <div id="modo-selector-panel" style="display:none;margin-top:8px;padding:10px 14px;background:#EBF3FB;border-radius:8px;border:1px solid #a8ccee;display:none;align-items:center;gap:10px;flex-wrap:wrap">
+      <i class="ti ti-toggle-left" style="font-size:18px;color:#185FA5"></i>
+      <span style="font-size:12px;font-weight:600;color:#185FA5">Tipo de evaluación:</span>
+      <select id="modo-eval" onchange="cambiarModo()" style="font-size:13px;padding:6px 12px;border:1px solid #185FA5;border-radius:6px;background:white;color:#185FA5;font-weight:600;outline:none;cursor:pointer">
+        <option value="camioneta">🚛 Supervisor de Campo — Camioneta</option>
+        <option value="tractor">🚜 Tractorista — Tractor</option>
+      </select>
+    </div>
   </div>
 
   <div class="card-title" id="card-datos-title"><i class="ti ti-user-check"></i> <span id="card-datos-lbl">Datos del supervisor y vehículo</span></div>
@@ -353,12 +358,32 @@ button.success:hover{background:#27500A}
   <div class="card-title"><i class="ti ti-tool"></i> Inventario de herramienta
     <span style="margin-left:auto;font-size:11px;font-weight:400;color:#888" id="herr-resumen">— / — items presentes</span></div>
   <div class="herr-grid" id="herr-grid"></div>
+  <!-- HERRAMIENTAS SUGERIDAS -->
+  <div style="margin-top:14px;padding-top:12px;border-top:1px dashed #d0ccc4">
+    <div style="font-size:12px;font-weight:600;color:#185FA5;margin-bottom:8px;display:flex;align-items:center;gap:6px">
+      <i class="ti ti-bulb"></i> Herramientas sugeridas / adicionales
+    </div>
+    <div id="herr-sugeridas-container" style="display:flex;flex-direction:column;gap:6px"></div>
+    <button type="button" onclick="agregarHerramientaSugerida()" style="margin-top:8px;font-size:11px;padding:5px 12px;background:#EBF3FB;color:#185FA5;border:1px solid #a8ccee;border-radius:6px;cursor:pointer;font-family:Arial,sans-serif;display:flex;align-items:center;gap:5px">
+      <i class="ti ti-plus"></i> Agregar herramienta
+    </button>
+  </div>
 </div>
 
 <div class="card">
   <div class="card-title"><i class="ti ti-first-aid-kit"></i> Inventario de botiquín
     <span style="margin-left:auto;font-size:11px;font-weight:400;color:#888" id="bot-resumen">— / — items presentes</span></div>
   <div class="herr-grid" id="bot-grid"></div>
+  <!-- INSUMOS SUGERIDOS BOTIQUÍN -->
+  <div style="margin-top:14px;padding-top:12px;border-top:1px dashed #d0ccc4">
+    <div style="font-size:12px;font-weight:600;color:#185FA5;margin-bottom:8px;display:flex;align-items:center;gap:6px">
+      <i class="ti ti-bulb"></i> Insumos sugeridos / adicionales para botiquín
+    </div>
+    <div id="bot-sugeridas-container" style="display:flex;flex-direction:column;gap:6px"></div>
+    <button type="button" onclick="agregarInsumoSugerido()" style="margin-top:8px;font-size:11px;padding:5px 12px;background:#EBF3FB;color:#185FA5;border:1px solid #a8ccee;border-radius:6px;cursor:pointer;font-family:Arial,sans-serif;display:flex;align-items:center;gap:5px">
+      <i class="ti ti-plus"></i> Agregar insumo
+    </button>
+  </div>
 </div>
 </div>
 
@@ -485,7 +510,7 @@ button.success:hover{background:#27500A}
         <th onclick="sortDB('semana')">Semana <span class="sort-arrow">↕</span></th>
         <th>Rancho</th><th>Camioneta</th>
         <th onclick="sortDB('puntaje')">Puntaje <span class="sort-arrow">↕</span></th>
-        <th>Resultado</th><th>Fotos</th><th>Detalle</th>
+        <th>Resultado</th><th>Fotos</th><th>Acciones</th>
       </tr></thead>
       <tbody id="db-body"></tbody>
     </table>
@@ -502,7 +527,10 @@ button.success:hover{background:#27500A}
   <div class="detail-box">
     <h3 id="det-titulo">Detalle de evaluación</h3>
     <div id="det-content"></div>
-    <div style="margin-top:16px;text-align:right"><button onclick="document.getElementById('detail-modal').classList.remove('open')"><i class="ti ti-x"></i> Cerrar</button></div>
+    <div style="margin-top:16px;display:flex;gap:8px;justify-content:flex-end">
+      <button class="primary" id="det-pdf-btn" onclick=""><i class="ti ti-file-type-pdf"></i> Descargar PDF</button>
+      <button onclick="document.getElementById('detail-modal').classList.remove('open')"><i class="ti ti-x"></i> Cerrar</button>
+    </div>
   </div>
 </div>
 
@@ -760,7 +788,7 @@ function saveTractoristas(){try{const base=["SALVADOR CORREA GONZALEZ","HOMERO G
 // ── CRITERIOS TRACTORISTA ──────────────────────────────────────
 const CRITERIOS_TRACTOR=[
   {sec:"1. Asistencia",icon:"ti-calendar-check",items:[
-    {id:"t1.1",crit:"Asistió todos los días del periodo semanal (0 faltas, sin excepciones)",tipo:"sinno",peso:20,cancela:false}
+    {id:"t1.1",crit:"Asistió todos los días del periodo semanal (0 faltas, sin excepciones)",tipo:"sinno",peso:35,cancela:false}
   ]},
   {sec:"2. Horario y velocidad",icon:"ti-clock",items:[
     {id:"t2.1",crit:"Cumplió turno completo con mínimo 8 horas efectivas en parcela",tipo:"sinno",peso:15,cancela:false},
@@ -773,12 +801,6 @@ const CRITERIOS_TRACTOR=[
     {id:"t4.1",crit:"Tractor limpio, sin basura ni acumulación excesiva de tierra",tipo:"sinno",peso:4,cancela:false},
     {id:"t4.2",crit:"Sin golpes ni daños atribuibles a negligencia del operador",tipo:"sinno",peso:4,cancela:false},
     {id:"t4.3",crit:"Faros, calaveras y luces completamente funcionales",tipo:"sinno",peso:4,cancela:false}
-  ]},
-  {sec:"6. Mantenimiento del tractor",icon:"ti-engine",items:[
-    {id:"t6.1",crit:"Reporte fotográfico semanal de puntos de engrasado enviado a coordinación",tipo:"sinno",peso:3,cancela:false},
-    {id:"t6.2",crit:"Revisión diaria de nivel y estado de aceite y anticongelante reportada",tipo:"sinno",peso:5,cancela:false},
-    {id:"t6.3",crit:"Estado y presión de llantas + brazos de levante revisados y reportados",tipo:"sinno",peso:4,cancela:false},
-    {id:"t6.4",crit:"Pernos adecuados para el uso de implementos verificados",tipo:"sinno",peso:3,cancela:false}
   ]}
 ];
 // ── HERRAMIENTAS TRACTORISTA ───────────────────────────────────
@@ -797,7 +819,7 @@ let modoEval='camioneta'; // 'camioneta' | 'tractor'
 const HERRAMIENTAS=["Gato hidráulico","Cruceta","Triángulo de seguridad","Compresor","Eslingas para remolcar","Cables pasa corriente","Cepillo / escobeta / brocha","Franelas de limpieza","Extintor","Pinzas","Llaves (juego completo)","Desarmadores (juego)","Estuche de herramienta completo"];
 const BOTIQUIN=["Mochila botiquín","Vendas","Gasas","Curitas","Agua oxigenada","Jabón neutro para heridas","Tijeras punta redonda","Cinta de curación","Lava ojos","Agua para lavado de ojos","Pomada de árnica"];
 const CRITERIOS=[
-  {sec:"1. Asistencia",icon:"ti-calendar-check",items:[{id:"1.1",crit:"Asistió todos los días del periodo semanal (0 faltas, sin excepciones)",tipo:"sinno",peso:15,cancela:false}]},
+  {sec:"1. Asistencia",icon:"ti-calendar-check",items:[{id:"1.1",crit:"Asistió todos los días del periodo semanal (0 faltas, sin excepciones)",tipo:"sinno",peso:25,cancela:false}]},
   {sec:"2. Horario",icon:"ti-clock",items:[{id:"2.1",crit:"Cumplimiento del horario asignado (7:00 a.m. – 3:00 p.m. en parcela)",tipo:"sinno",peso:10,cancela:false}]},
   {sec:"3. Actividades de cultivo",icon:"ti-plant",items:[
     {id:"3.1",crit:"Calidad de las actividades realizadas conforme al Plan Anual de Cultivo",tipo:"escala",peso:10,cancela:false},
@@ -823,11 +845,6 @@ const CRITERIOS=[
     {id:"5.1",crit:"Niveles de fluidos correctos y reportados (aceite, anticongelante, hidráulico, frenos)",tipo:"sinno",peso:6,cancela:false},
     {id:"5.2",crit:"Estado de llantas reportado y en condiciones adecuadas",tipo:"sinno",peso:6,cancela:false},
     {id:"5.3",crit:"Sin excesos de velocidad constantes o reiterados (verificado por GPS)",tipo:"sinno",peso:6,cancela:false}
-  ]},
-  {sec:"6. Comunicación y reporte de actividades",icon:"ti-message-report",items:[
-    {id:"6.1",crit:"Envío puntual del reporte de actividades diario (WhatsApp / sistema antes de las 4 p.m.)",tipo:"escala",peso:4,cancela:false},
-    {id:"6.2",crit:"Respuesta oportuna a mensajes del jefe de área (máx. 30 min en horario laboral)",tipo:"sinno",peso:3,cancela:false},
-    {id:"6.3",crit:"Notificación inmediata de incidencias: accidentes, daños, paros, situaciones de riesgo",tipo:"sinno",peso:3,cancela:true}
   ]}
 ];
 
@@ -995,13 +1012,84 @@ function initSelects(){
 function toggleStdTable(){const t=document.getElementById('std-table-full');t.style.display=t.style.display==='none'?'block':'none';}
 
 // ============================================================
+// TOGGLE MODO SELECTOR (tractorista oculto por defecto)
+// ============================================================
+function toggleModoSelector(){
+  const panel=document.getElementById('modo-selector-panel');
+  const badge=document.getElementById('modo-badge');
+  const isVisible=panel.style.display==='flex';
+  panel.style.display=isVisible?'none':'flex';
+  if(isVisible&&modoEval==='tractor'){
+    // Si se cierra el panel estando en modo tractor, volver a camioneta
+    document.getElementById('modo-eval').value='camioneta';
+    cambiarModo();
+    badge.style.display='none';
+  }
+}
+
+// ============================================================
+// HERRAMIENTAS / INSUMOS SUGERIDOS
+// ============================================================
+let herrSugeridasCount=0;
+let botSugeridasCount=0;
+
+function agregarHerramientaSugerida(){
+  const cont=document.getElementById('herr-sugeridas-container');
+  const idx=herrSugeridasCount++;
+  const row=document.createElement('div');
+  row.id='herr-sug-row-'+idx;
+  row.style.cssText='display:flex;gap:6px;align-items:center';
+  row.innerHTML=`
+    <input type="text" id="herr-sug-nom-${idx}" placeholder="Nombre de la herramienta…"
+      style="flex:2;font-size:12px;padding:6px 10px;border:1px solid #d0ccc4;border-radius:6px;outline:none;font-family:Arial,sans-serif">
+    <select id="herr-sug-est-${idx}"
+      style="flex:1;font-size:12px;padding:6px 8px;border:1px solid #d0ccc4;border-radius:6px;background:white;outline:none">
+      <option value="">– Estado –</option>
+      <option value="presente">✓ Presente</option>
+      <option value="falta">✗ Falta</option>
+      <option value="noprop">⚠ No proporcionado</option>
+    </select>
+    <input type="text" id="herr-sug-obs-${idx}" placeholder="Observación…"
+      style="flex:2;font-size:11px;padding:6px 10px;border:1px solid #d0ccc4;border-radius:6px;outline:none;font-family:Arial,sans-serif">
+    <button type="button" onclick="document.getElementById('herr-sug-row-${idx}').remove()"
+      style="padding:5px 8px;font-size:12px;background:#FCEBEB;color:#791F1F;border:1px solid #F0997B;border-radius:5px;cursor:pointer;font-family:Arial,sans-serif;min-width:28px">✕</button>
+  `;
+  cont.appendChild(row);
+}
+
+function agregarInsumoSugerido(){
+  const cont=document.getElementById('bot-sugeridas-container');
+  const idx=botSugeridasCount++;
+  const row=document.createElement('div');
+  row.id='bot-sug-row-'+idx;
+  row.style.cssText='display:flex;gap:6px;align-items:center';
+  row.innerHTML=`
+    <input type="text" id="bot-sug-nom-${idx}" placeholder="Nombre del insumo…"
+      style="flex:2;font-size:12px;padding:6px 10px;border:1px solid #d0ccc4;border-radius:6px;outline:none;font-family:Arial,sans-serif">
+    <select id="bot-sug-est-${idx}"
+      style="flex:1;font-size:12px;padding:6px 8px;border:1px solid #d0ccc4;border-radius:6px;background:white;outline:none">
+      <option value="">– Estado –</option>
+      <option value="presente">✓ Presente</option>
+      <option value="falta">✗ Falta</option>
+      <option value="noprop">⚠ No proporcionado</option>
+    </select>
+    <input type="text" id="bot-sug-obs-${idx}" placeholder="Observación…"
+      style="flex:2;font-size:11px;padding:6px 10px;border:1px solid #d0ccc4;border-radius:6px;outline:none;font-family:Arial,sans-serif">
+    <button type="button" onclick="document.getElementById('bot-sug-row-${idx}').remove()"
+      style="padding:5px 8px;font-size:12px;background:#FCEBEB;color:#791F1F;border:1px solid #F0997B;border-radius:5px;cursor:pointer;font-family:Arial,sans-serif;min-width:28px">✕</button>
+  `;
+  cont.appendChild(row);
+}
+
+// ============================================================
 // CAMBIAR MODO (camioneta <-> tractor)
 // ============================================================
 function cambiarModo(){
   modoEval=document.getElementById('modo-eval').value;
   const esT=modoEval==='tractor';
-  // Badge
-  const badge=document.getElementById('modo-badge');badge.textContent=esT?'TRACTORISTA':'SUPERVISOR';badge.style.background=esT?'#3B6D11':'#185FA5';
+  // Badge (nuevo diseño: dentro del botón toggle)
+  const badge=document.getElementById('modo-badge');
+  if(badge){badge.textContent=esT?'TRACTORISTA':'';badge.style.display=esT?'inline-block':'none';badge.style.background=esT?'#3B6D11':'#185FA5';}
   // Card titulo
   document.getElementById('card-datos-lbl').textContent=esT?'Datos del tractorista y tractor':'Datos del supervisor y vehículo';
   // Filas específicas
@@ -1508,6 +1596,118 @@ function generarActa(){
 }
 
 // ============================================================
+// PDF DESDE REGISTRO HISTÓRICO (Base de Datos)
+// ============================================================
+function generarPDFDesdeRegistro(id){
+  const r=historial.find(x=>x.id===id);if(!r){toast('⚠ Registro no encontrado');return;}
+  toast('Generando PDF…');
+  const{jsPDF}=window.jspdf;
+  const doc=new jsPDF({orientation:'portrait',unit:'mm',format:'letter'});
+  const PW=215.9,ML=12,MR=12,MT=10;let y=MT;
+  const setF=(size,style='normal',color=[34,34,34])=>{doc.setFontSize(size);doc.setFont('helvetica',style);doc.setTextColor(...color);};
+  const rF=(x,yw,w,h,color,r=0)=>{doc.setFillColor(...color);r>0?doc.roundedRect(x,yw,w,h,r,r,'F'):doc.rect(x,yw,w,h,'F');};
+  const setDr=color=>doc.setDrawColor(...color);
+  const checkY=(n=20)=>{if(y+n>272){doc.addPage();y=MT;}};
+  const secH=(title,bg=[24,95,165])=>{checkY(10);rF(ML,y,PW-ML-MR,6.5,bg,1);setF(8,'bold',[255,255,255]);doc.text(title,ML+3,y+4.5);y+=8;};
+  const row2=(items)=>{const cw=(PW-ML-MR)/2-1;for(let i=0;i<items.length;i+=2){checkY(8);[[ML,items[i]],[ML+cw+2,items[i+1]]].forEach(([x,it])=>{if(!it)return;rF(x,y,cw,7.5,[248,248,248]);doc.setLineWidth(.15);setDr([210,210,210]);doc.rect(x,y,cw,7.5);setF(6,'bold',[120,120,120]);doc.text((it.label||'').toUpperCase(),x+2,y+3);setF(8,'normal',[30,30,30]);doc.text(String(it.value||'—').substring(0,40),x+2,y+7);});y+=9;}};
+
+  const esT=r.tipo==='tractor';
+  const bonoTag=r.bonoTag||'sinbono';
+  const esEx=bonoTag==='500';
+  const esReg=(bonoTag==='300'||bonoTag==='300_ajustado');
+  const colorResult=esEx?[59,109,17]:esReg?[133,79,11]:[163,45,45];
+  const bgResult=esEx?[234,243,222]:esReg?[250,238,218]:[252,235,235];
+  const fechaGen=new Date().toLocaleDateString('es-MX',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
+
+  // — Header —
+  rF(0,0,PW,28,[24,95,165]);rF(0,24,PW,4,[12,68,124]);
+  setF(13,'bold',[255,255,255]);doc.text('Evaluación de Bono Semanal — '+(esT?'Tractorista':'Supervisor de Campo'),PW/2,11,{align:'center'});
+  setF(8,'normal',[200,230,255]);doc.text('CONSOLIDACIÓN DE AGAVE S.A. DE C.V.  |  Dpto. de Campo  |  Magdalena, Jalisco',PW/2,17,{align:'center'});
+  rF(PW-50,2,46,8,[12,68,124],1);setF(6.5,'normal',[200,230,255]);doc.text(fechaGen,PW-MR,7.5,{align:'right'});
+  y=32;
+
+  // — I. Datos —
+  secH('I. Datos del '+(esT?'Tractorista y Tractor':'Supervisor y Vehículo'));
+  const datosRow=[
+    {label:esT?'Tractorista evaluado':'Supervisor evaluado',value:r.nombre},
+    {label:'Puesto',value:r.puesto||'—'},
+    {label:'Semana evaluada',value:r.semana},
+    {label:'Fecha evaluación',value:r.fecha},
+    {label:esT?'Tractor / Eco.':'Camioneta / Eco.',value:r.cam},
+    {label:'Modelo',value:r.modelo||'—'},
+    {label:esT?'HP':'Placas',value:r.placas||'—'},
+    {label:esT?'Horometro':'Kilometraje',value:r.km||r.horometro||'—'},
+    {label:'Rancho / Parcela',value:'['+r.rancho+'] '+(r.contrato||'').substring(0,38)},
+    {label:'Jefe de área',value:r.jefe},
+    {label:'Evaluador',value:r.evaluador},
+    {label:'Negligencia',value:r.negVal==='Si'?'⚠ SÍ — Bono SUSPENDIDO':'No'}
+  ];
+  if(r.bonoOverride&&r.bonoOverrideMotivo)datosRow.push({label:'Ajuste de bono',value:r.bonoOverrideMotivo});
+  if(esT&&r.tipoActividad)datosRow.push({label:'Tipo de actividad',value:r.tipoActividad},{label:'Actividad específica',value:r.actividadEspecifica||'—'});
+  row2(datosRow);
+
+  // — Resumen strip —
+  checkY(10);
+  const rc2=esEx?[59,109,17]:esReg?[133,79,11]:[163,45,45],rb2=esEx?[234,243,222]:esReg?[250,238,218]:[252,235,235];
+  rF(ML,y,PW-ML-MR,8,rb2,1);doc.setLineWidth(.2);setDr(rc2);doc.roundedRect(ML,y,PW-ML-MR,8,1,1);
+  setF(7,'bold',rc2);doc.text('Puntaje: '+(r.puntaje||0)+'/100  |  '+(r.bonoTxt||'—')+'  |  Fotos: '+(r.nFotos||0),PW/2,y+5.2,{align:'center'});
+  y+=12;
+
+  // — II. Criterios (desde snapshot de incumplidos) —
+  secH('II. Resumen de Evaluación');
+  const incumpList=r.incumplidos&&r.incumplidos!=='Ninguno'?r.incumplidos.split('; ').filter(Boolean):[];
+  if(incumpList.length===0){
+    checkY(8);rF(ML,y,PW-ML-MR,8,[234,243,222],1);setF(8,'bold',[59,109,17]);doc.text('✓ Sin incumplimientos registrados',PW/2,y+5.2,{align:'center'});y+=12;
+  } else {
+    checkY(10);rF(ML,y,PW-ML-MR,6,[163,45,45],1);setF(8,'bold',[255,255,255]);doc.text('⚠  Criterios incumplidos ('+incumpList.length+')',ML+3,y+4.2);y+=7;
+    incumpList.forEach((itm,i)=>{checkY(7);rF(ML,y,PW-ML-MR,6,[252,235,235]);setF(7,'normal',[100,20,20]);doc.text((i+1)+'. '+itm.substring(0,100),ML+3,y+4.2);y+=7;});y+=3;
+  }
+
+  // — III. Inventario herramienta —
+  const herr=r.herramientas||[];const bot=r.botiquin||[];
+  if(herr.length>0){
+    secH('III. Inventario de Herramienta');
+    const hc=Math.ceil(herr.length/2);
+    for(let i=0;i<hc;i++){checkY(7);[i,i+hc].forEach((idx,col)=>{if(idx>=herr.length)return;const h=herr[idx],v=h.estado||'—',cx=ML+col*((PW-ML-MR)/2+2),cw=(PW-ML-MR)/2-2,bg=v==='presente'?[234,243,222]:v==='falta'?[252,235,235]:v==='noprop'?[255,248,232]:[245,245,245];rF(cx,y,cw,6,bg);doc.setLineWidth(.15);setDr([200,200,200]);doc.rect(cx,y,cw,6);setF(6.5,'normal',[30,30,30]);doc.text((h.nombre||'').substring(0,30),cx+2,y+2.5);const vc=v==='presente'?[59,109,17]:v==='falta'?[163,45,45]:v==='noprop'?[133,79,11]:[120,120,120];setF(6,'bold',vc);doc.text(v==='presente'?'✓ OK':v==='falta'?'✗ Falta':v==='noprop'?'⚠ No dado':v==='na'?'N/A':'—',cx+cw-2,y+2.5,{align:'right'});if(h.obs){setF(5.5,'italic',[100,100,100]);doc.text(h.obs.substring(0,28),cx+2,y+5);}});y+=7;}y+=2;
+  }
+
+  // — IV. Botiquín —
+  if(bot.length>0){
+    secH('IV. Inventario de Botiquín',[5,80,65]);
+    const bc2=Math.ceil(bot.length/2);
+    for(let i=0;i<bc2;i++){checkY(7);[i,i+bc2].forEach((idx,col)=>{if(idx>=bot.length)return;const h=bot[idx],v=h.estado||'—',cx=ML+col*((PW-ML-MR)/2+2),cw=(PW-ML-MR)/2-2,bg=v==='presente'?[234,243,222]:v==='falta'?[252,235,235]:[245,245,245];rF(cx,y,cw,6,bg);doc.setLineWidth(.15);setDr([200,200,200]);doc.rect(cx,y,cw,6);setF(6.5,'normal',[30,30,30]);doc.text((h.nombre||'').substring(0,32),cx+2,y+4);const vc=v==='presente'?[59,109,17]:v==='falta'?[163,45,45]:[120,120,120];setF(6,'bold',vc);doc.text(v==='presente'?'✓ OK':v==='falta'?'✗ Falta':v==='na'?'N/A':'—',cx+cw-2,y+4,{align:'right'});});y+=7;}y+=3;
+  }
+
+  // — V. Observaciones —
+  if(r.obsGeneral){checkY(16);secH('V. Observaciones Generales',[80,80,80]);const lines=doc.splitTextToSize(r.obsGeneral,PW-ML-MR-4),obsH=lines.length*5+4;rF(ML,y,PW-ML-MR,obsH,[249,249,249]);doc.setLineWidth(.2);setDr([200,200,200]);doc.rect(ML,y,PW-ML-MR,obsH);setF(7.5,'normal',[50,50,50]);lines.forEach((line,i)=>doc.text(line,ML+3,y+5+i*5));y+=obsH+4;}
+
+  // — VI. Resultado final —
+  checkY(36);secH('VI. Resultado Final',colorResult);
+  rF(ML,y,PW-ML-MR,28,bgResult,2);doc.setLineWidth(.3);setDr(colorResult);doc.roundedRect(ML,y,PW-ML-MR,28,2,2);
+  setF(28,'bold',colorResult);doc.text(String(r.puntaje||0),ML+16,y+20,{align:'center'});setF(10,'normal',[120,120,120]);doc.text('/100',ML+22,y+20);
+  rF(ML+35,y+6,80,10,colorResult,2);setF(10,'bold',[255,255,255]);doc.text((r.bonoTxt||'—').substring(0,40),ML+75,y+12.5,{align:'center'});
+  setF(7,'normal',[80,80,80]);doc.text('Escala: 0–69 = Sin bono  |  70–80 = $300 MXN  |  81–100 = $500 MXN',ML+35,y+22);doc.text('Incumplimiento o herramienta faltante = Bono suspendido (puntaje conservado)',ML+35,y+27);y+=34;
+
+  // — Firmas —
+  checkY(30);const sigW=(PW-ML-MR)/2-8;
+  [{x:ML+4,label:'Firma del Evaluador',name:r.evaluador||'—'},{x:PW/2+4,label:'Firma del '+(esT?'Tractorista':'Supervisor'),name:r.nombre||'—'}].forEach(s=>{doc.setLineWidth(.3);setDr([80,80,80]);doc.line(s.x,y+20,s.x+sigW,y+20);setF(7.5,'bold',[30,30,30]);doc.text(s.label,s.x+sigW/2,y+24,{align:'center'});setF(7,'normal',[80,80,80]);doc.text(s.name.substring(0,35),s.x+sigW/2,y+28,{align:'center'});});y+=32;
+
+  // — Fotos miniatura —
+  const fotosMini=r.fotosMini||[];
+  if(fotosMini.length>0){checkY(10);secH('VII. Fotografías de Evidencia ('+(r.nFotos||fotosMini.length)+')',[30,70,120]);const fw=42,fh=32,gap=2;for(let i=0;i<fotosMini.length;i++){if(i%4===0&&i>0){y+=fh+gap+5;checkY(fh+10);}const fx=ML+(i%4)*(fw+gap);try{doc.addImage(fotosMini[i],'JPEG',fx,y,fw,fh,'','FAST');setF(5.5,'normal',[120,120,120]);doc.text('Foto '+(i+1),fx+fw/2,y+fh+3,{align:'center'});}catch(e){}}y+=fh+8;
+  if(r.nFotos>fotosMini.length){checkY(8);setF(7,'italic',[120,120,120]);doc.text('* Se muestran '+fotosMini.length+' de '+r.nFotos+' fotos totales (máx. almacenadas en el registro)',ML,y);y+=6;}}
+
+  // — Footer —
+  const totalPags=doc.getNumberOfPages();
+  for(let p=1;p<=totalPags;p++){doc.setPage(p);rF(0,282,PW,10,[240,244,248]);setF(6.5,'normal',[120,120,120]);doc.text('Consolidación de Agave S.A. de C.V.  |  Sistema de Evaluación de Bono Semanal  |  '+new Date().toLocaleString('es-MX'),PW/2,288,{align:'center'});doc.text('Pág. '+p+' / '+totalPags,PW-MR,288,{align:'right'});}
+
+  const nl=(r.nombre||'Evaluado').split(' ').slice(0,3).join('_');
+  const sl=(r.semana||'Semana').replace(/[^\w]/g,'_').replace(/_+/g,'_');
+  doc.save('Evaluacion_'+nl+'_'+sl+'.pdf');
+  toast('✓ PDF generado: '+r.nombre);
+}
+
+// ============================================================
 // BASE DE DATOS
 // ============================================================
 function renderDB(){
@@ -1521,7 +1721,7 @@ function renderDB(){
   const slice=data.slice((dbPage-1)*PER_PAGE,dbPage*PER_PAGE);
   const body=document.getElementById('db-body'),empty=document.getElementById('db-empty');
   if(slice.length===0){body.innerHTML='';empty.style.display='block';}
-  else{empty.style.display='none';body.innerHTML=slice.map(r=>{const tc={suspendido:'x','500':'v','300':'m',sinbono:'s'}[r.bonoTag]||'s',tl={suspendido:'Suspendido','500':'$500 MXN','300':'$300 MXN',sinbono:'Sin bono'}[r.bonoTag]||r.bonoTag;return`<tr><td>${r.fecha}</td><td><strong>${r.nombre}</strong><br><span style="color:#888;font-size:10px">${r.puesto||''}</span></td><td>${r.semana}</td><td style="font-size:10px">[${r.rancho}]<br>${(r.contrato||'').substring(0,28)}…</td><td style="font-size:11px">${r.cam}<br><span style="color:#888">${r.placas||''}</span></td><td style="font-size:16px;font-weight:700;text-align:center;color:${tc==='v'?'#3B6D11':tc==='m'?'#854F0B':'#A32D2D'}">${r.puntaje}</td><td><span class="db-tag ${tc}">${tl}</span></td><td style="text-align:center">${r.nFotos>0?'<span style="color:#185FA5">📷 '+r.nFotos+'</span>':'—'}</td><td><button style="padding:4px 10px;font-size:11px" onclick="verDetalle(${r.id})"><i class="ti ti-eye"></i> Ver</button></td></tr>`;}).join('');}
+  else{empty.style.display='none';body.innerHTML=slice.map(r=>{const tc={suspendido:'x','500':'v','300':'m',sinbono:'s'}[r.bonoTag]||'s',tl={suspendido:'Suspendido','500':'$500 MXN','300':'$300 MXN',sinbono:'Sin bono'}[r.bonoTag]||r.bonoTag;return`<tr><td>${r.fecha}</td><td><strong>${r.nombre}</strong><br><span style="color:#888;font-size:10px">${r.puesto||''}</span></td><td>${r.semana}</td><td style="font-size:10px">[${r.rancho}]<br>${(r.contrato||'').substring(0,28)}…</td><td style="font-size:11px">${r.cam}<br><span style="color:#888">${r.placas||''}</span></td><td style="font-size:16px;font-weight:700;text-align:center;color:${tc==='v'?'#3B6D11':tc==='m'?'#854F0B':'#A32D2D'}">${r.puntaje}</td><td><span class="db-tag ${tc}">${tl}</span></td><td style="text-align:center">${r.nFotos>0?'<span style="color:#185FA5">📷 '+r.nFotos+'</span>':'—'}</td><td><button style="padding:4px 10px;font-size:11px" onclick="verDetalle(${r.id})"><i class="ti ti-eye"></i> Ver</button> <button style="padding:4px 10px;font-size:11px;background:#EBF3FB;color:#185FA5;border-color:#a8ccee" onclick="generarPDFDesdeRegistro(${r.id})"><i class="ti ti-file-type-pdf"></i> PDF</button></td></tr>`;}).join('');}
   document.getElementById('db-pagination').innerHTML=total2>0?`<span>Mostrando ${(dbPage-1)*PER_PAGE+1}–${Math.min(dbPage*PER_PAGE,total2)} de ${total2}</span><div style="display:flex;gap:6px"><button style="padding:4px 10px;font-size:11px" onclick="changePage(-1)" ${dbPage<=1?'disabled':''}>‹ Anterior</button><span style="padding:4px 8px;font-size:11px;color:#666">Pág. ${dbPage}/${pages}</span><button style="padding:4px 10px;font-size:11px" onclick="changePage(1)" ${dbPage>=pages?'disabled':''}>Siguiente ›</button></div>`:'';
 }
 function changePage(d){dbPage+=d;renderDB();}
@@ -1538,6 +1738,7 @@ function verDetalle(id){
   document.getElementById('det-titulo').textContent='Evaluación — '+r.nombre+' — '+r.semana;
   document.getElementById('det-content').innerHTML=`<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px 20px;font-size:12px;margin-bottom:14px"><div><span style="color:#888;font-weight:600">Supervisor:</span> ${r.nombre}</div><div><span style="color:#888;font-weight:600">Puesto:</span> ${r.puesto||'—'}</div><div><span style="color:#888;font-weight:600">Semana:</span> ${r.semana}</div><div><span style="color:#888;font-weight:600">Fecha:</span> ${r.fecha}</div><div><span style="color:#888;font-weight:600">Rancho:</span> [${r.rancho}] ${r.contrato}</div><div><span style="color:#888;font-weight:600">Jefe área:</span> ${r.jefe}</div><div><span style="color:#888;font-weight:600">Camioneta:</span> ${r.cam} / ${r.modelo}</div><div><span style="color:#888;font-weight:600">Placas:</span> ${r.placas||'—'}</div><div><span style="color:#888;font-weight:600">Evaluador:</span> ${r.evaluador}</div><div><span style="color:#888;font-weight:600">Negligencia:</span> ${r.negVal}</div><div><span style="color:#888;font-weight:600">Puntaje:</span> <strong style="font-size:16px">${r.puntaje}/100</strong></div><div><span style="color:#888;font-weight:600">Bono:</span> <span class="db-tag ${tc}">${tl}</span></div></div>${r.incumplidos&&r.incumplidos!=='Ninguno'?`<div style="background:#FCEBEB;border:1px solid #F0997B;border-radius:6px;padding:8px 12px;margin-bottom:10px;font-size:11px"><strong style="color:#A32D2D">Incumplimientos:</strong><br>${r.incumplidos}</div>`:''}${r.obsGeneral?`<div style="background:#f9f9f9;border:1px solid #e0ddd4;border-radius:6px;padding:8px 12px;margin-bottom:10px;font-size:11px"><strong>Observaciones:</strong><br>${r.obsGeneral}</div>`:''}<details style="margin-bottom:10px"><summary style="cursor:pointer;font-size:12px;font-weight:600;color:#185FA5;padding:6px 0">🔧 Inventario de herramienta</summary>${herrHTML}</details><details style="margin-bottom:10px"><summary style="cursor:pointer;font-size:12px;font-weight:600;color:#185FA5;padding:6px 0">🩺 Inventario de botiquín</summary>${botHTML}</details><details><summary style="cursor:pointer;font-size:12px;font-weight:600;color:#185FA5;padding:6px 0">📷 Fotografías (${r.nFotos||0})</summary>${fotosHTML}</details>`;
   document.getElementById('detail-modal').classList.add('open');
+  const pdfBtn=document.getElementById('det-pdf-btn');if(pdfBtn)pdfBtn.onclick=()=>generarPDFDesdeRegistro(id);
 }
 async function sincronizarAhora(){
   if(!GS_URL){abrirConfig();return;}if(!navigator.onLine){toast('⚠ Sin conexión a internet');updateConn('pending');return;}
