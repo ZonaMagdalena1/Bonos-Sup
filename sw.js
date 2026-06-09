@@ -1,6 +1,6 @@
 const CACHE_NAME = 'bonos-agave-v4';
 const ASSETS = [
-  './index_agave_v4.html',
+  './index.html',
   './manifest.json',
   'https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.19.0/dist/tabler-icons.min.css',
   'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js'
@@ -12,7 +12,7 @@ self.addEventListener('install', event => {
     caches.open(CACHE_NAME).then(cache => {
       return cache.addAll(ASSETS).catch(() => {
         // Si algún recurso externo falla, continúa igual
-        return cache.add('./index_agave_v4.html');
+        return cache.add('./index.html');
       });
     })
   );
@@ -46,7 +46,7 @@ self.addEventListener('fetch', event => {
         return response;
       }).catch(() => {
         // Sin red y sin caché: devuelve la app principal como fallback
-        return caches.match('./index_agave_v4.html');
+        return caches.match('./index.html');
       });
     })
   );
