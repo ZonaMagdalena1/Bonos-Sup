@@ -1467,14 +1467,53 @@ function getInventarioSnap(prefix,lista){
 // ============================================================
 // FOTOS
 // ============================================================
-function agregarFotos(ev){Array.from(ev.target.files).forEach(f=>{const r=new FileReader();r.onload=e=>{fotos.push({dataUrl:e.target.result,nombre:f.name});renderFotos();};r.readAsDataURL(f);});ev.target.value='';}
+function comprimirFoto(dataUrl,callback){
+  const img=new Image();
+  img.onload=function(){
+    const MAX=1280;
+    let w=img.width,h=img.height;
+    if(w>MAX||h>MAX){if(w>h){h=Math.round(h*MAX/w);w=MAX;}else{w=Math.round(w*MAX/h);h=MAX;}}
+    const c=document.createElement('canvas');c.width=w;c.height=h;
+    c.getContext('2d').drawImage(img,0,0,w,h);
+    callback(c.toDataURL('image/jpeg',0.65));
+  };
+  img.src=dataUrl;
+}
+function agregarFotos(ev){
+  Array.from(ev.target.files).forEach(f=>{
+    const r=new FileReader();
+    r.onload=e=>{
+      comprimirFoto(e.target.result,compressed=>{
+        fotos.push({dataUrl:compressed,nombre:f.name});
+        renderFotos();
+      });
+    };
+    r.readAsDataURL(f);
+  });
+  ev.target.value='';
+}
 function dragOver(e){e.preventDefault();document.getElementById('foto-zone').classList.add('drag-over');}
 function dragLeave(){document.getElementById('foto-zone').classList.remove('drag-over');}
-function dropFotos(e){e.preventDefault();dragLeave();Array.from(e.dataTransfer.files).forEach(f=>{if(!f.type.startsWith('image/'))return;const r=new FileReader();r.onload=ev=>{fotos.push({dataUrl:ev.target.result,nombre:f.name});renderFotos();};r.readAsDataURL(f);});}
+function dropFotos(e){e.preventDefault();dragLeave();Array.from(e.dataTransfer.files).forEach(f=>{if(!f.type.startsWith('image/'))return;const r=new FileReader();r.onload=ev=>{comprimirFoto(ev.target.result,compressed=>{fotos.push({dataUrl:compressed,nombre:f.name});renderFotos();});};r.readAsDataURL(f);});}
 function eliminarFoto(i){fotos.splice(i,1);renderFotos();}
 function renderFotos(){
   document.getElementById('foto-count-lbl').textContent=fotos.length+' foto'+(fotos.length!==1?'s':'');
-  document.getElementById('foto-grid').innerHTML=fotos.map((f,i)=>`<div class="foto-thumb"><img src="${f.dataUrl}" alt="Foto ${i+1}"><button class="del-btn" onclick="eliminarFoto(${i})">✕</button><div class="flabel">Foto ${i+1}</div></div>`).join('');
+  document.getElementById('foto-grid').innerHTML=fotos.map((f,i)=>`<div class="foto-thumb" onclick="verFotoGrande('${f.dataUrl}','Foto ${i+1} de ${fotos.length}')"><img src="${f.dataUrl}" alt="Foto ${i+1}"><button class="del-btn" onclick="event.stopPropagation();eliminarFoto(${i})">✕</button><div class="flabel">Foto ${i+1}</div></div>`).join('');
+}
+function verFotoGrande(src,titulo){
+  let overlay=document.getElementById('foto-overlay');
+  if(!overlay){
+    overlay=document.createElement('div');
+    overlay.id='foto-overlay';
+    overlay.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.92);z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:16px';
+    overlay.onclick=()=>overlay.remove();
+    document.body.appendChild(overlay);
+  }
+  overlay.innerHTML=`
+    <div style="color:white;font-size:12px;margin-bottom:10px;opacity:.7">${titulo}</div>
+    <img src="${src}" style="max-width:100%;max-height:80vh;border-radius:8px;object-fit:contain">
+    <div style="color:white;font-size:11px;margin-top:12px;opacity:.5">Toca en cualquier lugar para cerrar</div>`;
+  overlay.style.display='flex';
 }
 function abrirCamara(facing){
   facing=facing||'environment';
@@ -1503,7 +1542,8 @@ function cerrarCamara(){if(camStream)camStream.getTracks().forEach(t=>t.stop());
 function capturarFoto(){
   const v=document.getElementById('cam-video'),canvas=document.getElementById('cam-canvas');
   canvas.width=v.videoWidth;canvas.height=v.videoHeight;canvas.getContext('2d').drawImage(v,0,0);
-  fotos.push({dataUrl:canvas.toDataURL('image/jpeg',.85),nombre:'Cam_'+Date.now()+'.jpg'});renderFotos();toast('✓ Foto capturada');cerrarCamara();
+  const raw=canvas.toDataURL('image/jpeg',.85);
+  comprimirFoto(raw,compressed=>{fotos.push({dataUrl:compressed,nombre:'Cam_'+Date.now()+'.jpg'});renderFotos();toast('✓ Foto capturada');});cerrarCamara();
 }
 
 // ============================================================
@@ -1526,7 +1566,7 @@ function guardarEvaluacion(){
     bonoOverrideMotivo:document.getElementById('bono-override-motivo').value.trim()||'',
     incumplidos:c.incumplidos.map(i=>i.id+' — '+i.crit).join('; ')||'Ninguno',
     herrFalta:c.herrFalta,herramientas:herrSnap,botiquin:botSnap,
-    obsItems:getObsItems(),nFotos:fotos.length,fotosMini:fotos.slice(0,4).map(f=>f.dataUrl)
+    obsItems:getObsItems(),nFotos:fotos.length,fotosMini:fotos.map(f=>f.dataUrl)
   };
   historial.unshift(reg);saveHist();renderDB();
   if(GS_URL&&navigator.onLine){showSyncBar('syncing','Guardando en Google Sheets…',false);sendToGS(reg).then(ok=>{if(ok){showSyncBar('ok','✓ Guardado en Google Sheets y localmente');updateConn('ok');}else{syncPending.push(reg);savePending();showSyncBar('pending','Guardado localmente — sin conexión a Sheets',false);updateConn('pending');}});}
@@ -1621,7 +1661,7 @@ function generarPDFEval(){
   checkY(30);const sigW=(PW-ML-MR)/2-8;
   [{x:ML+4,label:'Firma del Evaluador',name:d.evaluador},{x:PW/2+4,label:'Firma del Supervisor Evaluado',name:d.nombre}].forEach(s=>{doc.setLineWidth(.3);setDr([80,80,80]);doc.line(s.x,y+20,s.x+sigW,y+20);setF(7.5,'bold',[30,30,30]);doc.text(s.label,s.x+sigW/2,y+24,{align:'center'});setF(7,'normal',[80,80,80]);doc.text(s.name.substring(0,35),s.x+sigW/2,y+28,{align:'center'});});y+=32;
   // Fotos
-  if(fotos.length>0){checkY(10);secH('VII. Fotografías de Evidencia ('+fotos.length+')',[30,70,120]);const mf=Math.min(fotos.length,8),fw=42,fh=32,gap=2;for(let i=0;i<mf;i++){if(i%4===0&&i>0){y+=fh+gap+5;checkY(fh+10);}const fx=ML+(i%4)*(fw+gap);try{doc.addImage(fotos[i].dataUrl,'JPEG',fx,y,fw,fh,'','FAST');setF(5.5,'normal',[120,120,120]);doc.text('Foto '+(i+1),fx+fw/2,y+fh+3,{align:'center'});}catch(e){}}y+=fh+8;}
+  if(fotos.length>0){checkY(10);secH('VII. Fotografías de Evidencia ('+fotos.length+')',[30,70,120]);const fw=42,fh=32,gap=2;for(let i=0;i<fotos.length;i++){if(i%4===0&&i>0){y+=fh+gap+5;checkY(fh+10);}const fx=ML+(i%4)*(fw+gap);try{doc.addImage(fotos[i].dataUrl,'JPEG',fx,y,fw,fh,'','FAST');setF(5.5,'normal',[120,120,120]);doc.text('Foto '+(i+1),fx+fw/2,y+fh+3,{align:'center'});}catch(e){}}y+=fh+8;}
   // Footer todas las páginas
   const total=doc.getNumberOfPages();
   for(let p=1;p<=total;p++){doc.setPage(p);rF(0,282,PW,10,[240,244,248]);setF(6.5,'normal',[120,120,120]);doc.text('Consolidación de Agave S.A. de C.V.  |  Sistema de Evaluación de Bono Semanal  |  '+new Date().toLocaleString('es-MX'),PW/2,288,{align:'center'});doc.text('Pág. '+p+' / '+total,PW-MR,288,{align:'right'});}
@@ -1787,8 +1827,7 @@ function generarPDFDesdeRegistro(id){
 
   // — Fotos miniatura —
   const fotosMini=r.fotosMini||[];
-  if(fotosMini.length>0){checkY(10);secH('VII. Fotografías de Evidencia ('+(r.nFotos||fotosMini.length)+')',[30,70,120]);const fw=42,fh=32,gap=2;for(let i=0;i<fotosMini.length;i++){if(i%4===0&&i>0){y+=fh+gap+5;checkY(fh+10);}const fx=ML+(i%4)*(fw+gap);try{doc.addImage(fotosMini[i],'JPEG',fx,y,fw,fh,'','FAST');setF(5.5,'normal',[120,120,120]);doc.text('Foto '+(i+1),fx+fw/2,y+fh+3,{align:'center'});}catch(e){}}y+=fh+8;
-  if(r.nFotos>fotosMini.length){checkY(8);setF(7,'italic',[120,120,120]);doc.text('* Se muestran '+fotosMini.length+' de '+r.nFotos+' fotos totales (máx. almacenadas en el registro)',ML,y);y+=6;}}
+  if(fotosMini.length>0){checkY(10);secH('VII. Fotografías de Evidencia ('+fotosMini.length+')',[30,70,120]);const fw=42,fh=32,gap=2;for(let i=0;i<fotosMini.length;i++){if(i%4===0&&i>0){y+=fh+gap+5;checkY(fh+10);}const fx=ML+(i%4)*(fw+gap);try{doc.addImage(fotosMini[i],'JPEG',fx,y,fw,fh,'','FAST');setF(5.5,'normal',[120,120,120]);doc.text('Foto '+(i+1),fx+fw/2,y+fh+3,{align:'center'});}catch(e){}}y+=fh+8;}
 
   // — Footer —
   const totalPags=doc.getNumberOfPages();
@@ -1827,7 +1866,15 @@ function verDetalle(id){
   (r.herramientas||[]).forEach(h=>{const col=h.estado==='presente'?'#27500A':h.estado==='falta'?'#791F1F':'#888';herrHTML+=`<tr><td style="padding:3px 6px;border-bottom:1px solid #f0ede6">${h.nombre}</td><td style="padding:3px 6px;border-bottom:1px solid #f0ede6;font-weight:700;color:${col}">${h.estado||'—'}</td><td style="padding:3px 6px;border-bottom:1px solid #f0ede6;color:#666">${h.obs||''}</td></tr>`;});herrHTML+='</table>';
   let botHTML='<table style="width:100%;font-size:11px;border-collapse:collapse;margin:4px 0">';
   (r.botiquin||[]).forEach(h=>{const col=h.estado==='presente'?'#27500A':h.estado==='falta'?'#791F1F':'#888';botHTML+=`<tr><td style="padding:3px 6px;border-bottom:1px solid #f0ede6">${h.nombre}</td><td style="padding:3px 6px;border-bottom:1px solid #f0ede6;font-weight:700;color:${col}">${h.estado||'—'}</td><td style="padding:3px 6px;border-bottom:1px solid #f0ede6;color:#666">${h.obs||''}</td></tr>`;});botHTML+='</table>';
-  let fotosHTML=r.fotosMini&&r.fotosMini.length>0?`<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-top:6px">${r.fotosMini.map((d,i)=>`<div style="aspect-ratio:1;border-radius:6px;overflow:hidden;border:1px solid #e0ddd4"><img src="${d}" style="width:100%;height:100%;object-fit:cover"></div>`).join('')}${r.nFotos>4?`<div style="aspect-ratio:1;background:#f5f5f0;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:12px;color:#888">+${r.nFotos-4} más</div>`:''}</div>`:'<p style="color:#aaa;font-size:12px">Sin fotos adjuntas</p>';
+  let fotosHTML=r.fotosMini&&r.fotosMini.length>0
+    ?`<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:6px">
+        ${r.fotosMini.map((d,i)=>`
+          <div style="aspect-ratio:1;border-radius:6px;overflow:hidden;border:1px solid #e0ddd4;cursor:pointer" onclick="verFotoGrande('${d}','Foto ${i+1} de ${r.fotosMini.length}')">
+            <img src="${d}" style="width:100%;height:100%;object-fit:cover">
+          </div>`).join('')}
+      </div>
+      <p style="font-size:10px;color:#aaa;margin-top:4px;text-align:center">Toca una foto para ampliarla</p>`
+    :'<p style="color:#aaa;font-size:12px">Sin fotos adjuntas</p>';
   document.getElementById('det-titulo').textContent='Evaluación — '+r.nombre+' — '+r.semana;
   document.getElementById('det-content').innerHTML=`<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px 20px;font-size:12px;margin-bottom:14px"><div><span style="color:#888;font-weight:600">Supervisor:</span> ${r.nombre}</div><div><span style="color:#888;font-weight:600">Puesto:</span> ${r.puesto||'—'}</div><div><span style="color:#888;font-weight:600">Semana:</span> ${r.semana}</div><div><span style="color:#888;font-weight:600">Fecha:</span> ${r.fecha}</div><div><span style="color:#888;font-weight:600">Rancho:</span> [${r.rancho}] ${r.contrato}</div><div><span style="color:#888;font-weight:600">Jefe área:</span> ${r.jefe}</div><div><span style="color:#888;font-weight:600">Camioneta:</span> ${r.cam} / ${r.modelo}</div><div><span style="color:#888;font-weight:600">Placas:</span> ${r.placas||'—'}</div><div><span style="color:#888;font-weight:600">Evaluador:</span> ${r.evaluador}</div><div><span style="color:#888;font-weight:600">Negligencia:</span> ${r.negVal}</div><div><span style="color:#888;font-weight:600">Puntaje:</span> <strong style="font-size:16px">${r.puntaje}/100</strong></div><div><span style="color:#888;font-weight:600">Bono:</span> <span class="db-tag ${tc}">${tl}</span></div></div>${r.incumplidos&&r.incumplidos!=='Ninguno'?`<div style="background:#FCEBEB;border:1px solid #F0997B;border-radius:6px;padding:8px 12px;margin-bottom:10px;font-size:11px"><strong style="color:#A32D2D">Incumplimientos:</strong><br>${r.incumplidos}</div>`:''}${r.obsGeneral?`<div style="background:#f9f9f9;border:1px solid #e0ddd4;border-radius:6px;padding:8px 12px;margin-bottom:10px;font-size:11px"><strong>Observaciones:</strong><br>${r.obsGeneral}</div>`:''}<details style="margin-bottom:10px"><summary style="cursor:pointer;font-size:12px;font-weight:600;color:#185FA5;padding:6px 0">🔧 Inventario de herramienta</summary>${herrHTML}</details><details style="margin-bottom:10px"><summary style="cursor:pointer;font-size:12px;font-weight:600;color:#185FA5;padding:6px 0">🩺 Inventario de botiquín</summary>${botHTML}</details><details><summary style="cursor:pointer;font-size:12px;font-weight:600;color:#185FA5;padding:6px 0">📷 Fotografías (${r.nFotos||0})</summary>${fotosHTML}</details>`;
   document.getElementById('detail-modal').classList.add('open');
