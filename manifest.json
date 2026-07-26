@@ -1,12 +1,13 @@
 {
   "name": "Bonos Agave — Consolidación de Agave S.A. de C.V.",
   "short_name": "Bonos Agave",
-  "description": "Sistema de evaluación de bono semanal — Supervisores de Campo",
+  "description": "Sistema de evaluación de bono semanal — Consolidación de Agave S.A. de C.V.",
   "start_url": "./index.html",
+  "scope": "./",
   "display": "standalone",
+  "orientation": "portrait-primary",
   "background_color": "#f5f5f0",
   "theme_color": "#185FA5",
-  "orientation": "portrait-primary",
   "icons": [
     {
       "src": "icon-192.png",
