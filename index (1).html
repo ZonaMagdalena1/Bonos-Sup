@@ -310,7 +310,7 @@ button.success:hover{background:#27500A}
           <option value="">— Selecciona la actividad principal —</option>
           <option value="preparacion">🌱 Preparación de parcela (Bono: $500 Exc / $300 Reg)</option>
           <option value="acarreo">💧 Acarreo de pipas (Bono: $365 Exc / $255 Reg)</option>
-          <option value="otra">📝 Otra actividad (especificar)</option>
+          <option value="otra">📝 Otra actividad (Bono: $365 Exc / $255 Reg)</option>
         </select>
         <div id="actividad-info" class="info-chip" style="display:none"></div>
         <div id="otra-actividad-box" style="display:none;margin-top:8px;background:#FFF8E8;border:1px solid #EF9F27;border-radius:7px;padding:10px 12px">
@@ -335,6 +335,10 @@ button.success:hover{background:#27500A}
     <div id="std-box" style="display:none;margin-top:8px;background:#f5f5f0;border:1px solid #e0ddd4;border-radius:8px;padding:10px 14px;font-size:11px">
       <strong style="color:#185FA5;display:block;margin-bottom:6px"><i class="ti ti-info-circle"></i> Estándar de referencia seleccionado</strong>
       <div id="std-content"></div>
+      <div style="margin-top:8px">
+        <label style="font-size:10.5px;font-weight:600;color:#555;display:block;margin-bottom:4px">Comentario sobre la actividad que se está desempeñando (opcional)</label>
+        <textarea id="f-comentario-actividad-especifica" rows="2" placeholder="Escribe aquí cualquier detalle sobre cómo se desempeña esta actividad…" style="font-size:12px;padding:6px 10px;border:1px solid #d0ccc4;border-radius:6px;width:100%;font-family:Arial,sans-serif;resize:vertical"></textarea>
+      </div>
     </div>
     <button id="btn-ver-estandares" onclick="toggleStdTable()" style="margin-top:8px;padding:5px 12px;font-size:11px;background:#EBF3FB;color:#185FA5;border:1px solid #a8ccee;border-radius:5px;cursor:pointer">
       <i class="ti ti-table"></i> Ver tabla completa de estándares
@@ -565,8 +569,23 @@ button.success:hover{background:#27500A}
     <h3 id="det-titulo">Detalle de evaluación</h3>
     <div id="det-content"></div>
     <div style="margin-top:16px;display:flex;gap:8px;justify-content:flex-end">
+      <button id="det-editar-btn" onclick="" style="background:#FFF8E8;color:#854F0B;border-color:#EF9F27"><i class="ti ti-edit"></i> Editar / agregar observación</button>
       <button class="primary" id="det-pdf-btn" onclick=""><i class="ti ti-file-type-pdf"></i> Descargar PDF</button>
       <button onclick="document.getElementById('detail-modal').classList.remove('open')"><i class="ti ti-x"></i> Cerrar</button>
+    </div>
+  </div>
+</div>
+
+<div class="detail-modal" id="edit-modal">
+  <div class="detail-box" style="max-width:520px">
+    <h3><i class="ti ti-edit"></i> Editar evaluación</h3>
+    <p style="font-size:11px;color:#888;margin:4px 0 12px">Esta evaluación ya fue guardada. Los cambios se agregan como observación adicional y quedará marcada como <strong>"Evaluación editada"</strong>, conservando el registro original.</p>
+    <div class="field"><label>Observación adicional (lo que se omitió durante la evaluación)</label>
+      <textarea id="f-obs-editada" rows="4" placeholder="Escribe aquí la observación, comentario o dato adicional que se omitió durante la evaluación original…"></textarea></div>
+    <div id="edit-historial-box" style="margin-top:8px;font-size:11px;color:#777"></div>
+    <div style="margin-top:16px;display:flex;gap:8px;justify-content:flex-end">
+      <button class="primary" id="edit-guardar-btn" onclick=""><i class="ti ti-device-floppy"></i> Guardar edición</button>
+      <button onclick="document.getElementById('edit-modal').classList.remove('open')"><i class="ti ti-x"></i> Cancelar</button>
     </div>
   </div>
 </div>
@@ -607,15 +626,30 @@ button.success:hover{background:#27500A}
           'Contrato','Camioneta','Modelo','Placas','Evaluador','Jefe','Km',
           'Horometro','Tipo_Actividad','Actividad_Otra','Comentario_Actividad',
           'Puntaje','Bono','Suspendido','Herr_Falta','Incumplimientos',
-          'Negligencia','Fotos','Observaciones','Timestamp']);
+          'Negligencia','Fotos','Observaciones','Editado','Observaciones_Adicionales','Timestamp']);
       }
       sheet.appendRow([r.id,r.fecha,r.nombre,r.puesto,r.semana,r.rancho,
         r.contrato,r.cam,r.modelo,r.placas,r.evaluador,r.jefe,r.km,
         r.horometro,r.tipoActividad,r.otraActividadNombre,r.otraActividadComentario,
         r.puntaje,r.bonoTxt,r.bonoTag==='suspendido'?'SI':'NO',
         r.herrFalta?'SI':'NO',r.incumplidos,r.negVal,r.nFotos,
-        r.obsGeneral,new Date().toISOString()]);
+        r.obsGeneral,r.editado?'SI':'NO',r.observacionesAdicionales?JSON.stringify(r.observacionesAdicionales):'',
+        new Date().toISOString()]);
       return out({ok:true});
+    }
+    if(data.action==='update'){
+      // Busca la fila por ID (columna A) y actualiza columnas de edición
+      var r2=data.row;
+      var values=sheet.getDataRange().getValues();
+      for(var i=1;i<values.length;i++){
+        if(String(values[i][0])===String(r2.id)){
+          var rowNum=i+1;
+          sheet.getRange(rowNum,26).setValue(r2.editado?'SI':'NO'); // Editado
+          sheet.getRange(rowNum,27).setValue(r2.observacionesAdicionales?JSON.stringify(r2.observacionesAdicionales):''); // Observaciones_Adicionales
+          return out({ok:true});
+        }
+      }
+      return out({ok:false,msg:'ID no encontrado para actualizar'});
     }
     return out({ok:false,msg:'unknown'});
   }catch(err){return out({ok:false,msg:err.toString()});}
@@ -924,6 +958,10 @@ function showSyncBar(type,msg,autoHide=true){
 async function sendToGS(reg){
   if(!GS_URL)return false;
   try{const params=new URLSearchParams();params.append('payload',JSON.stringify({action:'save',row:reg}));await fetch(GS_URL,{method:'POST',mode:'no-cors',body:params});return true;}catch(e){return false;}
+}
+async function sendUpdateToGS(reg){
+  if(!GS_URL||!navigator.onLine)return false;
+  try{const params=new URLSearchParams();params.append('payload',JSON.stringify({action:'update',row:{id:reg.id,editado:reg.editado,observacionesAdicionales:reg.observacionesAdicionales}}));await fetch(GS_URL,{method:'POST',mode:'no-cors',body:params});return true;}catch(e){return false;}
 }
 async function pingGS(){
   if(!GS_URL)return false;
@@ -1283,7 +1321,7 @@ function onActividadChange(){
   const v=document.getElementById('f-tipo-actividad').value,info=document.getElementById('actividad-info'),otraBox=document.getElementById('otra-actividad-box');
   if(v==='preparacion'){info.style.display='block';info.innerHTML='<i class="ti ti-info-circle"></i> <strong>Preparación de parcela:</strong> Bono excelente $500 | Regular $300';}
   else if(v==='acarreo'){info.style.display='block';info.innerHTML='<i class="ti ti-info-circle"></i> <strong>Acarreo de pipas:</strong> Bono excelente $365 | Regular $255';}
-  else if(v==='otra'){info.style.display='block';info.innerHTML='<i class="ti ti-info-circle"></i> <strong>Otra actividad:</strong> especifica cuál se está desempeñando y agrega un comentario. Se usará la escala de bono estándar ($500 Exc / $300 Reg).';}
+  else if(v==='otra'){info.style.display='block';info.innerHTML='<i class="ti ti-info-circle"></i> <strong>Otra actividad:</strong> especifica cuál se está desempeñando y agrega un comentario. Bono excelente $365 | Regular $255';}
   else{info.style.display='none';}
   if(otraBox)otraBox.style.display=(v==='otra')?'block':'none';
   // Actividad específica: cambia opciones según si es actividad establecida u "otra" (sin estándar)
@@ -1430,7 +1468,7 @@ function recalc(){
   let bonoCom=500,bonoReg=300;
   if(modoEval==='tractor'){
     const act=document.getElementById('f-tipo-actividad')?document.getElementById('f-tipo-actividad').value:'';
-    if(act==='acarreo'){bonoCom=365;bonoReg=255;}
+    if(act==='acarreo'||act==='otra'){bonoCom=365;bonoReg=255;}
   }
   if(cancelaBono){bonoTxt='⛔ BONO SUSPENDIDO — Puntaje registrado: '+sc+'/100';bonoClass='bono-no';fill.style.background='#E24B4A';document.getElementById('score-num').className='score-num red';bonoTag='suspendido';}
   else if(sc>=81){bonoTxt='✓ Bono aprobado: $'+bonoCom+' MXN';bonoClass='bono-ok';fill.style.background='#639922';document.getElementById('score-num').className='score-num green';bonoTag='500';bonoTeoricoMXN=bonoCom;}
@@ -1505,6 +1543,7 @@ function getDatos(){
     horometro:document.getElementById('f-horometro')?document.getElementById('f-horometro').value.trim():'',
     tipoActividad:document.getElementById('f-tipo-actividad')?document.getElementById('f-tipo-actividad').value:'',
     actividadEspecifica:document.getElementById('f-actividad-especifica')?(document.getElementById('f-actividad-especifica').options[document.getElementById('f-actividad-especifica').selectedIndex]?.text||''):'',
+    comentarioActividadEspecifica:document.getElementById('f-comentario-actividad-especifica')?document.getElementById('f-comentario-actividad-especifica').value.trim():'',
     otraActividadNombre:document.getElementById('f-otra-actividad-nombre')?document.getElementById('f-otra-actividad-nombre').value.trim():'',
     otraActividadComentario:document.getElementById('f-otra-actividad-comentario')?document.getElementById('f-otra-actividad-comentario').value.trim():'',
   };
@@ -1512,6 +1551,16 @@ function getDatos(){
 function getObsItems(){
   const obs={};const lista=modoEval==='tractor'?CRITERIOS_TRACTOR:CRITERIOS;
   lista.forEach(sec=>{sec.items.forEach(item=>{const el=document.getElementById('obs-'+item.id);if(el&&el.value.trim())obs[item.id]=el.value.trim();});});return obs;
+}
+function getCriteriosSnap(){
+  const lista=modoEval==='tractor'?CRITERIOS_TRACTOR:CRITERIOS,obsItems=getObsItems(),snap=[];
+  lista.forEach(sec=>{
+    sec.items.forEach(item=>{
+      const v=getVal(item.id),badge=document.getElementById('s-'+item.id),est=badge?badge.textContent:'–';
+      snap.push({sec:sec.sec,id:item.id,crit:item.crit,peso:item.peso,valor:v||'–',estado:est,obs:obsItems[item.id]||''});
+    });
+  });
+  return snap;
 }
 function getInventarioSnap(prefix,lista){
   return lista.map((nombre,i)=>({nombre,estado:(document.getElementById(prefix+'-'+i)||{}).value||'',obs:((document.getElementById(prefix+'-obs-'+i)||{}).value||'').trim(),descuentoPrecio:parseFloat(((document.getElementById(prefix+'-precio-'+i)||{}).value))||0,descuentoCuotas:parseInt(((document.getElementById(prefix+'-cuotas-'+i)||{}).value))||0}));
@@ -1649,12 +1698,14 @@ function guardarEvaluacion(){
     contrato:d.contrato,has:d.has,inv:d.inv,jefe:d.jefe,km:d.km,negVal:d.negVal,
     obsGeneral:d.obsGeneral,horometro:d.horometro||'',tipoActividad:d.tipoActividad||'',
     actividadEspecifica:d.actividadEspecifica||'',
+    comentarioActividadEspecifica:d.comentarioActividadEspecifica||'',
     otraActividadNombre:d.otraActividadNombre||'',otraActividadComentario:d.otraActividadComentario||'',
     puntaje:c.total,bonoTxt:c.bonoTxt,bonoTag:c.bonoTag,
     bonoOverride:document.getElementById('bono-override-sel').value||'',
     bonoOverrideMotivo:document.getElementById('bono-override-motivo').value.trim()||'',
     incumplidos:c.incumplidos.map(i=>i.id+' — '+i.crit).join('; ')||'Ninguno',
     herrFalta:c.herrFalta,herramientas:herrSnap,botiquin:botSnap,
+    criteriosSnap:getCriteriosSnap(),
     obsItems:getObsItems(),nFotos:fotos.length,fotosMini:fotos.map(f=>f.dataUrl)
   };
   historial.unshift(reg);saveHist();renderDB();
@@ -1698,6 +1749,7 @@ function generarPDFEval(){
   const esTpdf=modoEval==='tractor';
   const datosRow=[{label:esTpdf?'Tractorista':'Supervisor evaluado',value:d.nombre},{label:'Puesto',value:d.puesto},{label:'Semana evaluada',value:d.semana},{label:'Fecha evaluación',value:d.fecha},{label:esTpdf?'Tractor / Eco.':'Camioneta / Eco.',value:d.cam},{label:'Modelo',value:d.modelo},{label:esTpdf?'HP':'Placas',value:d.placas},{label:esTpdf?'Horometro (hrs)':'Kilometraje',value:esTpdf?(d.horometro||'—'):d.km},{label:'Rancho / Parcela',value:'['+d.rancho+'] '+(d.contrato||'').substring(0,38)},{label:'Jefe de área',value:d.jefe},{label:'Evaluador',value:d.evaluador},{label:'Negligencia',value:d.negVal==='Si'?'⚠ SÍ — Bono SUSPENDIDO':'No'}];
   if(esTpdf&&d.tipoActividad)datosRow.push({label:'Tipo de actividad',value:labelActividad(d)},{label:'Actividad específica',value:d.actividadEspecifica||'—'});
+  if(esTpdf&&d.comentarioActividadEspecifica)datosRow.push({label:'Comentario de actividad',value:d.comentarioActividadEspecifica});
   if(overrideSel2&&overrideMotivo2)datosRow.push({label:'Ajuste de bono',value:overrideMotivo2});
   row2(datosRow);
   // Resumen rápido (strip de resultado anticipado)
@@ -1707,11 +1759,12 @@ function generarPDFEval(){
   y+=12;
   // Criterios
   secH('II. Criterios de Evaluación');
+  const listaCrit=modoEval==='tractor'?CRITERIOS_TRACTOR:CRITERIOS;
   const cols={id:ML,crit:ML+10,peso:ML+115,resp:ML+127,est:ML+140,obs:ML+165};
   rF(ML,y,PW-ML-MR,6.5,[50,70,90]);setF(6.5,'bold',[255,255,255]);
   doc.text('ID',cols.id+1,y+4.2);doc.text('Criterio',cols.crit+1,y+4.2);doc.text('Peso',cols.peso+1,y+4.2);doc.text('Resp.',cols.resp+1,y+4.2);doc.text('Resultado',cols.est+1,y+4.2);doc.text('Observación',cols.obs+1,y+4.2);y+=7;
   let rowBg=false;
-  CRITERIOS.forEach(sec=>{
+  listaCrit.forEach(sec=>{
     checkY(8);rF(ML,y,PW-ML-MR,5.5,[235,243,251]);setF(7,'bold',[24,95,165]);doc.text(sec.sec,ML+2,y+3.8);y+=6;
     sec.items.forEach(item=>{
       checkY(8);const v=getVal(item.id)||'–',badge=document.getElementById('s-'+item.id),est=badge?badge.textContent:'–',obs=(obsItems[item.id]||'').substring(0,28);
@@ -1733,13 +1786,17 @@ function generarPDFEval(){
     c.incumplidos.forEach((item,i)=>{checkY(7);rF(ML,y,PW-ML-MR,6,[252,235,235]);setF(7,'bold',[163,45,45]);doc.text((i+1)+'. '+item.id+' — ',ML+2,y+4.2);setF(7,'normal',[100,20,20]);doc.text(item.crit.substring(0,85),ML+20,y+4.2);y+=7;});y+=2;
   }
   // Herramienta
-  secH('III. Inventario de Herramienta');
-  const hc=Math.ceil(HERRAMIENTAS.length/2);
-  for(let i=0;i<hc;i++){checkY(7);[i,i+hc].forEach((idx,col)=>{if(idx>=HERRAMIENTAS.length)return;const v=document.getElementById('herr-'+idx).value||'—',obs=(document.getElementById('herr-obs-'+idx).value||'').trim().substring(0,25),cx=ML+col*((PW-ML-MR)/2+2),cw=(PW-ML-MR)/2-2,bg=v==='presente'?[234,243,222]:v==='falta'?[252,235,235]:v==='noprop'?[255,248,232]:[245,245,245];rF(cx,y,cw,6,bg);doc.setLineWidth(.15);setDr([200,200,200]);doc.rect(cx,y,cw,6);setF(6.5,'normal',[30,30,30]);doc.text(HERRAMIENTAS[idx].substring(0,30),cx+2,y+2.5);const vc=v==='presente'?[59,109,17]:v==='falta'?[163,45,45]:v==='noprop'?[133,79,11]:[120,120,120];setF(6,'bold',vc);doc.text(v==='presente'?'✓ OK':v==='falta'?'✗ Falta':v==='noprop'?'⚠ No dado':v==='na'?'N/A':'—',cx+cw-2,y+2.5,{align:'right'});if(obs){setF(5.5,'italic',[100,100,100]);doc.text(obs,cx+2,y+5);}});y+=7;}y+=2;
-  // Botiquín
-  secH('IV. Inventario de Botiquín',[5,80,65]);
-  const bc=Math.ceil(BOTIQUIN.length/2);
-  for(let i=0;i<bc;i++){checkY(7);[i,i+bc].forEach((idx,col)=>{if(idx>=BOTIQUIN.length)return;const v=document.getElementById('bot-'+idx).value||'—',cx=ML+col*((PW-ML-MR)/2+2),cw=(PW-ML-MR)/2-2,bg=v==='presente'?[234,243,222]:v==='falta'?[252,235,235]:[245,245,245];rF(cx,y,cw,6,bg);doc.setLineWidth(.15);setDr([200,200,200]);doc.rect(cx,y,cw,6);setF(6.5,'normal',[30,30,30]);doc.text(BOTIQUIN[idx].substring(0,32),cx+2,y+4);const vc=v==='presente'?[59,109,17]:v==='falta'?[163,45,45]:[120,120,120];setF(6,'bold',vc);doc.text(v==='presente'?'✓ OK':v==='falta'?'✗ Falta':v==='na'?'N/A':'—',cx+cw-2,y+4,{align:'right'});});y+=7;}y+=3;
+  secH(esTpdf?'III. Inventario de Herramienta (Tractor)':'III. Inventario de Herramienta');
+  const listaHerr=esTpdf?HERRAMIENTAS_TRACTOR:HERRAMIENTAS;
+  const prefHerr=esTpdf?'herrt':'herr';
+  const hc=Math.ceil(listaHerr.length/2);
+  for(let i=0;i<hc;i++){checkY(7);[i,i+hc].forEach((idx,col)=>{if(idx>=listaHerr.length)return;const v=document.getElementById(prefHerr+'-'+idx).value||'—',obs=(document.getElementById(prefHerr+'-obs-'+idx).value||'').trim().substring(0,25),cx=ML+col*((PW-ML-MR)/2+2),cw=(PW-ML-MR)/2-2,bg=v==='presente'?[234,243,222]:v==='falta'?[252,235,235]:v==='noprop'?[255,248,232]:[245,245,245];rF(cx,y,cw,6,bg);doc.setLineWidth(.15);setDr([200,200,200]);doc.rect(cx,y,cw,6);setF(6.5,'normal',[30,30,30]);doc.text(listaHerr[idx].substring(0,30),cx+2,y+2.5);const vc=v==='presente'?[59,109,17]:v==='falta'?[163,45,45]:v==='noprop'?[133,79,11]:[120,120,120];setF(6,'bold',vc);doc.text(v==='presente'?'✓ OK':v==='falta'?'✗ Falta':v==='noprop'?'⚠ No dado':v==='na'?'N/A':'—',cx+cw-2,y+2.5,{align:'right'});if(obs){setF(5.5,'italic',[100,100,100]);doc.text(obs,cx+2,y+5);}});y+=7;}y+=2;
+  // Botiquín (no aplica en modo tractor)
+  if(!esTpdf){
+    secH('IV. Inventario de Botiquín',[5,80,65]);
+    const bc=Math.ceil(BOTIQUIN.length/2);
+    for(let i=0;i<bc;i++){checkY(7);[i,i+bc].forEach((idx,col)=>{if(idx>=BOTIQUIN.length)return;const v=document.getElementById('bot-'+idx).value||'—',cx=ML+col*((PW-ML-MR)/2+2),cw=(PW-ML-MR)/2-2,bg=v==='presente'?[234,243,222]:v==='falta'?[252,235,235]:[245,245,245];rF(cx,y,cw,6,bg);doc.setLineWidth(.15);setDr([200,200,200]);doc.rect(cx,y,cw,6);setF(6.5,'normal',[30,30,30]);doc.text(BOTIQUIN[idx].substring(0,32),cx+2,y+4);const vc=v==='presente'?[59,109,17]:v==='falta'?[163,45,45]:[120,120,120];setF(6,'bold',vc);doc.text(v==='presente'?'✓ OK':v==='falta'?'✗ Falta':v==='na'?'N/A':'—',cx+cw-2,y+4,{align:'right'});});y+=7;}y+=3;
+  }
   // Observaciones
   if(d.obsGeneral){checkY(16);secH('V. Observaciones Generales',[80,80,80]);const lines=doc.splitTextToSize(d.obsGeneral,PW-ML-MR-4),obsH=lines.length*5+4;rF(ML,y,PW-ML-MR,obsH,[249,249,249]);doc.setLineWidth(.2);setDr([200,200,200]);doc.rect(ML,y,PW-ML-MR,obsH);setF(7.5,'normal',[50,50,50]);lines.forEach((line,i)=>doc.text(line,ML+3,y+5+i*5));y+=obsH+4;}
   // Resultado
@@ -1849,6 +1906,10 @@ function generarPDFDesdeRegistro(id){
   setF(8,'normal',[200,230,255]);doc.text('CONSOLIDACIÓN DE AGAVE S.A. DE C.V.  |  Dpto. de Campo  |  Magdalena, Jalisco',PW/2,17,{align:'center'});
   rF(PW-50,2,46,8,[12,68,124],1);setF(6.5,'normal',[200,230,255]);doc.text(fechaGen,PW-MR,7.5,{align:'right'});
   y=32;
+  if(r.editado){
+    checkY(10);rF(ML,y,PW-ML-MR,7,[255,243,214],1);doc.setLineWidth(.3);setDr([239,159,39]);doc.roundedRect(ML,y,PW-ML-MR,7,1,1);
+    setF(7.5,'bold',[133,79,11]);doc.text('✎ EVALUACIÓN EDITADA — última edición: '+(r.fechaEdicion||''),PW/2,y+4.7,{align:'center'});y+=10;
+  }
 
   // — I. Datos —
   secH('I. Datos del '+(esT?'Tractorista y Tractor':'Supervisor y Vehículo'));
@@ -1868,6 +1929,7 @@ function generarPDFDesdeRegistro(id){
   ];
   if(r.bonoOverride&&r.bonoOverrideMotivo)datosRow.push({label:'Ajuste de bono',value:r.bonoOverrideMotivo});
   if(esT&&r.tipoActividad)datosRow.push({label:'Tipo de actividad',value:labelActividad(r)},{label:'Actividad específica',value:r.actividadEspecifica||'—'});
+  if(esT&&r.comentarioActividadEspecifica)datosRow.push({label:'Comentario de actividad',value:r.comentarioActividadEspecifica});
   row2(datosRow);
 
   // — Resumen strip —
@@ -1878,13 +1940,38 @@ function generarPDFDesdeRegistro(id){
   y+=12;
 
   // — II. Criterios (desde snapshot de incumplidos) —
-  secH('II. Resumen de Evaluación');
   const incumpList=r.incumplidos&&r.incumplidos!=='Ninguno'?r.incumplidos.split('; ').filter(Boolean):[];
-  if(incumpList.length===0){
-    checkY(8);rF(ML,y,PW-ML-MR,8,[234,243,222],1);setF(8,'bold',[59,109,17]);doc.text('✓ Sin incumplimientos registrados',PW/2,y+5.2,{align:'center'});y+=12;
+  if(esT&&r.criteriosSnap&&r.criteriosSnap.length>0){
+    // Checklist completo: todos los puntos, cumplidos y no cumplidos
+    secH('II. Criterios de Evaluación (Detalle completo)');
+    const cols={id:ML,crit:ML+10,peso:ML+130,resp:ML+142,est:ML+155,obs:ML+178};
+    rF(ML,y,PW-ML-MR,6.5,[50,70,90]);setF(6.5,'bold',[255,255,255]);
+    doc.text('ID',cols.id+1,y+4.2);doc.text('Criterio',cols.crit+1,y+4.2);doc.text('Peso',cols.peso+1,y+4.2);doc.text('Resp.',cols.resp+1,y+4.2);doc.text('Resultado',cols.est+1,y+4.2);y+=7;
+    let rowBg=false,secActual='';
+    r.criteriosSnap.forEach(item=>{
+      if(item.sec!==secActual){checkY(8);rF(ML,y,PW-ML-MR,5.5,[235,243,251]);setF(7,'bold',[24,95,165]);doc.text(item.sec,ML+2,y+3.8);y+=6;secActual=item.sec;}
+      checkY(8);const est=item.estado||'–',isBien=est.includes('Bien')||est.includes('N/A'),isInc=est.includes('Inc');
+      rF(ML,y,PW-ML-MR,6.5,rowBg?[250,250,248]:[255,255,255]);doc.setLineWidth(.1);setDr([220,220,220]);doc.rect(ML,y,PW-ML-MR,6.5);
+      setF(6.5,'normal',[120,120,120]);doc.text(item.id,cols.id+1,y+4.5);
+      setF(6.5,'normal',[30,30,30]);doc.text((item.crit||'').substring(0,84),cols.crit+1,y+4.5);
+      setF(6.5,'normal',[80,80,80]);doc.text(item.peso+'%',cols.peso+1,y+4.5);
+      setF(7,'bold',[30,30,30]);doc.text(item.valor||'–',cols.resp+3,y+4.5,{align:'center'});
+      const bc=isBien?[59,109,17]:isInc?[163,45,45]:[120,120,120],bb=isBien?[234,243,222]:isInc?[252,235,235]:[240,240,240];
+      rF(cols.est,y+1,20,4.5,bb,1);setF(5.5,'bold',bc);doc.text(est.includes('Bien')?'✓ Bien':est.includes('N/A')?'N/A':isInc?'✗ Incumplido':'–',cols.est+10,y+3.8,{align:'center'});
+      y+=7;rowBg=!rowBg;
+    });y+=3;
+    if(incumpList.length>0){
+      checkY(14);rF(ML,y,PW-ML-MR,6,[163,45,45],1);setF(8,'bold',[255,255,255]);doc.text('⚠  Criterios incumplidos ('+incumpList.length+')',ML+3,y+4.2);y+=7;
+      incumpList.forEach((itm,i)=>{checkY(7);rF(ML,y,PW-ML-MR,6,[252,235,235]);setF(7,'normal',[100,20,20]);doc.text((i+1)+'. '+itm.substring(0,100),ML+3,y+4.2);y+=7;});y+=3;
+    }
   } else {
-    checkY(10);rF(ML,y,PW-ML-MR,6,[163,45,45],1);setF(8,'bold',[255,255,255]);doc.text('⚠  Criterios incumplidos ('+incumpList.length+')',ML+3,y+4.2);y+=7;
-    incumpList.forEach((itm,i)=>{checkY(7);rF(ML,y,PW-ML-MR,6,[252,235,235]);setF(7,'normal',[100,20,20]);doc.text((i+1)+'. '+itm.substring(0,100),ML+3,y+4.2);y+=7;});y+=3;
+    secH('II. Resumen de Evaluación');
+    if(incumpList.length===0){
+      checkY(8);rF(ML,y,PW-ML-MR,8,[234,243,222],1);setF(8,'bold',[59,109,17]);doc.text('✓ Sin incumplimientos registrados',PW/2,y+5.2,{align:'center'});y+=12;
+    } else {
+      checkY(10);rF(ML,y,PW-ML-MR,6,[163,45,45],1);setF(8,'bold',[255,255,255]);doc.text('⚠  Criterios incumplidos ('+incumpList.length+')',ML+3,y+4.2);y+=7;
+      incumpList.forEach((itm,i)=>{checkY(7);rF(ML,y,PW-ML-MR,6,[252,235,235]);setF(7,'normal',[100,20,20]);doc.text((i+1)+'. '+itm.substring(0,100),ML+3,y+4.2);y+=7;});y+=3;
+    }
   }
 
   // — III. Inventario herramienta —
@@ -1904,6 +1991,13 @@ function generarPDFDesdeRegistro(id){
 
   // — V. Observaciones —
   if(r.obsGeneral){checkY(16);secH('V. Observaciones Generales',[80,80,80]);const lines=doc.splitTextToSize(r.obsGeneral,PW-ML-MR-4),obsH=lines.length*5+4;rF(ML,y,PW-ML-MR,obsH,[249,249,249]);doc.setLineWidth(.2);setDr([200,200,200]);doc.rect(ML,y,PW-ML-MR,obsH);setF(7.5,'normal',[50,50,50]);lines.forEach((line,i)=>doc.text(line,ML+3,y+5+i*5));y+=obsH+4;}
+  if(r.observacionesAdicionales&&r.observacionesAdicionales.length>0){
+    checkY(16);secH('Observaciones adicionales (evaluación editada)',[133,79,11]);
+    r.observacionesAdicionales.forEach(o=>{
+      const lines=doc.splitTextToSize('['+o.fecha+']  '+o.texto,PW-ML-MR-4),obsH=lines.length*5+4;
+      checkY(obsH+4);rF(ML,y,PW-ML-MR,obsH,[255,248,232]);doc.setLineWidth(.2);setDr([239,159,39]);doc.rect(ML,y,PW-ML-MR,obsH);setF(7.5,'normal',[133,79,11]);lines.forEach((line,i)=>doc.text(line,ML+3,y+5+i*5));y+=obsH+4;
+    });
+  }
 
   // — VI. Resultado final —
   checkY(36);secH('VI. Resultado Final',colorResult);
@@ -1944,7 +2038,7 @@ function renderDB(){
   const slice=data.slice((dbPage-1)*PER_PAGE,dbPage*PER_PAGE);
   const body=document.getElementById('db-body'),empty=document.getElementById('db-empty');
   if(slice.length===0){body.innerHTML='';empty.style.display='block';}
-  else{empty.style.display='none';body.innerHTML=slice.map(r=>{const tc={suspendido:'x','500':'v','300':'m',sinbono:'s'}[r.bonoTag]||'s',tl={suspendido:'Suspendido','500':'$500 MXN','300':'$300 MXN',sinbono:'Sin bono'}[r.bonoTag]||r.bonoTag;return`<tr><td>${r.fecha}</td><td><strong>${r.nombre}</strong><br><span style="color:#888;font-size:10px">${r.puesto||''}</span></td><td>${r.semana}</td><td style="font-size:10px">[${r.rancho}]<br>${(r.contrato||'').substring(0,28)}…</td><td style="font-size:11px">${r.cam}<br><span style="color:#888">${r.placas||''}</span></td><td style="font-size:16px;font-weight:700;text-align:center;color:${tc==='v'?'#3B6D11':tc==='m'?'#854F0B':'#A32D2D'}">${r.puntaje}</td><td><span class="db-tag ${tc}">${tl}</span></td><td style="text-align:center">${r.nFotos>0?'<span style="color:#185FA5">📷 '+r.nFotos+'</span>':'—'}</td><td><button style="padding:4px 10px;font-size:11px" onclick="verDetalle(${r.id})"><i class="ti ti-eye"></i> Ver</button> <button style="padding:4px 10px;font-size:11px;background:#EBF3FB;color:#185FA5;border-color:#a8ccee" onclick="generarPDFDesdeRegistro(${r.id})"><i class="ti ti-file-type-pdf"></i> PDF</button></td></tr>`;}).join('');}
+  else{empty.style.display='none';body.innerHTML=slice.map(r=>{const tc={suspendido:'x','500':'v','300':'m',sinbono:'s'}[r.bonoTag]||'s',tl={suspendido:'Suspendido','500':'$500 MXN','300':'$300 MXN',sinbono:'Sin bono'}[r.bonoTag]||r.bonoTag;const editadoTag=r.editado?' <span style="background:#FFF3D6;color:#854F0B;border:1px solid #EF9F27;border-radius:4px;font-size:9px;padding:1px 5px;font-weight:700">✎ EDITADA</span>':'';return`<tr><td>${r.fecha}</td><td><strong>${r.nombre}</strong>${editadoTag}<br><span style="color:#888;font-size:10px">${r.puesto||''}</span></td><td>${r.semana}</td><td style="font-size:10px">[${r.rancho}]<br>${(r.contrato||'').substring(0,28)}…</td><td style="font-size:11px">${r.cam}<br><span style="color:#888">${r.placas||''}</span></td><td style="font-size:16px;font-weight:700;text-align:center;color:${tc==='v'?'#3B6D11':tc==='m'?'#854F0B':'#A32D2D'}">${r.puntaje}</td><td><span class="db-tag ${tc}">${tl}</span></td><td style="text-align:center">${r.nFotos>0?'<span style="color:#185FA5">📷 '+r.nFotos+'</span>':'—'}</td><td><button style="padding:4px 10px;font-size:11px" onclick="verDetalle(${r.id})"><i class="ti ti-eye"></i> Ver</button> <button style="padding:4px 10px;font-size:11px;background:#EBF3FB;color:#185FA5;border-color:#a8ccee" onclick="generarPDFDesdeRegistro(${r.id})"><i class="ti ti-file-type-pdf"></i> PDF</button></td></tr>`;}).join('');}
   document.getElementById('db-pagination').innerHTML=total2>0?`<span>Mostrando ${(dbPage-1)*PER_PAGE+1}–${Math.min(dbPage*PER_PAGE,total2)} de ${total2}</span><div style="display:flex;gap:6px"><button style="padding:4px 10px;font-size:11px" onclick="changePage(-1)" ${dbPage<=1?'disabled':''}>‹ Anterior</button><span style="padding:4px 8px;font-size:11px;color:#666">Pág. ${dbPage}/${pages}</span><button style="padding:4px 10px;font-size:11px" onclick="changePage(1)" ${dbPage>=pages?'disabled':''}>Siguiente ›</button></div>`:'';
 }
 function changePage(d){dbPage+=d;renderDB();}
@@ -1971,10 +2065,37 @@ function verDetalle(id){
   const vehiculoHTML=esTdet
     ?`<div><span style="color:#888;font-weight:600">Tractor:</span> ${r.cam} / ${r.modelo}</div><div><span style="color:#888;font-weight:600">Horometro:</span> ${r.horometro||'—'} hrs</div>`
     :`<div><span style="color:#888;font-weight:600">Camioneta:</span> ${r.cam} / ${r.modelo}</div><div><span style="color:#888;font-weight:600">Placas:</span> ${r.placas||'—'}</div>`;
-  const actividadHTML=esTdet&&r.tipoActividad?`<div style="grid-column:1/-1"><span style="color:#888;font-weight:600">Actividad:</span> ${labelActividad(r)}</div>`:'';
-  document.getElementById('det-content').innerHTML=`<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px 20px;font-size:12px;margin-bottom:14px"><div><span style="color:#888;font-weight:600">Supervisor:</span> ${r.nombre}</div><div><span style="color:#888;font-weight:600">Puesto:</span> ${r.puesto||'—'}</div><div><span style="color:#888;font-weight:600">Semana:</span> ${r.semana}</div><div><span style="color:#888;font-weight:600">Fecha:</span> ${r.fecha}</div><div><span style="color:#888;font-weight:600">Rancho:</span> [${r.rancho}] ${r.contrato}</div><div><span style="color:#888;font-weight:600">Jefe área:</span> ${r.jefe}</div>${vehiculoHTML}${actividadHTML}<div><span style="color:#888;font-weight:600">Evaluador:</span> ${r.evaluador}</div><div><span style="color:#888;font-weight:600">Negligencia:</span> ${r.negVal}</div><div><span style="color:#888;font-weight:600">Puntaje:</span> <strong style="font-size:16px">${r.puntaje}/100</strong></div><div><span style="color:#888;font-weight:600">Bono:</span> <span class="db-tag ${tc}">${tl}</span></div></div>${r.incumplidos&&r.incumplidos!=='Ninguno'?`<div style="background:#FCEBEB;border:1px solid #F0997B;border-radius:6px;padding:8px 12px;margin-bottom:10px;font-size:11px"><strong style="color:#A32D2D">Incumplimientos:</strong><br>${r.incumplidos}</div>`:''}${r.obsGeneral?`<div style="background:#f9f9f9;border:1px solid #e0ddd4;border-radius:6px;padding:8px 12px;margin-bottom:10px;font-size:11px"><strong>Observaciones:</strong><br>${r.obsGeneral}</div>`:''}<details style="margin-bottom:10px"><summary style="cursor:pointer;font-size:12px;font-weight:600;color:#185FA5;padding:6px 0">🔧 Inventario de herramienta</summary>${herrHTML}</details><details style="margin-bottom:10px"><summary style="cursor:pointer;font-size:12px;font-weight:600;color:#185FA5;padding:6px 0">🩺 Inventario de botiquín</summary>${botHTML}</details><details><summary style="cursor:pointer;font-size:12px;font-weight:600;color:#185FA5;padding:6px 0">📷 Fotografías (${r.nFotos||0})</summary>${fotosHTML}</details>`;
+  const actividadHTML=esTdet&&r.tipoActividad?`<div style="grid-column:1/-1"><span style="color:#888;font-weight:600">Actividad:</span> ${labelActividad(r)}</div>${r.comentarioActividadEspecifica?`<div style="grid-column:1/-1"><span style="color:#888;font-weight:600">Comentario:</span> ${r.comentarioActividadEspecifica}</div>`:''}`:'';
+  const editadoHTML=r.editado?`<div style="background:#FFF3D6;border:1px solid #EF9F27;border-radius:6px;padding:7px 12px;margin-bottom:10px;font-size:11px;color:#854F0B"><i class="ti ti-alert-triangle"></i> <strong>Evaluación editada</strong> — última edición: ${r.fechaEdicion||''}</div>`:'';
+  document.getElementById('det-content').innerHTML=`${editadoHTML}<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px 20px;font-size:12px;margin-bottom:14px"><div><span style="color:#888;font-weight:600">Supervisor:</span> ${r.nombre}</div><div><span style="color:#888;font-weight:600">Puesto:</span> ${r.puesto||'—'}</div><div><span style="color:#888;font-weight:600">Semana:</span> ${r.semana}</div><div><span style="color:#888;font-weight:600">Fecha:</span> ${r.fecha}</div><div><span style="color:#888;font-weight:600">Rancho:</span> [${r.rancho}] ${r.contrato}</div><div><span style="color:#888;font-weight:600">Jefe área:</span> ${r.jefe}</div>${vehiculoHTML}${actividadHTML}<div><span style="color:#888;font-weight:600">Evaluador:</span> ${r.evaluador}</div><div><span style="color:#888;font-weight:600">Negligencia:</span> ${r.negVal}</div><div><span style="color:#888;font-weight:600">Puntaje:</span> <strong style="font-size:16px">${r.puntaje}/100</strong></div><div><span style="color:#888;font-weight:600">Bono:</span> <span class="db-tag ${tc}">${tl}</span></div></div>${r.incumplidos&&r.incumplidos!=='Ninguno'?`<div style="background:#FCEBEB;border:1px solid #F0997B;border-radius:6px;padding:8px 12px;margin-bottom:10px;font-size:11px"><strong style="color:#A32D2D">Incumplimientos:</strong><br>${r.incumplidos}</div>`:''}${r.obsGeneral?`<div style="background:#f9f9f9;border:1px solid #e0ddd4;border-radius:6px;padding:8px 12px;margin-bottom:10px;font-size:11px"><strong>Observaciones:</strong><br>${r.obsGeneral}</div>`:''}${(r.observacionesAdicionales&&r.observacionesAdicionales.length>0)?`<div style="background:#FFF8E8;border:1px solid #EF9F27;border-radius:6px;padding:8px 12px;margin-bottom:10px;font-size:11px"><strong style="color:#854F0B">Observaciones adicionales (edición posterior):</strong><br>${r.observacionesAdicionales.map(o=>`<div style="margin-top:5px;padding-top:5px;border-top:1px dashed #EF9F27"><span style="color:#a67519;font-size:10px">${o.fecha}</span><br>${o.texto}</div>`).join('')}</div>`:''}<details style="margin-bottom:10px"><summary style="cursor:pointer;font-size:12px;font-weight:600;color:#185FA5;padding:6px 0">🔧 Inventario de herramienta</summary>${herrHTML}</details><details style="margin-bottom:10px"><summary style="cursor:pointer;font-size:12px;font-weight:600;color:#185FA5;padding:6px 0">🩺 Inventario de botiquín</summary>${botHTML}</details><details><summary style="cursor:pointer;font-size:12px;font-weight:600;color:#185FA5;padding:6px 0">📷 Fotografías (${r.nFotos||0})</summary>${fotosHTML}</details>`;
   document.getElementById('detail-modal').classList.add('open');
   const pdfBtn=document.getElementById('det-pdf-btn');if(pdfBtn)pdfBtn.onclick=()=>generarPDFDesdeRegistro(id);
+  const editBtn=document.getElementById('det-editar-btn');if(editBtn)editBtn.onclick=()=>abrirEditarEvaluacion(id);
+}
+function abrirEditarEvaluacion(id){
+  const r=historial.find(x=>x.id===id);if(!r)return;
+  document.getElementById('f-obs-editada').value='';
+  const box=document.getElementById('edit-historial-box');
+  if(r.observacionesAdicionales&&r.observacionesAdicionales.length>0){
+    box.innerHTML='<strong>Observaciones adicionales previas:</strong>'+r.observacionesAdicionales.map(o=>`<div style="margin-top:4px">• <span style="color:#aaa">${o.fecha}:</span> ${o.texto}</div>`).join('');
+  }else{box.innerHTML='';}
+  document.getElementById('detail-modal').classList.remove('open');
+  document.getElementById('edit-modal').classList.add('open');
+  document.getElementById('edit-guardar-btn').onclick=()=>guardarEdicionEvaluacion(id);
+}
+function guardarEdicionEvaluacion(id){
+  const texto=document.getElementById('f-obs-editada').value.trim();
+  if(!texto){toast('⚠ Escribe la observación antes de guardar');return;}
+  const r=historial.find(x=>x.id===id);if(!r)return;
+  if(!r.observacionesAdicionales)r.observacionesAdicionales=[];
+  const ahora=new Date().toLocaleString('es-MX');
+  r.observacionesAdicionales.push({texto,fecha:ahora});
+  r.editado=true;r.fechaEdicion=ahora;
+  saveHist();renderDB();
+  if(GS_URL)sendUpdateToGS(r);
+  document.getElementById('edit-modal').classList.remove('open');
+  toast('✓ Evaluación editada — observación agregada');
+  verDetalle(id);
 }
 async function sincronizarAhora(){
   if(!GS_URL){abrirConfig();return;}if(!navigator.onLine){toast('⚠ Sin conexión a internet');updateConn('pending');return;}
@@ -1982,8 +2103,8 @@ async function sincronizarAhora(){
 }
 function exportarCSV(){
   if(historial.length===0){toast('⚠ Sin datos');return;}
-  const h=['ID','Fecha','Supervisor','Puesto','Semana','Rancho','Contrato','Cam','Modelo','Placas','Evaluador','Jefe','Km','Horometro','Tipo_Actividad','Actividad_Otra','Comentario_Actividad','Puntaje','Bono','Suspendido','Herr_Faltante','Incumplimientos','Negligencia','Fotos','Observaciones'];
-  const rows=historial.map(r=>[r.id,r.fecha,r.nombre,r.puesto,r.semana,r.rancho,'"'+r.contrato+'"',r.cam,r.modelo,r.placas,r.evaluador,r.jefe,r.km,r.horometro||'','"'+(r.tipoActividad||'')+'"','"'+(r.otraActividadNombre||'')+'"','"'+(r.otraActividadComentario||'')+'"',r.puntaje,'"'+r.bonoTxt+'"',r.bonoTag==='suspendido'?'SI':'NO',r.herrFalta?'SI':'NO','"'+(r.incumplidos||'')+'"',r.negVal,r.nFotos,'"'+(r.obsGeneral||'')+'"']);
+  const h=['ID','Fecha','Supervisor','Puesto','Semana','Rancho','Contrato','Cam','Modelo','Placas','Evaluador','Jefe','Km','Horometro','Tipo_Actividad','Actividad_Otra','Comentario_Actividad','Actividad_Especifica','Comentario_Actividad_Especifica','Puntaje','Bono','Suspendido','Herr_Faltante','Incumplimientos','Negligencia','Fotos','Observaciones','Editado','Observaciones_Adicionales'];
+  const rows=historial.map(r=>[r.id,r.fecha,r.nombre,r.puesto,r.semana,r.rancho,'"'+r.contrato+'"',r.cam,r.modelo,r.placas,r.evaluador,r.jefe,r.km,r.horometro||'','"'+(r.tipoActividad||'')+'"','"'+(r.otraActividadNombre||'')+'"','"'+(r.otraActividadComentario||'')+'"','"'+(r.actividadEspecifica||'')+'"','"'+(r.comentarioActividadEspecifica||'')+'"',r.puntaje,'"'+r.bonoTxt+'"',r.bonoTag==='suspendido'?'SI':'NO',r.herrFalta?'SI':'NO','"'+(r.incumplidos||'')+'"',r.negVal,r.nFotos,'"'+(r.obsGeneral||'')+'"',r.editado?'SI':'NO','"'+(r.observacionesAdicionales?r.observacionesAdicionales.map(o=>o.fecha+': '+o.texto).join(' | '):'')+'"']);
   const csv=[h,...rows].map(r=>r.join(',')).join('\n');
   const b=new Blob(['\uFEFF'+csv],{type:'text/csv;charset=utf-8'});const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='BD_Bono_Supervisores_Agave_'+new Date().toISOString().slice(0,10)+'.csv';a.click();toast('✓ Base de datos exportada');
 }
@@ -2018,7 +2139,7 @@ function importarJSON(ev){
 }
 function limpiarBD(){if(historial.length===0){toast('La base de datos ya está vacía');return;}if(confirm('¿Eliminar TODA la base de datos? Esta acción no se puede deshacer.')){historial=[];saveHist();renderDB();toast('Base de datos eliminada');}}
 function limpiarForm(){
-  ['f-nombre','f-puesto','f-semana','f-modelo','f-placas','f-jefe','f-km','obs-general','f-modelo-tractor','f-horometro','f-otra-actividad-nombre','f-otra-actividad-comentario'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+  ['f-nombre','f-puesto','f-semana','f-modelo','f-placas','f-jefe','f-km','obs-general','f-modelo-tractor','f-horometro','f-otra-actividad-nombre','f-otra-actividad-comentario','f-comentario-actividad-especifica'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
   ['f-cam','f-eval','f-lugar','f-tractor','f-tipo-actividad','f-actividad-especifica'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
   ['cam-info','parcela-info','tractor-info','actividad-info','std-box','otra-actividad-box'].forEach(id=>{const el=document.getElementById(id);if(el)el.style.display='none';});
   const selEsp=document.getElementById('f-actividad-especifica'),lblEsp=document.getElementById('lbl-actividad-especifica'),btnStd=document.getElementById('btn-ver-estandares');
