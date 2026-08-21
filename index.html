@@ -310,7 +310,7 @@ button.success:hover{background:#27500A}
           <option value="">— Selecciona la actividad principal —</option>
           <option value="preparacion">🌱 Preparación de parcela (Bono: $500 Exc / $300 Reg)</option>
           <option value="acarreo">💧 Acarreo de pipas (Bono: $365 Exc / $255 Reg)</option>
-          <option value="otra">📝 Otra actividad (especificar)</option>
+          <option value="otra">📝 Otra actividad (Bono: $365 Exc / $255 Reg)</option>
         </select>
         <div id="actividad-info" class="info-chip" style="display:none"></div>
         <div id="otra-actividad-box" style="display:none;margin-top:8px;background:#FFF8E8;border:1px solid #EF9F27;border-radius:7px;padding:10px 12px">
@@ -335,6 +335,10 @@ button.success:hover{background:#27500A}
     <div id="std-box" style="display:none;margin-top:8px;background:#f5f5f0;border:1px solid #e0ddd4;border-radius:8px;padding:10px 14px;font-size:11px">
       <strong style="color:#185FA5;display:block;margin-bottom:6px"><i class="ti ti-info-circle"></i> Estándar de referencia seleccionado</strong>
       <div id="std-content"></div>
+      <div style="margin-top:8px">
+        <label style="font-size:10.5px;font-weight:600;color:#555;display:block;margin-bottom:4px">Comentario sobre la actividad que se está desempeñando (opcional)</label>
+        <textarea id="f-comentario-actividad-especifica" rows="2" placeholder="Escribe aquí cualquier detalle sobre cómo se desempeña esta actividad…" style="font-size:12px;padding:6px 10px;border:1px solid #d0ccc4;border-radius:6px;width:100%;font-family:Arial,sans-serif;resize:vertical"></textarea>
+      </div>
     </div>
     <button id="btn-ver-estandares" onclick="toggleStdTable()" style="margin-top:8px;padding:5px 12px;font-size:11px;background:#EBF3FB;color:#185FA5;border:1px solid #a8ccee;border-radius:5px;cursor:pointer">
       <i class="ti ti-table"></i> Ver tabla completa de estándares
@@ -1317,7 +1321,7 @@ function onActividadChange(){
   const v=document.getElementById('f-tipo-actividad').value,info=document.getElementById('actividad-info'),otraBox=document.getElementById('otra-actividad-box');
   if(v==='preparacion'){info.style.display='block';info.innerHTML='<i class="ti ti-info-circle"></i> <strong>Preparación de parcela:</strong> Bono excelente $500 | Regular $300';}
   else if(v==='acarreo'){info.style.display='block';info.innerHTML='<i class="ti ti-info-circle"></i> <strong>Acarreo de pipas:</strong> Bono excelente $365 | Regular $255';}
-  else if(v==='otra'){info.style.display='block';info.innerHTML='<i class="ti ti-info-circle"></i> <strong>Otra actividad:</strong> especifica cuál se está desempeñando y agrega un comentario. Se usará la escala de bono estándar ($500 Exc / $300 Reg).';}
+  else if(v==='otra'){info.style.display='block';info.innerHTML='<i class="ti ti-info-circle"></i> <strong>Otra actividad:</strong> especifica cuál se está desempeñando y agrega un comentario. Bono excelente $365 | Regular $255';}
   else{info.style.display='none';}
   if(otraBox)otraBox.style.display=(v==='otra')?'block':'none';
   // Actividad específica: cambia opciones según si es actividad establecida u "otra" (sin estándar)
@@ -1464,7 +1468,7 @@ function recalc(){
   let bonoCom=500,bonoReg=300;
   if(modoEval==='tractor'){
     const act=document.getElementById('f-tipo-actividad')?document.getElementById('f-tipo-actividad').value:'';
-    if(act==='acarreo'){bonoCom=365;bonoReg=255;}
+    if(act==='acarreo'||act==='otra'){bonoCom=365;bonoReg=255;}
   }
   if(cancelaBono){bonoTxt='⛔ BONO SUSPENDIDO — Puntaje registrado: '+sc+'/100';bonoClass='bono-no';fill.style.background='#E24B4A';document.getElementById('score-num').className='score-num red';bonoTag='suspendido';}
   else if(sc>=81){bonoTxt='✓ Bono aprobado: $'+bonoCom+' MXN';bonoClass='bono-ok';fill.style.background='#639922';document.getElementById('score-num').className='score-num green';bonoTag='500';bonoTeoricoMXN=bonoCom;}
@@ -1539,6 +1543,7 @@ function getDatos(){
     horometro:document.getElementById('f-horometro')?document.getElementById('f-horometro').value.trim():'',
     tipoActividad:document.getElementById('f-tipo-actividad')?document.getElementById('f-tipo-actividad').value:'',
     actividadEspecifica:document.getElementById('f-actividad-especifica')?(document.getElementById('f-actividad-especifica').options[document.getElementById('f-actividad-especifica').selectedIndex]?.text||''):'',
+    comentarioActividadEspecifica:document.getElementById('f-comentario-actividad-especifica')?document.getElementById('f-comentario-actividad-especifica').value.trim():'',
     otraActividadNombre:document.getElementById('f-otra-actividad-nombre')?document.getElementById('f-otra-actividad-nombre').value.trim():'',
     otraActividadComentario:document.getElementById('f-otra-actividad-comentario')?document.getElementById('f-otra-actividad-comentario').value.trim():'',
   };
@@ -1693,6 +1698,7 @@ function guardarEvaluacion(){
     contrato:d.contrato,has:d.has,inv:d.inv,jefe:d.jefe,km:d.km,negVal:d.negVal,
     obsGeneral:d.obsGeneral,horometro:d.horometro||'',tipoActividad:d.tipoActividad||'',
     actividadEspecifica:d.actividadEspecifica||'',
+    comentarioActividadEspecifica:d.comentarioActividadEspecifica||'',
     otraActividadNombre:d.otraActividadNombre||'',otraActividadComentario:d.otraActividadComentario||'',
     puntaje:c.total,bonoTxt:c.bonoTxt,bonoTag:c.bonoTag,
     bonoOverride:document.getElementById('bono-override-sel').value||'',
@@ -1743,6 +1749,7 @@ function generarPDFEval(){
   const esTpdf=modoEval==='tractor';
   const datosRow=[{label:esTpdf?'Tractorista':'Supervisor evaluado',value:d.nombre},{label:'Puesto',value:d.puesto},{label:'Semana evaluada',value:d.semana},{label:'Fecha evaluación',value:d.fecha},{label:esTpdf?'Tractor / Eco.':'Camioneta / Eco.',value:d.cam},{label:'Modelo',value:d.modelo},{label:esTpdf?'HP':'Placas',value:d.placas},{label:esTpdf?'Horometro (hrs)':'Kilometraje',value:esTpdf?(d.horometro||'—'):d.km},{label:'Rancho / Parcela',value:'['+d.rancho+'] '+(d.contrato||'').substring(0,38)},{label:'Jefe de área',value:d.jefe},{label:'Evaluador',value:d.evaluador},{label:'Negligencia',value:d.negVal==='Si'?'⚠ SÍ — Bono SUSPENDIDO':'No'}];
   if(esTpdf&&d.tipoActividad)datosRow.push({label:'Tipo de actividad',value:labelActividad(d)},{label:'Actividad específica',value:d.actividadEspecifica||'—'});
+  if(esTpdf&&d.comentarioActividadEspecifica)datosRow.push({label:'Comentario de actividad',value:d.comentarioActividadEspecifica});
   if(overrideSel2&&overrideMotivo2)datosRow.push({label:'Ajuste de bono',value:overrideMotivo2});
   row2(datosRow);
   // Resumen rápido (strip de resultado anticipado)
@@ -1922,6 +1929,7 @@ function generarPDFDesdeRegistro(id){
   ];
   if(r.bonoOverride&&r.bonoOverrideMotivo)datosRow.push({label:'Ajuste de bono',value:r.bonoOverrideMotivo});
   if(esT&&r.tipoActividad)datosRow.push({label:'Tipo de actividad',value:labelActividad(r)},{label:'Actividad específica',value:r.actividadEspecifica||'—'});
+  if(esT&&r.comentarioActividadEspecifica)datosRow.push({label:'Comentario de actividad',value:r.comentarioActividadEspecifica});
   row2(datosRow);
 
   // — Resumen strip —
@@ -2057,7 +2065,7 @@ function verDetalle(id){
   const vehiculoHTML=esTdet
     ?`<div><span style="color:#888;font-weight:600">Tractor:</span> ${r.cam} / ${r.modelo}</div><div><span style="color:#888;font-weight:600">Horometro:</span> ${r.horometro||'—'} hrs</div>`
     :`<div><span style="color:#888;font-weight:600">Camioneta:</span> ${r.cam} / ${r.modelo}</div><div><span style="color:#888;font-weight:600">Placas:</span> ${r.placas||'—'}</div>`;
-  const actividadHTML=esTdet&&r.tipoActividad?`<div style="grid-column:1/-1"><span style="color:#888;font-weight:600">Actividad:</span> ${labelActividad(r)}</div>`:'';
+  const actividadHTML=esTdet&&r.tipoActividad?`<div style="grid-column:1/-1"><span style="color:#888;font-weight:600">Actividad:</span> ${labelActividad(r)}</div>${r.comentarioActividadEspecifica?`<div style="grid-column:1/-1"><span style="color:#888;font-weight:600">Comentario:</span> ${r.comentarioActividadEspecifica}</div>`:''}`:'';
   const editadoHTML=r.editado?`<div style="background:#FFF3D6;border:1px solid #EF9F27;border-radius:6px;padding:7px 12px;margin-bottom:10px;font-size:11px;color:#854F0B"><i class="ti ti-alert-triangle"></i> <strong>Evaluación editada</strong> — última edición: ${r.fechaEdicion||''}</div>`:'';
   document.getElementById('det-content').innerHTML=`${editadoHTML}<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px 20px;font-size:12px;margin-bottom:14px"><div><span style="color:#888;font-weight:600">Supervisor:</span> ${r.nombre}</div><div><span style="color:#888;font-weight:600">Puesto:</span> ${r.puesto||'—'}</div><div><span style="color:#888;font-weight:600">Semana:</span> ${r.semana}</div><div><span style="color:#888;font-weight:600">Fecha:</span> ${r.fecha}</div><div><span style="color:#888;font-weight:600">Rancho:</span> [${r.rancho}] ${r.contrato}</div><div><span style="color:#888;font-weight:600">Jefe área:</span> ${r.jefe}</div>${vehiculoHTML}${actividadHTML}<div><span style="color:#888;font-weight:600">Evaluador:</span> ${r.evaluador}</div><div><span style="color:#888;font-weight:600">Negligencia:</span> ${r.negVal}</div><div><span style="color:#888;font-weight:600">Puntaje:</span> <strong style="font-size:16px">${r.puntaje}/100</strong></div><div><span style="color:#888;font-weight:600">Bono:</span> <span class="db-tag ${tc}">${tl}</span></div></div>${r.incumplidos&&r.incumplidos!=='Ninguno'?`<div style="background:#FCEBEB;border:1px solid #F0997B;border-radius:6px;padding:8px 12px;margin-bottom:10px;font-size:11px"><strong style="color:#A32D2D">Incumplimientos:</strong><br>${r.incumplidos}</div>`:''}${r.obsGeneral?`<div style="background:#f9f9f9;border:1px solid #e0ddd4;border-radius:6px;padding:8px 12px;margin-bottom:10px;font-size:11px"><strong>Observaciones:</strong><br>${r.obsGeneral}</div>`:''}${(r.observacionesAdicionales&&r.observacionesAdicionales.length>0)?`<div style="background:#FFF8E8;border:1px solid #EF9F27;border-radius:6px;padding:8px 12px;margin-bottom:10px;font-size:11px"><strong style="color:#854F0B">Observaciones adicionales (edición posterior):</strong><br>${r.observacionesAdicionales.map(o=>`<div style="margin-top:5px;padding-top:5px;border-top:1px dashed #EF9F27"><span style="color:#a67519;font-size:10px">${o.fecha}</span><br>${o.texto}</div>`).join('')}</div>`:''}<details style="margin-bottom:10px"><summary style="cursor:pointer;font-size:12px;font-weight:600;color:#185FA5;padding:6px 0">🔧 Inventario de herramienta</summary>${herrHTML}</details><details style="margin-bottom:10px"><summary style="cursor:pointer;font-size:12px;font-weight:600;color:#185FA5;padding:6px 0">🩺 Inventario de botiquín</summary>${botHTML}</details><details><summary style="cursor:pointer;font-size:12px;font-weight:600;color:#185FA5;padding:6px 0">📷 Fotografías (${r.nFotos||0})</summary>${fotosHTML}</details>`;
   document.getElementById('detail-modal').classList.add('open');
@@ -2095,8 +2103,8 @@ async function sincronizarAhora(){
 }
 function exportarCSV(){
   if(historial.length===0){toast('⚠ Sin datos');return;}
-  const h=['ID','Fecha','Supervisor','Puesto','Semana','Rancho','Contrato','Cam','Modelo','Placas','Evaluador','Jefe','Km','Horometro','Tipo_Actividad','Actividad_Otra','Comentario_Actividad','Puntaje','Bono','Suspendido','Herr_Faltante','Incumplimientos','Negligencia','Fotos','Observaciones','Editado','Observaciones_Adicionales'];
-  const rows=historial.map(r=>[r.id,r.fecha,r.nombre,r.puesto,r.semana,r.rancho,'"'+r.contrato+'"',r.cam,r.modelo,r.placas,r.evaluador,r.jefe,r.km,r.horometro||'','"'+(r.tipoActividad||'')+'"','"'+(r.otraActividadNombre||'')+'"','"'+(r.otraActividadComentario||'')+'"',r.puntaje,'"'+r.bonoTxt+'"',r.bonoTag==='suspendido'?'SI':'NO',r.herrFalta?'SI':'NO','"'+(r.incumplidos||'')+'"',r.negVal,r.nFotos,'"'+(r.obsGeneral||'')+'"',r.editado?'SI':'NO','"'+(r.observacionesAdicionales?r.observacionesAdicionales.map(o=>o.fecha+': '+o.texto).join(' | '):'')+'"']);
+  const h=['ID','Fecha','Supervisor','Puesto','Semana','Rancho','Contrato','Cam','Modelo','Placas','Evaluador','Jefe','Km','Horometro','Tipo_Actividad','Actividad_Otra','Comentario_Actividad','Actividad_Especifica','Comentario_Actividad_Especifica','Puntaje','Bono','Suspendido','Herr_Faltante','Incumplimientos','Negligencia','Fotos','Observaciones','Editado','Observaciones_Adicionales'];
+  const rows=historial.map(r=>[r.id,r.fecha,r.nombre,r.puesto,r.semana,r.rancho,'"'+r.contrato+'"',r.cam,r.modelo,r.placas,r.evaluador,r.jefe,r.km,r.horometro||'','"'+(r.tipoActividad||'')+'"','"'+(r.otraActividadNombre||'')+'"','"'+(r.otraActividadComentario||'')+'"','"'+(r.actividadEspecifica||'')+'"','"'+(r.comentarioActividadEspecifica||'')+'"',r.puntaje,'"'+r.bonoTxt+'"',r.bonoTag==='suspendido'?'SI':'NO',r.herrFalta?'SI':'NO','"'+(r.incumplidos||'')+'"',r.negVal,r.nFotos,'"'+(r.obsGeneral||'')+'"',r.editado?'SI':'NO','"'+(r.observacionesAdicionales?r.observacionesAdicionales.map(o=>o.fecha+': '+o.texto).join(' | '):'')+'"']);
   const csv=[h,...rows].map(r=>r.join(',')).join('\n');
   const b=new Blob(['\uFEFF'+csv],{type:'text/csv;charset=utf-8'});const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='BD_Bono_Supervisores_Agave_'+new Date().toISOString().slice(0,10)+'.csv';a.click();toast('✓ Base de datos exportada');
 }
@@ -2131,7 +2139,7 @@ function importarJSON(ev){
 }
 function limpiarBD(){if(historial.length===0){toast('La base de datos ya está vacía');return;}if(confirm('¿Eliminar TODA la base de datos? Esta acción no se puede deshacer.')){historial=[];saveHist();renderDB();toast('Base de datos eliminada');}}
 function limpiarForm(){
-  ['f-nombre','f-puesto','f-semana','f-modelo','f-placas','f-jefe','f-km','obs-general','f-modelo-tractor','f-horometro','f-otra-actividad-nombre','f-otra-actividad-comentario'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+  ['f-nombre','f-puesto','f-semana','f-modelo','f-placas','f-jefe','f-km','obs-general','f-modelo-tractor','f-horometro','f-otra-actividad-nombre','f-otra-actividad-comentario','f-comentario-actividad-especifica'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
   ['f-cam','f-eval','f-lugar','f-tractor','f-tipo-actividad','f-actividad-especifica'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
   ['cam-info','parcela-info','tractor-info','actividad-info','std-box','otra-actividad-box'].forEach(id=>{const el=document.getElementById(id);if(el)el.style.display='none';});
   const selEsp=document.getElementById('f-actividad-especifica'),lblEsp=document.getElementById('lbl-actividad-especifica'),btnStd=document.getElementById('btn-ver-estandares');
