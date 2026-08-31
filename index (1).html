@@ -25,6 +25,7 @@ body{font-family:Arial,sans-serif;font-size:14px;color:#1a1a1a;background:#f5f5f
 .grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
 .field label{font-size:11px;color:#666;display:block;margin-bottom:4px;font-weight:600;text-transform:uppercase;letter-spacing:.3px}
 .field input,.field select,.field textarea{width:100%;font-size:13px;padding:8px 10px;border:1px solid #d0ccc4;border-radius:6px;background:white;color:#1a1a1a;outline:none;transition:border .2s;font-family:Arial,sans-serif}
+textarea{overflow:hidden}
 .field input:focus,.field select:focus,.field textarea:focus{border-color:#185FA5;box-shadow:0 0 0 2px rgba(24,95,165,.1)}
 .field input[readonly]{background:#f5f5f0;color:#666;cursor:default}
 .info-chip{font-size:11px;color:#185FA5;margin-top:4px;padding:4px 8px;background:#EBF3FB;border-radius:4px;display:none}
@@ -1735,7 +1736,7 @@ function generarPDFEval(){
   const setDr=color=>doc.setDrawColor(...color);
   const checkY=(n=20)=>{if(y+n>272){doc.addPage();y=MT;}};
   const secH=(title,bg=[24,95,165])=>{checkY(10);rF(ML,y,PW-ML-MR,6.5,bg,1);setF(8,'bold',[255,255,255]);doc.text(title,ML+3,y+4.5);y+=8;};
-  const row2=(items)=>{const cw=(PW-ML-MR)/2-1;for(let i=0;i<items.length;i+=2){checkY(8);[[ML,items[i]],[ML+cw+2,items[i+1]]].forEach(([x,it])=>{if(!it)return;rF(x,y,cw,7.5,[248,248,248]);doc.setLineWidth(.15);setDr([210,210,210]);doc.rect(x,y,cw,7.5);setF(6,'bold',[120,120,120]);doc.text((it.label||'').toUpperCase(),x+2,y+3);setF(8,'normal',[30,30,30]);doc.text(String(it.value||'—').substring(0,40),x+2,y+7);});y+=9;}};
+  const row2=(items)=>{const cw=(PW-ML-MR)/2-1;for(let i=0;i<items.length;i+=2){setF(8,'normal',[30,30,30]);const a=items[i],b=items[i+1];const la=a?doc.splitTextToSize(String(a.value||'—'),cw-4):[],lb=b?doc.splitTextToSize(String(b.value||'—'),cw-4):[];const maxL=Math.max(la.length,lb.length,1);const rh=Math.max(7.5,4+maxL*4);checkY(rh+1.5);[[ML,a,la],[ML+cw+2,b,lb]].forEach(([x,it,lines])=>{if(!it)return;rF(x,y,cw,rh,[248,248,248]);doc.setLineWidth(.15);setDr([210,210,210]);doc.rect(x,y,cw,rh);setF(6,'bold',[120,120,120]);doc.text((it.label||'').toUpperCase(),x+2,y+3);setF(8,'normal',[30,30,30]);lines.forEach((ln,li)=>doc.text(ln,x+2,y+7+li*4));});y+=rh+1.5;}};
   // Header mejorado con banda de color y subtítulo
   rF(0,0,PW,28,[24,95,165]);rF(0,24,PW,4,[12,68,124]);
   setF(13,'bold',[255,255,255]);doc.text('Evaluación de Bono Semanal — Supervisores de Campo',PW/2,11,{align:'center'});setF(8,'normal',[200,230,255]);doc.text('CONSOLIDACIÓN DE AGAVE S.A. DE C.V.  |  Dpto. de Campo  |  Magdalena, Jalisco',PW/2,17,{align:'center'});
@@ -1760,37 +1761,58 @@ function generarPDFEval(){
   // Criterios
   secH('II. Criterios de Evaluación');
   const listaCrit=modoEval==='tractor'?CRITERIOS_TRACTOR:CRITERIOS;
-  const cols={id:ML,crit:ML+10,peso:ML+115,resp:ML+127,est:ML+140,obs:ML+165};
+  const cols={id:ML,crit:ML+10,peso:ML+100,resp:ML+112,est:ML+125,obs:ML+148};
   rF(ML,y,PW-ML-MR,6.5,[50,70,90]);setF(6.5,'bold',[255,255,255]);
   doc.text('ID',cols.id+1,y+4.2);doc.text('Criterio',cols.crit+1,y+4.2);doc.text('Peso',cols.peso+1,y+4.2);doc.text('Resp.',cols.resp+1,y+4.2);doc.text('Resultado',cols.est+1,y+4.2);doc.text('Observación',cols.obs+1,y+4.2);y+=7;
   let rowBg=false;
   listaCrit.forEach(sec=>{
     checkY(8);rF(ML,y,PW-ML-MR,5.5,[235,243,251]);setF(7,'bold',[24,95,165]);doc.text(sec.sec,ML+2,y+3.8);y+=6;
     sec.items.forEach(item=>{
-      checkY(8);const v=getVal(item.id)||'–',badge=document.getElementById('s-'+item.id),est=badge?badge.textContent:'–',obs=(obsItems[item.id]||'').substring(0,28);
+      const v=getVal(item.id)||'–',badge=document.getElementById('s-'+item.id),est=badge?badge.textContent:'–',obsRaw=obsItems[item.id]||'';
       const isBien=est.includes('Bien'),isInc=est.includes('Inc');
-      rF(ML,y,PW-ML-MR,6.5,rowBg?[250,250,248]:[255,255,255]);doc.setLineWidth(.1);setDr([220,220,220]);doc.rect(ML,y,PW-ML-MR,6.5);
+      const critW=cols.peso-cols.crit-2,obsW=(PW-MR)-cols.obs-2;
+      setF(6.5,'normal',[30,30,30]);const critLines=doc.splitTextToSize(item.crit,critW);
+      setF(6,'italic',[100,100,100]);const obsLines=obsRaw?doc.splitTextToSize(obsRaw,obsW):[];
+      const maxLines=Math.max(critLines.length,obsLines.length,1),rowH=Math.max(6.5,3+maxLines*4);
+      checkY(rowH+1);
+      rF(ML,y,PW-ML-MR,rowH,rowBg?[250,250,248]:[255,255,255]);doc.setLineWidth(.1);setDr([220,220,220]);doc.rect(ML,y,PW-ML-MR,rowH);
       setF(6.5,'normal',[120,120,120]);doc.text(item.id,cols.id+1,y+4.5);
-      setF(6.5,'normal',[30,30,30]);doc.text(item.crit.substring(0,68),cols.crit+1,y+4.5);
+      setF(6.5,'normal',[30,30,30]);critLines.forEach((ln,li)=>doc.text(ln,cols.crit+1,y+4.5+li*4));
       setF(6.5,'normal',[80,80,80]);doc.text(item.peso+'%',cols.peso+1,y+4.5);
       setF(7,'bold',[30,30,30]);doc.text(v,cols.resp+3,y+4.5,{align:'center'});
       const bc=isBien?[59,109,17]:isInc?[163,45,45]:[120,120,120],bb=isBien?[234,243,222]:isInc?[252,235,235]:[240,240,240];
       rF(cols.est,y+1,22,4.5,bb,1);setF(5.5,'bold',bc);doc.text(isBien?'✓ Bien':isInc?'✗ Incumplido':'N/A',cols.est+11,y+3.8,{align:'center'});
-      setF(6,'italic',[100,100,100]);doc.text(obs,cols.obs+1,y+4.5);
-      y+=7;rowBg=!rowBg;
+      setF(6,'italic',[100,100,100]);obsLines.forEach((ln,li)=>doc.text(ln,cols.obs+1,y+4.5+li*4));
+      y+=rowH+1;rowBg=!rowBg;
     });
   });y+=3;
   // Incumplidos
   if(c.incumplidos&&c.incumplidos.length>0){
     checkY(14);rF(ML,y,PW-ML-MR,6,[163,45,45],1);setF(8,'bold',[255,255,255]);doc.text('⚠  Criterios incumplidos ('+c.incumplidos.length+')',ML+3,y+4.2);y+=7;
-    c.incumplidos.forEach((item,i)=>{checkY(7);rF(ML,y,PW-ML-MR,6,[252,235,235]);setF(7,'bold',[163,45,45]);doc.text((i+1)+'. '+item.id+' — ',ML+2,y+4.2);setF(7,'normal',[100,20,20]);doc.text(item.crit.substring(0,85),ML+20,y+4.2);y+=7;});y+=2;
+    c.incumplidos.forEach((item,i)=>{setF(7,'normal',[100,20,20]);const lines=doc.splitTextToSize(item.crit,PW-ML-MR-22);const rh=Math.max(6,2+lines.length*4);checkY(rh+.5);rF(ML,y,PW-ML-MR,rh,[252,235,235]);setF(7,'bold',[163,45,45]);doc.text((i+1)+'. '+item.id+' — ',ML+2,y+4.2);setF(7,'normal',[100,20,20]);lines.forEach((ln,li)=>doc.text(ln,ML+20,y+4.2+li*4));y+=rh+.5;});y+=2;
   }
   // Herramienta
   secH(esTpdf?'III. Inventario de Herramienta (Tractor)':'III. Inventario de Herramienta');
   const listaHerr=esTpdf?HERRAMIENTAS_TRACTOR:HERRAMIENTAS;
   const prefHerr=esTpdf?'herrt':'herr';
   const hc=Math.ceil(listaHerr.length/2);
-  for(let i=0;i<hc;i++){checkY(7);[i,i+hc].forEach((idx,col)=>{if(idx>=listaHerr.length)return;const v=document.getElementById(prefHerr+'-'+idx).value||'—',obs=(document.getElementById(prefHerr+'-obs-'+idx).value||'').trim().substring(0,25),cx=ML+col*((PW-ML-MR)/2+2),cw=(PW-ML-MR)/2-2,bg=v==='presente'?[234,243,222]:v==='falta'?[252,235,235]:v==='noprop'?[255,248,232]:[245,245,245];rF(cx,y,cw,6,bg);doc.setLineWidth(.15);setDr([200,200,200]);doc.rect(cx,y,cw,6);setF(6.5,'normal',[30,30,30]);doc.text(listaHerr[idx].substring(0,30),cx+2,y+2.5);const vc=v==='presente'?[59,109,17]:v==='falta'?[163,45,45]:v==='noprop'?[133,79,11]:[120,120,120];setF(6,'bold',vc);doc.text(v==='presente'?'✓ OK':v==='falta'?'✗ Falta':v==='noprop'?'⚠ No dado':v==='na'?'N/A':'—',cx+cw-2,y+2.5,{align:'right'});if(obs){setF(5.5,'italic',[100,100,100]);doc.text(obs,cx+2,y+5);}});y+=7;}y+=2;
+  for(let i=0;i<hc;i++){
+    const idxs=[i,i+hc],cw=(PW-ML-MR)/2-2;
+    const cellData=idxs.map(idx=>{if(idx>=listaHerr.length)return null;const v=document.getElementById(prefHerr+'-'+idx).value||'—',obsRaw=(document.getElementById(prefHerr+'-obs-'+idx).value||'').trim();return{idx,v,obsRaw};});
+    setF(5.5,'italic',[100,100,100]);const linesArr=cellData.map(c=>c&&c.obsRaw?doc.splitTextToSize(c.obsRaw,cw-4):[]);
+    const maxLines=Math.max(0,...linesArr.map(l=>l.length)),rowH=maxLines>0?4+maxLines*3.8:6;
+    checkY(rowH+1);
+    cellData.forEach((c,col)=>{
+      if(!c)return;const idx=c.idx,v=c.v,lines=linesArr[col],cx=ML+col*((PW-ML-MR)/2+2);
+      const bg=v==='presente'?[234,243,222]:v==='falta'?[252,235,235]:v==='noprop'?[255,248,232]:[245,245,245];
+      rF(cx,y,cw,rowH,bg);doc.setLineWidth(.15);setDr([200,200,200]);doc.rect(cx,y,cw,rowH);
+      setF(6.5,'normal',[30,30,30]);doc.text(listaHerr[idx].substring(0,30),cx+2,y+2.5);
+      const vc=v==='presente'?[59,109,17]:v==='falta'?[163,45,45]:v==='noprop'?[133,79,11]:[120,120,120];
+      setF(6,'bold',vc);doc.text(v==='presente'?'✓ OK':v==='falta'?'✗ Falta':v==='noprop'?'⚠ No dado':v==='na'?'N/A':'—',cx+cw-2,y+2.5,{align:'right'});
+      if(lines.length){setF(5.5,'italic',[100,100,100]);lines.forEach((ln,li)=>doc.text(ln,cx+2,y+5+li*3.8));}
+    });
+    y+=rowH+1;
+  }y+=2;
   // Botiquín (no aplica en modo tractor)
   if(!esTpdf){
     secH('IV. Inventario de Botiquín',[5,80,65]);
@@ -1890,7 +1912,7 @@ function generarPDFDesdeRegistro(id){
   const setDr=color=>doc.setDrawColor(...color);
   const checkY=(n=20)=>{if(y+n>272){doc.addPage();y=MT;}};
   const secH=(title,bg=[24,95,165])=>{checkY(10);rF(ML,y,PW-ML-MR,6.5,bg,1);setF(8,'bold',[255,255,255]);doc.text(title,ML+3,y+4.5);y+=8;};
-  const row2=(items)=>{const cw=(PW-ML-MR)/2-1;for(let i=0;i<items.length;i+=2){checkY(8);[[ML,items[i]],[ML+cw+2,items[i+1]]].forEach(([x,it])=>{if(!it)return;rF(x,y,cw,7.5,[248,248,248]);doc.setLineWidth(.15);setDr([210,210,210]);doc.rect(x,y,cw,7.5);setF(6,'bold',[120,120,120]);doc.text((it.label||'').toUpperCase(),x+2,y+3);setF(8,'normal',[30,30,30]);doc.text(String(it.value||'—').substring(0,40),x+2,y+7);});y+=9;}};
+  const row2=(items)=>{const cw=(PW-ML-MR)/2-1;for(let i=0;i<items.length;i+=2){setF(8,'normal',[30,30,30]);const a=items[i],b=items[i+1];const la=a?doc.splitTextToSize(String(a.value||'—'),cw-4):[],lb=b?doc.splitTextToSize(String(b.value||'—'),cw-4):[];const maxL=Math.max(la.length,lb.length,1);const rh=Math.max(7.5,4+maxL*4);checkY(rh+1.5);[[ML,a,la],[ML+cw+2,b,lb]].forEach(([x,it,lines])=>{if(!it)return;rF(x,y,cw,rh,[248,248,248]);doc.setLineWidth(.15);setDr([210,210,210]);doc.rect(x,y,cw,rh);setF(6,'bold',[120,120,120]);doc.text((it.label||'').toUpperCase(),x+2,y+3);setF(8,'normal',[30,30,30]);lines.forEach((ln,li)=>doc.text(ln,x+2,y+7+li*4));});y+=rh+1.5;}};
 
   const esT=r.tipo==='tractor';
   const bonoTag=r.bonoTag||'sinbono';
@@ -1944,21 +1966,27 @@ function generarPDFDesdeRegistro(id){
   if(esT&&r.criteriosSnap&&r.criteriosSnap.length>0){
     // Checklist completo: todos los puntos, cumplidos y no cumplidos
     secH('II. Criterios de Evaluación (Detalle completo)');
-    const cols={id:ML,crit:ML+10,peso:ML+130,resp:ML+142,est:ML+155,obs:ML+178};
+    const cols={id:ML,crit:ML+10,peso:ML+100,resp:ML+112,est:ML+125,obs:ML+148};
     rF(ML,y,PW-ML-MR,6.5,[50,70,90]);setF(6.5,'bold',[255,255,255]);
-    doc.text('ID',cols.id+1,y+4.2);doc.text('Criterio',cols.crit+1,y+4.2);doc.text('Peso',cols.peso+1,y+4.2);doc.text('Resp.',cols.resp+1,y+4.2);doc.text('Resultado',cols.est+1,y+4.2);y+=7;
+    doc.text('ID',cols.id+1,y+4.2);doc.text('Criterio',cols.crit+1,y+4.2);doc.text('Peso',cols.peso+1,y+4.2);doc.text('Resp.',cols.resp+1,y+4.2);doc.text('Resultado',cols.est+1,y+4.2);doc.text('Observación',cols.obs+1,y+4.2);y+=7;
     let rowBg=false,secActual='';
     r.criteriosSnap.forEach(item=>{
       if(item.sec!==secActual){checkY(8);rF(ML,y,PW-ML-MR,5.5,[235,243,251]);setF(7,'bold',[24,95,165]);doc.text(item.sec,ML+2,y+3.8);y+=6;secActual=item.sec;}
-      checkY(8);const est=item.estado||'–',isBien=est.includes('Bien')||est.includes('N/A'),isInc=est.includes('Inc');
-      rF(ML,y,PW-ML-MR,6.5,rowBg?[250,250,248]:[255,255,255]);doc.setLineWidth(.1);setDr([220,220,220]);doc.rect(ML,y,PW-ML-MR,6.5);
+      const est=item.estado||'–',isBien=est.includes('Bien')||est.includes('N/A'),isInc=est.includes('Inc');
+      const critW=cols.peso-cols.crit-2,obsW=(PW-MR)-cols.obs-2;
+      setF(6.5,'normal',[30,30,30]);const critLines=doc.splitTextToSize(item.crit||'',critW);
+      setF(6,'italic',[100,100,100]);const obsLines=item.obs?doc.splitTextToSize(item.obs,obsW):[];
+      const maxLines=Math.max(critLines.length,obsLines.length,1),rowH=Math.max(6.5,3+maxLines*4);
+      checkY(rowH+1);
+      rF(ML,y,PW-ML-MR,rowH,rowBg?[250,250,248]:[255,255,255]);doc.setLineWidth(.1);setDr([220,220,220]);doc.rect(ML,y,PW-ML-MR,rowH);
       setF(6.5,'normal',[120,120,120]);doc.text(item.id,cols.id+1,y+4.5);
-      setF(6.5,'normal',[30,30,30]);doc.text((item.crit||'').substring(0,84),cols.crit+1,y+4.5);
+      setF(6.5,'normal',[30,30,30]);critLines.forEach((ln,li)=>doc.text(ln,cols.crit+1,y+4.5+li*4));
       setF(6.5,'normal',[80,80,80]);doc.text(item.peso+'%',cols.peso+1,y+4.5);
       setF(7,'bold',[30,30,30]);doc.text(item.valor||'–',cols.resp+3,y+4.5,{align:'center'});
       const bc=isBien?[59,109,17]:isInc?[163,45,45]:[120,120,120],bb=isBien?[234,243,222]:isInc?[252,235,235]:[240,240,240];
       rF(cols.est,y+1,20,4.5,bb,1);setF(5.5,'bold',bc);doc.text(est.includes('Bien')?'✓ Bien':est.includes('N/A')?'N/A':isInc?'✗ Incumplido':'–',cols.est+10,y+3.8,{align:'center'});
-      y+=7;rowBg=!rowBg;
+      setF(6,'italic',[100,100,100]);obsLines.forEach((ln,li)=>doc.text(ln,cols.obs+1,y+4.5+li*4));
+      y+=rowH+1;rowBg=!rowBg;
     });y+=3;
     if(incumpList.length>0){
       checkY(14);rF(ML,y,PW-ML-MR,6,[163,45,45],1);setF(8,'bold',[255,255,255]);doc.text('⚠  Criterios incumplidos ('+incumpList.length+')',ML+3,y+4.2);y+=7;
@@ -1979,7 +2007,23 @@ function generarPDFDesdeRegistro(id){
   if(herr.length>0){
     secH('III. Inventario de Herramienta');
     const hc=Math.ceil(herr.length/2);
-    for(let i=0;i<hc;i++){checkY(7);[i,i+hc].forEach((idx,col)=>{if(idx>=herr.length)return;const h=herr[idx],v=h.estado||'—',cx=ML+col*((PW-ML-MR)/2+2),cw=(PW-ML-MR)/2-2,bg=v==='presente'?[234,243,222]:v==='falta'?[252,235,235]:v==='noprop'?[255,248,232]:[245,245,245];rF(cx,y,cw,6,bg);doc.setLineWidth(.15);setDr([200,200,200]);doc.rect(cx,y,cw,6);setF(6.5,'normal',[30,30,30]);doc.text((h.nombre||'').substring(0,30),cx+2,y+2.5);const vc=v==='presente'?[59,109,17]:v==='falta'?[163,45,45]:v==='noprop'?[133,79,11]:[120,120,120];setF(6,'bold',vc);doc.text(v==='presente'?'✓ OK':v==='falta'?'✗ Falta':v==='noprop'?'⚠ No dado':v==='na'?'N/A':'—',cx+cw-2,y+2.5,{align:'right'});if(h.obs){setF(5.5,'italic',[100,100,100]);doc.text(h.obs.substring(0,28),cx+2,y+5);}});y+=7;}y+=2;
+    for(let i=0;i<hc;i++){
+      const idxs=[i,i+hc],cw=(PW-ML-MR)/2-2;
+      const cellData=idxs.map(idx=>idx<herr.length?herr[idx]:null);
+      setF(5.5,'italic',[100,100,100]);const linesArr=cellData.map(h=>h&&h.obs?doc.splitTextToSize(h.obs,cw-4):[]);
+      const maxLines=Math.max(0,...linesArr.map(l=>l.length)),rowH=maxLines>0?4+maxLines*3.8:6;
+      checkY(rowH+1);
+      cellData.forEach((h,col)=>{
+        if(!h)return;const v=h.estado||'—',lines=linesArr[col],cx=ML+col*((PW-ML-MR)/2+2);
+        const bg=v==='presente'?[234,243,222]:v==='falta'?[252,235,235]:v==='noprop'?[255,248,232]:[245,245,245];
+        rF(cx,y,cw,rowH,bg);doc.setLineWidth(.15);setDr([200,200,200]);doc.rect(cx,y,cw,rowH);
+        setF(6.5,'normal',[30,30,30]);doc.text((h.nombre||'').substring(0,30),cx+2,y+2.5);
+        const vc=v==='presente'?[59,109,17]:v==='falta'?[163,45,45]:v==='noprop'?[133,79,11]:[120,120,120];
+        setF(6,'bold',vc);doc.text(v==='presente'?'✓ OK':v==='falta'?'✗ Falta':v==='noprop'?'⚠ No dado':v==='na'?'N/A':'—',cx+cw-2,y+2.5,{align:'right'});
+        if(lines.length){setF(5.5,'italic',[100,100,100]);lines.forEach((ln,li)=>doc.text(ln,cx+2,y+5+li*3.8));}
+      });
+      y+=rowH+1;
+    }y+=2;
   }
 
   // — IV. Botiquín —
@@ -2165,6 +2209,11 @@ function setMNav(tab){
 }
 
 // Collapsible cards on mobile
+// Auto-ajuste de altura de los textareas: crecen conforme se escribe para que
+// nunca se oculte parte del comentario (aplica a todos, incluidos los generados dinámicamente).
+function autoGrow(el){el.style.height='auto';el.style.height=(el.scrollHeight+2)+'px';}
+document.addEventListener('input',function(e){if(e.target&&e.target.tagName==='TEXTAREA')autoGrow(e.target);});
+function autoGrowAll(){document.querySelectorAll('textarea').forEach(autoGrow);}
 document.addEventListener('DOMContentLoaded',()=>{
   if(window.innerWidth<=640){
     document.querySelectorAll('.card').forEach(card=>{
@@ -2178,7 +2227,7 @@ document.addEventListener('DOMContentLoaded',()=>{
 // ============================================================
 // INIT
 // ============================================================
-initSelects();buildItems();buildHerramientas();recalc();
+initSelects();buildItems();buildHerramientas();recalc();autoGrowAll();
 {const chkGF=document.getElementById('chk-guardar-fotos');if(chkGF)chkGF.checked=guardarFotosDispositivo;}
 if('serviceWorker' in navigator){window.addEventListener('load',()=>{navigator.serviceWorker.register('./sw.js').then(()=>console.log('SW OK')).catch(e=>console.log('SW err:',e));});}
 let deferredPrompt=null;
